@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_activity_label">Ustawienia</string>
+    <string name="cameras_order_activity_label">Kolejność kamer</string>
+    <string name="ignore_aspect_ratio_pref">Ignoruj proporcje</string>
+    <string name="invalid_host">Nieprawidłowy host</string>
+    <string name="invalid_port">Nieprawidłowy port</string>
+    <string name="invalid_url">Nieprawidłowy URL</string>
+    <string name="invalid_credentials">Nieprawidłowe dane logowania</string>
+    <string name="tls_error">Urządzenie nie wspiera TLS</string>
+    <string name="change_credentials">Zmień dane logowania</string>
+    <string name="change_to_http">Zmień na HTTP</string>
+    <string name="change_host">Zmień host</string>
+    <string name="change_port">Zmień port</string>
+    <string name="change_url">Zmień URL</string>
+    <string name="error_getting_cameras">Błąd pobierania listy kamer z %s</string>
+    <string name="no_cameras_selected">Nie wybrano kamer</string>
+    <string name="protocol">Protokół</string>
+    <string name="interval">Interwał</string>
+    <string name="timeout">Limit czasu</string>
+    <string name="image_format">Format obrazu</string>
+    <string name="display_implementation">Implementacja wyświetlania</string>
+    <string name="user">Nazwa użytkownika</string>
+    <string name="password">Hasło</string>
+</resources>

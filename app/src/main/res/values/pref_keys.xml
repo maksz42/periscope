@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ignore_aspect_ratio_key" translatable="false">ignore_aspect_ratio</string>
+    <string name="host_key" translatable="false">host</string>
+    <string name="port_key" translatable="false">port</string>
+    <string name="interval_key" translatable="false">interval</string>
+    <string name="protocol_key" translatable="false">protocol</string>
+    <string name="timeout_key" translatable="false">timeout</string>
+    <string name="image_format_key" translatable="false">image_format</string>
+    <string name="display_implementation_key" translatable="false">display_implementation</string>
+    <string name="user_key" translatable="false">user</string>
+    <string name="password_key" translatable="false">password</string>
+    <string name="selected_cameras_key" translatable="false">selected_cameras</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="floating_button_size">60dp</dimen>
+    <dimen name="floating_button_padding">10dp</dimen>
+    <dimen name="floating_button_margin">10dp</dimen>
+    <dimen name="camera_name_padding">2dp</dimen>
+</resources>

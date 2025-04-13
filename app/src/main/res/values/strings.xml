@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name" translatable="false">Periscope</string>
+    <string name="settings_activity_label">Settings</string>
+    <string name="cameras_order_activity_label">Cameras order</string>
+    <string name="ignore_aspect_ratio_pref">Ignore aspect ratio</string>
+    <string name="interval_preference_dialog_msg">Minimum %dms</string>
+    <string name="timeout_preference_dialog_msg">Maximum %dms</string>
+    <string name="invalid_host">Invalid host</string>
+    <string name="invalid_port">Invalid port</string>
+    <string name="invalid_url">Invalid URL</string>
+    <string name="invalid_credentials">Invalid credentials</string>
+    <string name="tls_error">"Device probably doesn't support TLS"</string>
+    <string name="change_credentials">Change credentials</string>
+    <string name="change_to_http">Change to HTTP</string>
+    <string name="change_host">Change host</string>
+    <string name="change_port">Change port</string>
+    <string name="change_url">Change URL</string>
+    <string name="error_getting_cameras">Error getting camera list from %s</string>
+    <string name="no_cameras_selected">No cameras selected</string>
+    <string name="protocol">Protocol</string>
+    <string name="host">Host</string>
+    <string name="port">Port</string>
+    <string name="interval">Interval</string>
+    <string name="timeout">Timeout</string>
+    <string name="image_format">Image format</string>
+    <string name="display_implementation">Display implementation</string>
+    <string name="user">User</string>
+    <string name="password">Password</string>
+</resources>

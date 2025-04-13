@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="ImpliedTouchscreenHardware,MissingLeanbackSupport">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:name=".Periscope"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="false"
+        android:usesCleartextTraffic="true"
+        android:largeHeap="true"
+        tools:targetApi="31"
+        tools:ignore="MissingTvBanner">
+
+        <activity
+            android:name=".MatrixActivity"
+            android:theme="@android:style/Theme.Black.NoTitleBar"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenLayout|screenSize"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".SingleCameraActivity"
+            android:theme="@android:style/Theme.Black.NoTitleBar"
+            android:configChanges="orientation|screenLayout|screenSize"
+            android:exported="true" />
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/settings_activity_label"
+            android:theme="@style/ThickTitlebar"
+            android:exported="true" />
+        <activity
+            android:name=".CamerasOrderActivity"
+            android:label="@string/cameras_order_activity_label"
+            android:theme="@style/ThickTitlebar"
+            android:exported="true" />
+    </application>
+</manifest>

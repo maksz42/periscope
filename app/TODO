@@ -1,0 +1,8 @@
+1.
+Investigate these logcat errors/warnings:
+BufferQueueProducer  com.maksz42.periscope  E  [SurfaceView[com.maksz42.periscope/com.maksz42.periscope.MatrixActivity]#1(BLAST Consumer)1](id:164700000001,api:0,p:-1,c:5703) disconnect: not connected (req=2)
+ksz42.periscope  com.maksz42.periscope  W  Cleared Reference was only reachable from finalizer (only reported once)
+FrameTracker  com.maksz42.periscope  E  force finish cuj, time out: J<IME_INSETS_ANIMATION::1@0@com.maksz42.periscope>
+
+2.
+Deal with logcat spam

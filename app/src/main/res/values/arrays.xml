@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="display_implementation_entries">
+        <item>ImageView</item>
+        <item>SurfaceView</item>
+    </string-array>
+    <string-array name="display_implementation_values">
+        <item>IMAGEVIEW</item>
+        <item>SURFACEVIEW</item>
+    </string-array>
+    <string-array name="protocol_values">
+        <item>HTTP</item>
+        <item>HTTPS</item>
+    </string-array>
+    <string-array name="image_format_values">
+        <item>JPG</item>
+        <item>WEBP</item>
+    </string-array>
+</resources>
