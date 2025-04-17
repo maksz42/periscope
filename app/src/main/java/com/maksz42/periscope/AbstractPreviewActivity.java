@@ -270,7 +270,7 @@ public abstract class AbstractPreviewActivity extends Activity {
           .setPositiveButton(getString(R.string.change_credentials),
               (dialog, which) -> startActivity(new Intent(this, SettingsActivity.class))
           )
-          .create());
+      );
     } else if (e instanceof SSLException) {
       Log.e(this.getClass().getName(), "Device probably doesn't support TLS", e);
       showDialog(new AlertDialog.Builder(this)
@@ -278,15 +278,16 @@ public abstract class AbstractPreviewActivity extends Activity {
           .setPositiveButton(getString(R.string.change_to_http),
               (dialog, which) -> startActivity(new Intent(this, SettingsActivity.class))
           )
-          .create());
+      );
     } else {
       Log.d(this.getClass().getName(), e.toString());
     }
   }
 
-  protected void showDialog(Dialog dialog) {
+  protected void showDialog(AlertDialog.Builder alertDialogBuilder) {
     runOnUiThread(() -> {
       if (alertDialog != null) return;
+      Dialog dialog = alertDialogBuilder.create();
       dialog.setOnDismissListener(d -> alertDialog = null);
       alertDialog = dialog;
       dialog.show();
