@@ -22,4 +22,9 @@
     <string name="display_implementation">Implementacja wyświetlania</string>
     <string name="user">Nazwa użytkownika</string>
     <string name="password">Hasło</string>
+    <string name="new_update">Akutalizacja %s</string>
+    <string name="install_update">Aktualizuj</string>
+    <string name="later">Później</string>
+    <string name="ignore">Ignoruj</string>
+    <string name="auto_check_for_updates">Automatycznie sprawdzaj aktualizacje</string>
 </resources>

@@ -48,6 +48,11 @@
         android:defaultValue="true"
         android:key="@string/ignore_aspect_ratio_key"
         />
+    <CheckBoxPreference
+        android:title="@string/auto_check_for_updates"
+        android:key="@string/auto_check_for_updates_key"
+        android:defaultValue="true"
+        />
     <EditTextPreference
         android:title="@string/user"
         android:key="@string/user_key"

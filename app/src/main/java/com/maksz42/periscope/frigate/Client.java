@@ -1,5 +1,7 @@
 package com.maksz42.periscope.frigate;
 
+import com.maksz42.periscope.utils.Net;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -84,9 +86,7 @@ public final class Client {
   static CloseableConnection openConnection(String endpoint, boolean enableCompression)
       throws IOException, InterruptedException {
     URL url = new URL(baseUrl, endpoint);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.setConnectTimeout(5000);
-    conn.setReadTimeout(5000);
+    HttpURLConnection conn = (HttpURLConnection) Net.openConnectionWithTimeout(url);
     // https://github.com/blakeblackshear/frigate/pull/17400
     // although my frigate 0.15 instance doesn't compress anything
     // except the first response for some reason
@@ -124,9 +124,8 @@ public final class Client {
       }
 
       URL url = new URL(baseUrl, "api/login");
-      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-      conn.setConnectTimeout(5000);
-      conn.setReadTimeout(1000);
+      HttpURLConnection conn =
+          (HttpURLConnection) Net.openConnectionWithTimeout(url, 5000, 1000);
       conn.setRequestMethod("POST");
       conn.setRequestProperty("Content-Type", "application/json");
       conn.setDoOutput(true);

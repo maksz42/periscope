@@ -32,6 +32,7 @@ public class Settings {
   public final String UserKey;
   public final String PasswordKey;
   public final String SelectedCamerasKey;
+  public final String AutoCheckForUpdatesKey;
 
   /**
    * not thread-safe, expected to be called on the UI thread
@@ -64,6 +65,7 @@ public class Settings {
     UserKey = res.getString(R.string.user_key);
     PasswordKey = res.getString(R.string.password_key);
     SelectedCamerasKey = res.getString(R.string.selected_cameras_key);
+    AutoCheckForUpdatesKey = res.getString(R.string.auto_check_for_updates_key);
   }
 
   private boolean getBoolean(String key) {
@@ -164,6 +166,14 @@ public class Settings {
 
   public void setSelectedCameras(List<String> cameraNames) {
     setString(SelectedCamerasKey, String.join(",", cameraNames));
+  }
+
+  public boolean getAutoCheckForUpdates() {
+    return getBoolean(AutoCheckForUpdatesKey);
+  }
+
+  public void setAutoCheckForUpdates(boolean enable) {
+    setBoolean(AutoCheckForUpdatesKey, enable);
   }
 
   public List<String> getSelectedCameras() {

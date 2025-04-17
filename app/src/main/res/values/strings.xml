@@ -26,4 +26,9 @@
     <string name="display_implementation">Display implementation</string>
     <string name="user">User</string>
     <string name="password">Password</string>
+    <string name="new_update">Update %s</string>
+    <string name="install_update">Update</string>
+    <string name="later">Later</string>
+    <string name="ignore">Ignore</string>
+    <string name="auto_check_for_updates">Automatically check for updates</string>
 </resources>

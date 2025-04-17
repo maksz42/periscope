@@ -2,10 +2,14 @@ package com.maksz42.periscope;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +35,7 @@ import javax.net.ssl.SSLException;
 public class MatrixActivity extends AbstractPreviewActivity {
   private List<CameraView> cameraViews;
   private volatile boolean refreshing;
+  private final Handler UpdateHandler = new Handler(Looper.getMainLooper());
 
 
   @Override
@@ -80,6 +85,33 @@ public class MatrixActivity extends AbstractPreviewActivity {
       addCameraViews();
       startPreview();
     }
+
+    if (Settings.getInstance(this).getAutoCheckForUpdates()) {
+      // TODO do this in AlarmManager or something
+      UpdateHandler.postDelayed(new Runnable() {
+        @Override
+        public void run() {
+          UpdateManager updateManager = new UpdateManager(MatrixActivity.this);
+          updateManager.checkForUpdate((um, versionName, changelog) ->
+              new AlertDialog.Builder(MatrixActivity.this)
+                  .setTitle(getString(R.string.new_update, versionName))
+                  .setMessage(changelog)
+                  .setCancelable(false)
+                  .setPositiveButton(
+                      R.string.install_update,
+                      (dialog, which) -> um.downloadAndInstallUpdate()
+                  )
+                  .setNeutralButton(R.string.later, (dialog, which) ->
+                      UpdateHandler.postDelayed(this, 1000 * 60 * 60 * 24)
+                  )
+                  .setNegativeButton(R.string.ignore, (dialog, which) -> {
+                    UpdateHandler.removeCallbacksAndMessages(null);
+                    Settings.getInstance(MatrixActivity.this).setAutoCheckForUpdates(false);
+                  })
+                  .show());
+        }
+      }, 10000);
+    }
   }
 
   @Override
@@ -89,6 +121,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
     stopPreview();
     removeCameraViews();
     cameraViews = null;
+    UpdateHandler.removeCallbacksAndMessages(null);
   }
 
   @Override

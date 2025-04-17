@@ -11,4 +11,5 @@
     <string name="user_key" translatable="false">user</string>
     <string name="password_key" translatable="false">password</string>
     <string name="selected_cameras_key" translatable="false">selected_cameras</string>
+    <string name="auto_check_for_updates_key" translatable="false">auto_check_for_updates</string>
 </resources>
