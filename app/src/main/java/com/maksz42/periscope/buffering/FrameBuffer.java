@@ -2,6 +2,7 @@ package com.maksz42.periscope.buffering;
 
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.HONEYCOMB;
+import static android.os.Build.VERSION_CODES.KITKAT;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -26,6 +27,10 @@ public abstract class FrameBuffer {
   // Although WEBP is supported from ICE_CREAM_SANDWICH
   // BitmapFactory.Options#inBitmap supports WEBP
   // for api >= KITKAT
+  public static boolean supportsWEBP() {
+    return SDK_INT >= KITKAT;
+  }
+
   public static boolean supportsInBitmap() {
     return SDK_INT >= HONEYCOMB;
   }
