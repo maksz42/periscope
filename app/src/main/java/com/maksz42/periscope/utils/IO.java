@@ -25,16 +25,6 @@ public final class IO {
     return new String(readAllBytes(input), "utf8");
   }
 
-  public static void saveToFile(InputStream input, File target) throws IOException {
-    try (OutputStream output = new FileOutputStream(target)) {
-      byte[] buffer = new byte[8192];
-      int bytesRead;
-      while ((bytesRead = input.read(buffer)) != -1) {
-        output.write(buffer, 0, bytesRead);
-      }
-    }
-  }
-
   public static void transferStream(InputStream input, OutputStream output) throws IOException {
     byte[] buffer = new byte[8192];
     int bytesRead;

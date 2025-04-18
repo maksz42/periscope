@@ -47,6 +47,7 @@ public class UpdateManager {
     }
   }
 
+  private final static String APK_NAME = "periscope.apk";
   private final static URL UPDATE_URL;
 
   static {
@@ -58,7 +59,6 @@ public class UpdateManager {
   }
 
   private final WeakReference<Context> ContextRef;
-  private final File ApkFile;
 
 
   public interface OnUpdateAvailableListener {
@@ -67,15 +67,14 @@ public class UpdateManager {
 
   public UpdateManager(Context context) {
     ContextRef = new WeakReference<>(context);
-    // getCacheDir() has permission problems on older androids
-    // see https://stackoverflow.com/a/47220833
-    // anyway, this seems to be ok
-    ApkFile = new File(context.getExternalCacheDir(), "periscope.apk");
   }
 
   public void checkForUpdate(OnUpdateAvailableListener onUpdateAvailableListener) {
     new Thread(() -> {
-      ApkFile.delete();
+      Context context = ContextRef.get();
+      if (context != null) {
+        new File(context.getFilesDir(), APK_NAME).delete();
+      }
       try {
         URL url = new URL(UPDATE_URL, "version_code");
         String resp;
@@ -109,7 +108,7 @@ public class UpdateManager {
   public void downloadAndInstallUpdate() {
     new Thread(() -> {
       try {
-        URL url = new URL(UPDATE_URL, "periscope.apk");
+        URL url = new URL(UPDATE_URL, APK_NAME);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
           installNewMethod(url);
         } else {
@@ -135,7 +134,7 @@ public class UpdateManager {
       HttpURLConnection conn = (HttpURLConnection) Net.openConnectionWithTimeout(url);
       int len = conn.getContentLength();
       try (InputStream input = conn.getInputStream();
-           OutputStream output = session.openWrite("periscope.apk", 0, len)
+           OutputStream output = session.openWrite(APK_NAME, 0, len)
       ) {
         IO.transferStream(input, output);
         session.fsync(output);
@@ -152,16 +151,21 @@ public class UpdateManager {
   }
 
   private void installOldMethod(URL url) throws IOException {
-    try (InputStream input = Net.openStreamWithTimeout(url)) {
-      IO.saveToFile(input, ApkFile);
+    Context context = ContextRef.get();
+    if (context == null) {
+      return;
+    }
+    // see https://stackoverflow.com/a/47220833
+    try (InputStream input = Net.openStreamWithTimeout(url);
+         OutputStream output = context.openFileOutput(APK_NAME, Context.MODE_WORLD_READABLE)
+    ) {
+      IO.transferStream(input, output);
     }
     Intent intent = new Intent(Intent.ACTION_VIEW);
-    intent.setDataAndType(Uri.fromFile(ApkFile), "application/vnd.android.package-archive");
-    Misc.runOnUIThread(() -> {
-      Context context = ContextRef.get();
-      if (context != null) {
-        context.startActivity(intent);
-      }
-    });
+    intent.setDataAndType(
+        Uri.fromFile(new File(context.getFilesDir(), APK_NAME)),
+        "application/vnd.android.package-archive"
+    );
+    context.startActivity(intent);
   }
 }
