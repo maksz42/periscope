@@ -7,6 +7,12 @@
         android:entryValues="@array/protocol_values"
         android:defaultValue="HTTP"
         />
+    <CheckBoxPreference
+        android:title="@string/disable_cert_verification"
+        android:summary="@string/security_hazard"
+        android:key="@string/disable_cert_verification_key"
+        android:defaultValue="false"
+        />
     <EditTextPreference
         android:title="@string/host"
         android:key="@string/host_key"

@@ -39,6 +39,8 @@ import androidx.annotation.RequiresApi;
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
 
+import java.security.cert.CertificateException;
+
 import javax.net.ssl.SSLException;
 
 
@@ -268,6 +270,14 @@ public abstract class AbstractPreviewActivity extends Activity {
       showDialog(new AlertDialog.Builder(this)
           .setMessage(getString(R.string.invalid_credentials))
           .setPositiveButton(getString(R.string.change_credentials),
+              (dialog, which) -> startActivity(new Intent(this, SettingsActivity.class))
+          )
+      );
+    } else if (e.getCause() instanceof CertificateException) {
+      Log.e(this.getClass().getName(), "Self-signed certificate error", e);
+      showDialog(new AlertDialog.Builder(this)
+          .setMessage(getString(R.string.self_signed_cert_info))
+          .setPositiveButton(getString(R.string.disable_cert_verification),
               (dialog, which) -> startActivity(new Intent(this, SettingsActivity.class))
           )
       );

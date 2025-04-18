@@ -27,4 +27,7 @@
     <string name="later">Później</string>
     <string name="ignore">Ignoruj</string>
     <string name="auto_check_for_updates">Automatycznie sprawdzaj aktualizacje</string>
+    <string name="disable_cert_verification">Wyłącz weryfikowanie certyfikatu</string>
+    <string name="self_signed_cert_info">Frigate używa samopodpisanego certyfikatu</string>
+    <string name="security_hazard">Zagrożenie bezpieczeństwa</string>
 </resources>

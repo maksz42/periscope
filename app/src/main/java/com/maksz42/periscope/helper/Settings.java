@@ -33,6 +33,7 @@ public class Settings {
   public final String PasswordKey;
   public final String SelectedCamerasKey;
   public final String AutoCheckForUpdatesKey;
+  public final String DisableCertVerificationKey;
 
   /**
    * not thread-safe, expected to be called on the UI thread
@@ -66,6 +67,7 @@ public class Settings {
     PasswordKey = res.getString(R.string.password_key);
     SelectedCamerasKey = res.getString(R.string.selected_cameras_key);
     AutoCheckForUpdatesKey = res.getString(R.string.auto_check_for_updates_key);
+    DisableCertVerificationKey = res.getString(R.string.disable_cert_verification_key);
   }
 
   private boolean getBoolean(String key) {
@@ -174,6 +176,14 @@ public class Settings {
 
   public void setAutoCheckForUpdates(boolean enable) {
     setBoolean(AutoCheckForUpdatesKey, enable);
+  }
+
+  public boolean getDisableCheckCertVerification() {
+    return getBoolean(DisableCertVerificationKey);
+  }
+
+  public void setDisableCertVerification(boolean value) {
+    setBoolean(DisableCertVerificationKey, value);
   }
 
   public List<String> getSelectedCameras() {

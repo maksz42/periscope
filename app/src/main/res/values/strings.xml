@@ -31,4 +31,7 @@
     <string name="later">Later</string>
     <string name="ignore">Ignore</string>
     <string name="auto_check_for_updates">Automatically check for updates</string>
+    <string name="disable_cert_verification">Disable certificate verification</string>
+    <string name="self_signed_cert_info">Your Frigate instance uses self-signed certificate</string>
+    <string name="security_hazard">Security hazard</string>
 </resources>

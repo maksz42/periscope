@@ -3,6 +3,7 @@ package com.maksz42.periscope;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -16,6 +17,7 @@ import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.helper.Settings;
 import com.maksz42.periscope.ui.CameraView;
 import com.maksz42.periscope.utils.Misc;
+import com.maksz42.periscope.utils.Net;
 
 import java.net.MalformedURLException;
 
@@ -31,6 +33,14 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     getPreferenceManager().setSharedPreferencesName(settings.PREF_FILE_NAME);
     getPreferenceManager().setSharedPreferencesMode(MODE_PRIVATE);
     addPreferencesFromResource(R.xml.settings_preferences);
+
+    Preference noCertPreference = findPreference(settings.DisableCertVerificationKey);
+    noCertPreference.setEnabled(settings.getProtocol() == Client.Protocol.HTTPS);
+    Preference protocolPreference = findPreference(settings.ProtocolKey);
+    protocolPreference.setOnPreferenceChangeListener((preference, newValue) -> {
+      noCertPreference.setEnabled(Client.Protocol.valueOf((String) newValue) == Client.Protocol.HTTPS);
+      return true;
+    });
 
     final int minInterval = 200;
     EditTextPreference intervalPreference = (EditTextPreference) findPreference(settings.IntervalKey);
@@ -104,6 +114,12 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 
   @Override
   public void onBackPressed() {
+    if (settings.getDisableCheckCertVerification()) {
+      Net.disableCertVerification();
+    } else {
+      Net.enableCertVerification();
+    }
+
     EditTextPreference hostPreference = (EditTextPreference) findPreference(settings.HostKey);
     String host = hostPreference.getText();
     if (host == null || host.isBlank()) {

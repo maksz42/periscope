@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.helper.Settings;
+import com.maksz42.periscope.utils.Net;
 
 import java.net.MalformedURLException;
 
@@ -21,5 +22,9 @@ public class Periscope extends Application {
     String user = settings.getUser();
     String password = settings.getPassword();
     Client.setCredentials(user, password);
+
+    if (settings.getDisableCheckCertVerification()) {
+      Net.disableCertVerification();
+    }
   }
 }
