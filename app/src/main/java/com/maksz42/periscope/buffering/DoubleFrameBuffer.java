@@ -1,21 +1,17 @@
 package com.maksz42.periscope.buffering;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Build;
 
-import androidx.annotation.RequiresApi;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class DoubleFrameBuffer extends FrameBuffer {
   private volatile Bitmap frontBuffer;
   private volatile Bitmap backBuffer;
 
-
-  @RequiresApi(Build.VERSION_CODES.HONEYCOMB)
   @Override
-  public void decodeByteArray(byte[] data) {
-    BitmapFactory.Options options = createReusableBitmapOptions(backBuffer);
-    Bitmap bitmap = internalDecodeByteArray(data, options);
+  public void decodeStream(InputStream input) throws IOException {
+    Bitmap bitmap = decodeStream(input, backBuffer);
     setFrame(bitmap);
   }
 

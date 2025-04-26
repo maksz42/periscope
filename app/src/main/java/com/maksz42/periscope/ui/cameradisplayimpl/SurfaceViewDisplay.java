@@ -95,7 +95,6 @@ public class SurfaceViewDisplay extends SurfaceView
       Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
       while (!Thread.interrupted()) {
         synchronized (newBitmapLock) {
-          // spurious wakeups
           while (!bitmapWaiting) {
             try {
               newBitmapLock.wait();

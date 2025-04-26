@@ -15,7 +15,7 @@ import com.maksz42.periscope.utils.Misc;
 
 public class ImageViewDisplay extends ImageView
     implements CameraDisplay, FrameBuffer.OnFrameUpdateListener {
-  private final FrameBuffer frameBuffer = FrameBuffer.supportsInBitmap()
+  private final FrameBuffer frameBuffer = FrameBuffer.supportsReusingBitmap()
       ? new DoubleFrameBuffer()
       : new SingleFrameBuffer();
 

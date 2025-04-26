@@ -20,7 +20,7 @@ public class Config {
     try (
         Client.CloseableConnection cc =
             Client.openConnection("api/config", true);
-        InputStream is = cc.get().getInputStream()
+        InputStream is = cc.getConnection().getInputStream()
     ) {
       response = IO.readAllText(is);
     }

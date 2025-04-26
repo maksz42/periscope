@@ -1,20 +1,17 @@
 package com.maksz42.periscope.buffering;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Build;
 
-import androidx.annotation.RequiresApi;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class SingleFrameBuffer extends FrameBuffer {
   private volatile Bitmap bitmap;
 
-  @RequiresApi(Build.VERSION_CODES.HONEYCOMB)
   @Override
-  public void decodeByteArray(byte[] data) {
+  public void decodeStream(InputStream input) throws IOException {
     synchronized (this) {
-      BitmapFactory.Options options = createReusableBitmapOptions(bitmap);
-      bitmap = internalDecodeByteArray(data, options);
+      bitmap = decodeStream(input, bitmap);
     }
     onUpdate();
   }
@@ -26,9 +23,7 @@ public class SingleFrameBuffer extends FrameBuffer {
 
   @Override
   public void setFrame(Bitmap bitmap) {
-    synchronized (this) {
-      this.bitmap = bitmap;
-    }
+    this.bitmap = bitmap;
     onUpdate();
   }
 }

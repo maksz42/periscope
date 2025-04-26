@@ -9,13 +9,18 @@ import android.graphics.BitmapFactory;
 
 import androidx.annotation.RequiresApi;
 
+import com.maksz42.periscope.io.RetryInputStream;
+
+import java.io.IOException;
+import java.io.InputStream;
+
 public abstract class FrameBuffer {
   public interface OnFrameUpdateListener {
     void onFrameUpdate();
   }
 
   @RequiresApi(HONEYCOMB)
-  protected static BitmapFactory.Options createReusableBitmapOptions(Bitmap reusableBitmap) {
+  private static BitmapFactory.Options createReusableBitmapOptions(Bitmap reusableBitmap) {
     BitmapFactory.Options options = new BitmapFactory.Options();
     options.inMutable = true;
     options.inBitmap = reusableBitmap;
@@ -31,14 +36,13 @@ public abstract class FrameBuffer {
     return SDK_INT >= KITKAT;
   }
 
-  public static boolean supportsInBitmap() {
+  public static boolean supportsReusingBitmap() {
     return SDK_INT >= HONEYCOMB;
   }
 
   protected OnFrameUpdateListener onFrameUpdateListener;
 
-  @RequiresApi(HONEYCOMB)
-  public abstract void decodeByteArray(byte[] data);
+  public abstract void decodeStream(InputStream input) throws IOException;
 
   public abstract Bitmap getFrame();
 
@@ -51,12 +55,28 @@ public abstract class FrameBuffer {
     }
   }
 
-  protected Bitmap internalDecodeByteArray(byte[] data, BitmapFactory.Options options) {
-    try {
-      return BitmapFactory.decodeByteArray(data, 0, data.length, options);
-    } catch (IllegalArgumentException e) {
-      return BitmapFactory.decodeByteArray(data, 0, data.length);
+  final protected Bitmap decodeStream(InputStream input, Bitmap reusableBitmap) throws IOException {
+    boolean canReuseBitmaps = supportsReusingBitmap();
+    BitmapFactory.Options opts = null;
+    if (canReuseBitmaps) {
+      opts = createReusableBitmapOptions(reusableBitmap);
+      // hopefully 8kB is enough
+      input = new RetryInputStream(input, 8 * 1024);
     }
+    Bitmap bitmap = null;
+    try {
+      bitmap = BitmapFactory.decodeStream(input, null, opts);
+    } catch (IllegalArgumentException e) {
+      if (canReuseBitmaps) {
+        input.reset();
+        opts.inBitmap = null;
+        bitmap = BitmapFactory.decodeStream(input, null, opts);
+      }
+    }
+    if (bitmap == null) {
+      throw new IOException("Failed to decode image");
+    }
+    return bitmap;
   }
 
   public void setOnFrameUpdateListener(OnFrameUpdateListener onFrameUpdateListener) {

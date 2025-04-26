@@ -1,20 +1,15 @@
 package com.maksz42.periscope.camera;
 
-import static android.os.Build.VERSION_CODES.HONEYCOMB;
-
 import static com.maksz42.periscope.frigate.Media.ImageFormat.JPG;
 
-import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
-
-import androidx.annotation.RequiresApi;
 
 import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.frigate.Media;
 import com.maksz42.periscope.utils.LoggingRunnable;
-import com.maksz42.periscope.utils.ThrowingAction;
 
+import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -41,9 +36,7 @@ public class CameraPlayer {
   private final ScheduledExecutorService executorService =
       Executors.newSingleThreadScheduledExecutor();
   private final Handler handler = new Handler(Looper.getMainLooper());
-  private final Runnable fetchAndDraw = createFetchAndDrawAction();
-  private final Media media;
-  private final FrameBuffer buffer;
+  private final LoggingRunnable fetchAndDraw;
   private final Runnable timeoutAction = () -> onError(new TimeoutException());
   private volatile short timeout = -1;
   private OnNewFrameListener onNewFrameListener;
@@ -51,8 +44,21 @@ public class CameraPlayer {
 
 
   public CameraPlayer(FrameBuffer buffer, Media media) {
-    this.buffer = buffer;
-    this.media = media;
+    fetchAndDraw = () -> {
+      try {
+        if (timeout > 0) {
+          handler.postDelayed(timeoutAction, timeout);
+        }
+        try (InputStream input = media.getLatestFrameInputStream(imageFormat)) {
+          buffer.decodeStream(input);
+        }
+        onNewFrame();
+      } catch (InterruptedIOException ignored) {
+      } catch (Exception e) {
+        onError(e);
+        throw new RuntimeException(e);
+      }
+    };
   }
 
   public void setOnNewFrameListener(OnNewFrameListener onNewFrameListener) {
@@ -99,39 +105,5 @@ public class CameraPlayer {
         onNewFrameListener.onNewFrame();
       }
     });
-  }
-
-  private LoggingRunnable createFetchAndDrawAction() {
-    ThrowingAction fetchAndDrawAction = FrameBuffer.supportsInBitmap()
-        ? createFetchBytesAndDrawAction()
-        : createFetchBitmapAndDrawAction();
-    return () -> {
-      try {
-        if (timeout > 0) {
-          handler.postDelayed(timeoutAction, timeout);
-        }
-        fetchAndDrawAction.run();
-        onNewFrame();
-      } catch (InterruptedIOException ignored) {
-      } catch (Exception e) {
-        onError(e);
-        throw new RuntimeException(e);
-      }
-    };
-  }
-
-  @RequiresApi(HONEYCOMB)
-  private ThrowingAction createFetchBytesAndDrawAction() {
-    return () -> {
-        byte[] frameData = media.fetchLatestFrameAsBytes(imageFormat);
-        buffer.decodeByteArray(frameData);
-    };
-  }
-
-  private ThrowingAction createFetchBitmapAndDrawAction() {
-    return () -> {
-      Bitmap bitmap = media.fetchLatestFrameAsBitmap(imageFormat);
-      buffer.setFrame(bitmap);
-    };
   }
 }
