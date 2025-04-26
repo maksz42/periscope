@@ -6,7 +6,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.os.Process;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -20,10 +19,8 @@ import com.maksz42.periscope.ui.CameraDisplay;
 public class SurfaceViewDisplay extends SurfaceView
     implements CameraDisplay, SurfaceHolder.Callback, FrameBuffer.OnFrameUpdateListener {
 
-  private volatile int surfaceWidth;
-  private volatile int surfaceHeight;
   private volatile boolean bitmapWaiting;
-  private final Paint paint = new Paint();
+  private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
   private final SingleFrameBuffer frameBuffer = new SingleFrameBuffer();
   private final Object newBitmapLock = new Object();
   private Thread drawingThread;
@@ -33,7 +30,6 @@ public class SurfaceViewDisplay extends SurfaceView
     super(context);
     getHolder().addCallback(this);
     frameBuffer.setOnFrameUpdateListener(this);
-    paint.setFilterBitmap(true);
   }
 
   @Override
@@ -53,19 +49,12 @@ public class SurfaceViewDisplay extends SurfaceView
 
   @Override
   public void surfaceCreated(@NonNull SurfaceHolder holder) {
-    Rect frame = holder.getSurfaceFrame();
-    surfaceWidth = frame.width();
-    surfaceHeight = frame.height();
     drawingThread = newDrawingThread();
     drawingThread.start();
-    drawBitmapRequest();
   }
 
   @Override
   public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
-    // TODO maybe double buffering of width and height needed
-    surfaceWidth = width;
-    surfaceHeight = height;
     drawBitmapRequest();
   }
 
@@ -104,7 +93,6 @@ public class SurfaceViewDisplay extends SurfaceView
           }
           bitmapWaiting = false;
         }
-        Rect dstRect = new Rect(0, 0, surfaceWidth, surfaceHeight);
         synchronized (frameBuffer) {
           Bitmap frame = frameBuffer.getFrame();
           if (frame == null) continue;
@@ -112,7 +100,7 @@ public class SurfaceViewDisplay extends SurfaceView
           if (Thread.interrupted()) return;
           Canvas canvas = holder.lockCanvas();
           if (canvas == null) continue;
-          canvas.drawBitmap(frame, null, dstRect, paint);
+          canvas.drawBitmap(frame, null, holder.getSurfaceFrame(), paint);
           holder.unlockCanvasAndPost(canvas);
         }
       }
