@@ -9,12 +9,11 @@ import android.widget.ImageView;
 
 import com.maksz42.periscope.buffering.DoubleFrameBuffer;
 import com.maksz42.periscope.buffering.FrameBuffer;
+import com.maksz42.periscope.buffering.LazyBitmapDrawable;
 import com.maksz42.periscope.buffering.SingleFrameBuffer;
 import com.maksz42.periscope.ui.CameraDisplay;
-import com.maksz42.periscope.utils.Misc;
 
-public class ImageViewDisplay extends ImageView
-    implements CameraDisplay, FrameBuffer.OnFrameUpdateListener {
+public class ImageViewDisplay extends ImageView implements CameraDisplay {
   private final FrameBuffer frameBuffer = FrameBuffer.supportsReusingBitmap()
       ? new DoubleFrameBuffer()
       : new SingleFrameBuffer();
@@ -22,7 +21,8 @@ public class ImageViewDisplay extends ImageView
 
   public ImageViewDisplay(Context context) {
     super(context);
-    frameBuffer.setOnFrameUpdateListener(this);
+    frameBuffer.setOnFrameUpdateListener(this::postInvalidate);
+    setImageDrawable(new LazyBitmapDrawable(frameBuffer));
   }
 
   @Override
@@ -33,14 +33,5 @@ public class ImageViewDisplay extends ImageView
   @Override
   public void setIgnoreAspectRatio(boolean ignore) {
     setScaleType(ignore ? FIT_XY : FIT_CENTER);
-  }
-
-  @Override
-  public void onFrameUpdate() {
-    Misc.runOnUIThread(() -> {
-      synchronized (frameBuffer) {
-        setImageBitmap(frameBuffer.getFrame());
-      }
-    });
   }
 }

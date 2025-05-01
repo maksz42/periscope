@@ -1,0 +1,43 @@
+package com.maksz42.periscope.buffering;
+
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Paint;
+import android.graphics.PixelFormat;
+import android.graphics.drawable.Drawable;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+public class LazyBitmapDrawable extends Drawable {
+  private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
+  private final FrameBuffer frameBuffer;
+
+  public LazyBitmapDrawable(FrameBuffer frameBuffer) {
+    this.frameBuffer = frameBuffer;
+  }
+
+  @Override
+  public void draw(@NonNull Canvas canvas) {
+    Bitmap bitmap = frameBuffer.getFrame();
+    if (bitmap != null) {
+      canvas.drawBitmap(bitmap, null, getBounds(), paint);
+    }
+  }
+
+  @Override
+  public void setAlpha(int alpha) {
+    paint.setAlpha(alpha);
+  }
+
+  @Override
+  public void setColorFilter(@Nullable ColorFilter colorFilter) {
+    paint.setColorFilter(colorFilter);
+  }
+
+  @Override
+  public int getOpacity() {
+    return PixelFormat.OPAQUE;
+  }
+}

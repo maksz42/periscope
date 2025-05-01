@@ -7,16 +7,16 @@ import java.io.InputStream;
 
 public class DoubleFrameBuffer extends FrameBuffer {
   private volatile Bitmap frontBuffer;
-  private volatile Bitmap backBuffer;
+  private Bitmap backBuffer;
 
   @Override
   public void decodeStream(InputStream input) throws IOException {
-    Bitmap bitmap = decodeStream(input, backBuffer);
-    setFrame(bitmap);
+    backBuffer = decodeStream(input, backBuffer);
+    swapBuffers();
+    onUpdate();
   }
 
-  // TODO make sure this synchronization is enough
-  private synchronized void swapBuffers() {
+  private void swapBuffers() {
     Bitmap temp = frontBuffer;
     frontBuffer = backBuffer;
     backBuffer = temp;
@@ -29,8 +29,7 @@ public class DoubleFrameBuffer extends FrameBuffer {
 
   @Override
   public void setFrame(Bitmap bitmap) {
-    backBuffer = bitmap;
-    swapBuffers();
+    frontBuffer = bitmap;
     onUpdate();
   }
 }
