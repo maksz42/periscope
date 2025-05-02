@@ -7,27 +7,21 @@ import static android.widget.ImageView.ScaleType.FIT_XY;
 import android.content.Context;
 import android.widget.ImageView;
 
-import com.maksz42.periscope.buffering.DoubleFrameBuffer;
 import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.buffering.LazyBitmapDrawable;
-import com.maksz42.periscope.buffering.SingleFrameBuffer;
 import com.maksz42.periscope.ui.CameraDisplay;
 
 public class ImageViewDisplay extends ImageView implements CameraDisplay {
-  private final FrameBuffer frameBuffer = FrameBuffer.supportsReusingBitmap()
-      ? new DoubleFrameBuffer()
-      : new SingleFrameBuffer();
-
-
   public ImageViewDisplay(Context context) {
     super(context);
-    frameBuffer.setOnFrameUpdateListener(this::postInvalidate);
-    setImageDrawable(new LazyBitmapDrawable(frameBuffer));
+    LazyBitmapDrawable lazyBitmapDrawable = new LazyBitmapDrawable();
+    lazyBitmapDrawable.getFrameBuffer().setOnFrameUpdateListener(this::postInvalidate);
+    setImageDrawable(lazyBitmapDrawable);
   }
 
   @Override
   public FrameBuffer getFrameBuffer() {
-    return frameBuffer;
+    return ((LazyBitmapDrawable) getDrawable()).getFrameBuffer();
   }
 
   @Override

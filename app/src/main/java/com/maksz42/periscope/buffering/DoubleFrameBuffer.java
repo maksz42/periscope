@@ -5,7 +5,7 @@ import android.graphics.Bitmap;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class DoubleFrameBuffer extends FrameBuffer {
+class DoubleFrameBuffer extends FrameBuffer {
   private volatile Bitmap frontBuffer;
   private Bitmap backBuffer;
 

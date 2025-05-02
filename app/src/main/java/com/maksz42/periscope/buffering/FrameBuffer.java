@@ -58,7 +58,7 @@ public abstract class FrameBuffer {
     return SDK_INT >= KITKAT;
   }
 
-  public static boolean supportsReusingBitmap() {
+  static boolean supportsReusingBitmap() {
     return SDK_INT >= HONEYCOMB;
   }
 
