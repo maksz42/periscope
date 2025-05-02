@@ -17,9 +17,14 @@ public class DoubleFrameBuffer extends FrameBuffer {
   }
 
   private void swapBuffers() {
-    Bitmap temp = frontBuffer;
-    frontBuffer = backBuffer;
-    backBuffer = temp;
+    lock();
+    try {
+      Bitmap temp = frontBuffer;
+      frontBuffer = backBuffer;
+      backBuffer = temp;
+    } finally {
+      unlock();
+    }
   }
 
   @Override

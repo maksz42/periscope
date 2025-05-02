@@ -82,28 +82,28 @@ public class SurfaceViewDisplay extends SurfaceView
   private Thread newDrawingThread() {
     return new Thread(() -> {
       Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
-      while (!Thread.interrupted()) {
-        synchronized (newBitmapLock) {
-          while (!bitmapWaiting) {
-            try {
+      try {
+        while (true) {
+          synchronized (newBitmapLock) {
+            while (!bitmapWaiting) {
               newBitmapLock.wait();
-            } catch (InterruptedException e) {
-              return;
             }
+            bitmapWaiting = false;
           }
-          bitmapWaiting = false;
+          frameBuffer.lockInterruptibly();
+          try {
+            Bitmap frame = frameBuffer.getFrame();
+            if (frame == null) continue;
+            SurfaceHolder holder = getHolder();
+            Canvas canvas = holder.lockCanvas();
+            if (canvas == null) continue;
+            canvas.drawBitmap(frame, null, holder.getSurfaceFrame(), paint);
+            holder.unlockCanvasAndPost(canvas);
+          } finally {
+            frameBuffer.unlock();
+          }
         }
-        synchronized (frameBuffer) {
-          Bitmap frame = frameBuffer.getFrame();
-          if (frame == null) continue;
-          SurfaceHolder holder = getHolder();
-          if (Thread.interrupted()) return;
-          Canvas canvas = holder.lockCanvas();
-          if (canvas == null) continue;
-          canvas.drawBitmap(frame, null, holder.getSurfaceFrame(), paint);
-          holder.unlockCanvasAndPost(canvas);
-        }
-      }
+      } catch (InterruptedException ignored) { }
     });
   }
 }

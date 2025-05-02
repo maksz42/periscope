@@ -13,10 +13,32 @@ import com.maksz42.periscope.io.RetryInputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class FrameBuffer {
   public interface OnFrameUpdateListener {
     void onFrameUpdate();
+  }
+
+  private final Lock lock = supportsReusingBitmap() ? new ReentrantLock() : null;
+
+  public void lock() {
+    if (lock != null) {
+      lock.lock();
+    }
+  }
+
+  public void lockInterruptibly() throws InterruptedException {
+    if (lock != null) {
+      lock.lockInterruptibly();
+    }
+  }
+
+  public void unlock() {
+    if (lock != null) {
+      lock.unlock();
+    }
   }
 
   @RequiresApi(HONEYCOMB)

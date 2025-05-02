@@ -20,9 +20,14 @@ public class LazyBitmapDrawable extends Drawable {
 
   @Override
   public void draw(@NonNull Canvas canvas) {
-    Bitmap bitmap = frameBuffer.getFrame();
-    if (bitmap != null) {
-      canvas.drawBitmap(bitmap, null, getBounds(), paint);
+    frameBuffer.lock();
+    try {
+      Bitmap bitmap = frameBuffer.getFrame();
+      if (bitmap != null) {
+        canvas.drawBitmap(bitmap, null, getBounds(), paint);
+      }
+    } finally {
+      frameBuffer.unlock();
     }
   }
 

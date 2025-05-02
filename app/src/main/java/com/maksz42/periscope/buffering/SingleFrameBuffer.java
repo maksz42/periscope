@@ -10,8 +10,11 @@ public class SingleFrameBuffer extends FrameBuffer {
 
   @Override
   public void decodeStream(InputStream input) throws IOException {
-    synchronized (this) {
+    lock();
+    try {
       bitmap = decodeStream(input, bitmap);
+    } finally {
+      unlock();
     }
     onUpdate();
   }
