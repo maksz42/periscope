@@ -3,7 +3,6 @@ package com.maksz42.periscope;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
