@@ -182,7 +182,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
     Media.ImageFormat imageFormat = settings.getImageFormat();
     CameraView.DisplayImplementation displayImplementation = settings.getDisplayImplementation();
     for (String cameraName : cameras) {
-      Media media = new Media(cameraName);
+      Media media = new Media(cameraName, imageFormat);
       Intent intent = new Intent(this, SingleCameraActivity.class);
       intent.putExtra("camera_name", cameraName);
       CameraView cameraView = new CameraView(this, media, displayImplementation);
@@ -194,7 +194,6 @@ public class MatrixActivity extends AbstractPreviewActivity {
         startActivity(intent);
       });
       cameraView.setTimeout(timeout);
-      cameraView.setImageFormat(imageFormat);
       cameraView.setIgnoreAspectRatio(ignoreAspectRatio);
       cameraView.setOnErrorListener(this::handleCommonErrors);
       cameraViews.add(cameraView);

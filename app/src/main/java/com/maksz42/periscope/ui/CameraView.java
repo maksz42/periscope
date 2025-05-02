@@ -23,8 +23,6 @@ import com.maksz42.periscope.frigate.Media;
 import com.maksz42.periscope.ui.cameradisplayimpl.ImageViewDisplay;
 import com.maksz42.periscope.ui.cameradisplayimpl.SurfaceViewDisplay;
 
-import java.util.Objects;
-
 import javax.net.ssl.SSLException;
 
 public class CameraView extends FrameLayout {
@@ -45,7 +43,6 @@ public class CameraView extends FrameLayout {
   private final Media media;
   private OnErrorListener onErrorListener;
   private short timeout = -1;
-  private Media.ImageFormat imageFormat;
 
   public CameraView(Context context, Media media, DisplayImplementation displayImplementation) {
     super(context);
@@ -123,15 +120,11 @@ public class CameraView extends FrameLayout {
   }
 
   public void start(long initialDelay, long delay) {
-    Objects.requireNonNull(media, "Media not set");
     cameraPlayer = new CameraPlayer(cameraDisplay.getFrameBuffer(), media);
     cameraPlayer.setOnErrorListener(this::onError);
     cameraPlayer.setOnNewFrameListener(this::onNewFrame);
     if (timeout > 0) {
       cameraPlayer.setTimeout(timeout);
-    }
-    if (imageFormat != null) {
-      cameraPlayer.setImageFormat(imageFormat);
     }
     cameraPlayer.start(initialDelay, delay);
   }
@@ -145,12 +138,6 @@ public class CameraView extends FrameLayout {
     this.timeout = timeout;
     if (cameraPlayer != null) {
       cameraPlayer.setTimeout(timeout);
-    }
-  }
-  public void setImageFormat(Media.ImageFormat imageFormat) {
-    this.imageFormat = imageFormat;
-    if (cameraPlayer != null) {
-      cameraPlayer.setImageFormat(imageFormat);
     }
   }
 

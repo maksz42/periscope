@@ -10,20 +10,18 @@ public class Media {
   }
 
   public final String name;
+  public final String endpoint;
 
-  public Media(String name) {
+  public Media(String name, ImageFormat format) {
     this.name = name;
+    this.endpoint = "api/" + name + "/latest." + format.toString().toLowerCase();
   }
 
   public String getName() {
     return name;
   }
 
-  private String getEndpoint(ImageFormat format) {
-    return "api/" + name + "/latest." + format.toString().toLowerCase();
-  }
-
-  public InputStream getLatestFrameInputStream(ImageFormat format) throws IOException, InterruptedException {
-    return Client.openStream(getEndpoint(format), false);
+  public InputStream getLatestFrameInputStream() throws IOException, InterruptedException {
+    return Client.openStream(endpoint, false);
   }
 }

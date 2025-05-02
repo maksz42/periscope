@@ -1,7 +1,5 @@
 package com.maksz42.periscope.camera;
 
-import static com.maksz42.periscope.frigate.Media.ImageFormat.JPG;
-
 import android.os.Handler;
 import android.os.Looper;
 
@@ -32,7 +30,6 @@ public class CameraPlayer {
   }
 
 
-  private Media.ImageFormat imageFormat = JPG;
   private final ScheduledExecutorService executorService =
       Executors.newSingleThreadScheduledExecutor();
   private final Handler handler = new Handler(Looper.getMainLooper());
@@ -49,7 +46,7 @@ public class CameraPlayer {
         if (timeout > 0) {
           handler.postDelayed(timeoutAction, timeout);
         }
-        try (InputStream input = media.getLatestFrameInputStream(imageFormat)) {
+        try (InputStream input = media.getLatestFrameInputStream()) {
           buffer.decodeStream(input);
         }
         onNewFrame();
@@ -71,10 +68,6 @@ public class CameraPlayer {
 
   public void setTimeout(short timeout) {
     this.timeout = timeout;
-  }
-
-  public void setImageFormat(Media.ImageFormat imageFormat) {
-    this.imageFormat = imageFormat;
   }
 
   public void start(long initialDelay, long delay) {
