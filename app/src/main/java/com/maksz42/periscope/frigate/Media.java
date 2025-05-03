@@ -12,9 +12,18 @@ public class Media {
   public final String name;
   public final String endpoint;
 
-  public Media(String name, ImageFormat format) {
+  public Media(String name, ImageFormat format, int quality) {
     this.name = name;
-    this.endpoint = "api/" + name + "/latest." + format.toString().toLowerCase();
+    StringBuilder sb = new StringBuilder()
+        .append("api/")
+        .append(name)
+        .append("/latest.")
+        .append(format.toString().toLowerCase());
+    // Frigate defaults to 70
+    if (quality >= 0) {
+      sb.append("?quality=").append(quality);
+    }
+    this.endpoint = sb.toString();
   }
 
   public String getName() {

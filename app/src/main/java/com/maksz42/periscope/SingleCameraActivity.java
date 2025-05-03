@@ -25,7 +25,7 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     short timeout = settings.getTimeout();
     Media.ImageFormat imageFormat = settings.getImageFormat();
     CameraView.DisplayImplementation displayImplementation = settings.getDisplayImplementation();
-    Media media = new Media(getIntent().getStringExtra("camera_name"), imageFormat);
+    Media media = new Media(getIntent().getStringExtra("camera_name"), imageFormat, 80);
     cameraView = new CameraView(this, media, displayImplementation);
     cameraView.setIgnoreAspectRatio(ignoreAspectRatio);
     cameraView.setTimeout(timeout);
