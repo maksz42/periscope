@@ -83,12 +83,11 @@ public abstract class FrameBuffer {
       opts = createReusableBitmapOptions(reusableBitmap);
       if (HAS_NATIVE_STREAM_BUFFER) {
         // api >= Kitkat, BitmapFactory buffers the stream in native code
-        // hopefully 8kB is enough
-        input = new RetryInputStream(input, 8 * 1024);
+        // test shows 1kB should be enough
+        input = new RetryInputStream(input, 1024);
       } else {
         // api < Kitkat, BitmapFactory buffers the stream in java
-        // BitmapFactory.decodeStream() internally calls mark(1024), which should be enough,
-        // unlike for RetryInputStream above, because double buffering is avoided
+        // BitmapFactory.decodeStream() internally calls mark(1024)
         input = new BufferedInputStream(input, 16 * 1024);
       }
     }

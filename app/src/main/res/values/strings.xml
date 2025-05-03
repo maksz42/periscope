@@ -34,4 +34,6 @@
     <string name="disable_cert_verification">Disable certificate verification</string>
     <string name="self_signed_cert_info">Your Frigate instance uses self-signed certificate</string>
     <string name="security_hazard">Security hazard</string>
+    <string name="retry_buffer_discarded_exception_msg">This shouldn\'t happen. Please open an issue at\n%s</string>
+    <string name="repo_link" translatable="false">github.com/maksz42/periscope/issues</string>
 </resources>

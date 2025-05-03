@@ -38,6 +38,7 @@ import androidx.annotation.RequiresApi;
 
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
+import com.maksz42.periscope.io.RetryInputStream;
 
 import java.security.cert.CertificateException;
 
@@ -288,6 +289,12 @@ public abstract class AbstractPreviewActivity extends Activity {
           .setPositiveButton(getString(R.string.change_to_http),
               (dialog, which) -> startActivity(new Intent(this, SettingsActivity.class))
           )
+      );
+    } else if (e instanceof RetryInputStream.RetryBufferDiscardedException) {
+      showDialog(new AlertDialog.Builder(this)
+          .setTitle("RetryBufferDiscardedException")
+          .setMessage(getString(R.string.retry_buffer_discarded_exception_msg, getString(R.string.repo_link)))
+          .setPositiveButton(android.R.string.ok, null)
       );
     } else {
       Log.d(this.getClass().getName(), e.toString());

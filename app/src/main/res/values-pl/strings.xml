@@ -30,4 +30,5 @@
     <string name="disable_cert_verification">Wyłącz weryfikowanie certyfikatu</string>
     <string name="self_signed_cert_info">Frigate używa samopodpisanego certyfikatu</string>
     <string name="security_hazard">Zagrożenie bezpieczeństwa</string>
+    <string name="retry_buffer_discarded_exception_msg">To nie powinno się zdarzyć. Zgłoś błąd na\n%s</string>
 </resources>

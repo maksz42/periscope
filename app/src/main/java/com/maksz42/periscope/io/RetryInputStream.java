@@ -10,6 +10,12 @@ public class RetryInputStream extends FilterInputStream {
   private FastBAOS cache;
   private ByteArrayInputStream replay;
 
+  public static class RetryBufferDiscardedException extends IOException {
+    private RetryBufferDiscardedException() {
+      super("Retry buffer was discarded");
+    }
+  }
+
   /**
    * Creates a {@code RetryInputStream} object wrapped around
    * {@code in} input stream, allowing to reset the stream.
@@ -76,7 +82,7 @@ public class RetryInputStream extends FilterInputStream {
   @Override
   public void reset() throws IOException {
     if (cache == null) {
-      throw new IOException("Retry buffer was discarded");
+      throw new RetryBufferDiscardedException();
     }
     replay = new ByteArrayInputStream(cache.getBuffer(), 0, cache.size());
   }
