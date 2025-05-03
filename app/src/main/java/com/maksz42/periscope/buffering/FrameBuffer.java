@@ -11,6 +11,7 @@ import androidx.annotation.RequiresApi;
 
 import com.maksz42.periscope.io.RetryInputStream;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.locks.Lock;
@@ -82,8 +83,16 @@ public abstract class FrameBuffer {
     BitmapFactory.Options opts = null;
     if (canReuseBitmaps) {
       opts = createReusableBitmapOptions(reusableBitmap);
-      // hopefully 8kB is enough
-      input = new RetryInputStream(input, 8 * 1024);
+      if (SDK_INT >= KITKAT) {
+        // api >= Kitkat, BitmapFactory buffers the stream in native code
+        // hopefully 8kB is enough
+        input = new RetryInputStream(input, 8 * 1024);
+      } else {
+        // api < Kitkat, BitmapFactory buffers the stream in java
+        // BitmapFactory.decodeStream() internally calls mark(1024), which should be enough,
+        // unlike for RetryInputStream above, because double buffering is avoided
+        input = new BufferedInputStream(input, 16 * 1024);
+      }
     }
     Bitmap bitmap = null;
     try {
