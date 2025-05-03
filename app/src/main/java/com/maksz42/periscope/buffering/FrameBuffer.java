@@ -22,7 +22,14 @@ public abstract class FrameBuffer {
     void onFrameUpdate();
   }
 
-  private final Lock lock = supportsReusingBitmap() ? new ReentrantLock() : null;
+  // Although WEBP is supported from ICE_CREAM_SANDWICH
+  // BitmapFactory.Options#inBitmap supports WEBP
+  // for api >= KITKAT
+  public static final boolean SUPPORTS_WEBP = (SDK_INT >= KITKAT);
+  static final boolean SUPPORTS_REUSING_BITMAP = (SDK_INT >= HONEYCOMB);
+  private static final boolean HAS_NATIVE_STREAM_BUFFER = (SDK_INT >= KITKAT);
+
+  private final Lock lock = SUPPORTS_REUSING_BITMAP ? new ReentrantLock() : null;
 
   public void lock() {
     if (lock != null) {
@@ -52,17 +59,6 @@ public abstract class FrameBuffer {
     return options;
   }
 
-  // Although WEBP is supported from ICE_CREAM_SANDWICH
-  // BitmapFactory.Options#inBitmap supports WEBP
-  // for api >= KITKAT
-  public static boolean supportsWEBP() {
-    return SDK_INT >= KITKAT;
-  }
-
-  static boolean supportsReusingBitmap() {
-    return SDK_INT >= HONEYCOMB;
-  }
-
   protected OnFrameUpdateListener onFrameUpdateListener;
 
   public abstract void decodeStream(InputStream input) throws IOException;
@@ -79,11 +75,11 @@ public abstract class FrameBuffer {
   }
 
   final protected Bitmap decodeStream(InputStream input, Bitmap reusableBitmap) throws IOException {
-    boolean canReuseBitmaps = supportsReusingBitmap();
+    boolean canReuseBitmaps = SUPPORTS_REUSING_BITMAP;
     BitmapFactory.Options opts = null;
     if (canReuseBitmaps) {
       opts = createReusableBitmapOptions(reusableBitmap);
-      if (SDK_INT >= KITKAT) {
+      if (HAS_NATIVE_STREAM_BUFFER) {
         // api >= Kitkat, BitmapFactory buffers the stream in native code
         // hopefully 8kB is enough
         input = new RetryInputStream(input, 8 * 1024);

@@ -12,7 +12,7 @@ import androidx.annotation.Nullable;
 
 public class LazyBitmapDrawable extends Drawable {
   private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
-  private final FrameBuffer frameBuffer = FrameBuffer.supportsReusingBitmap()
+  private final FrameBuffer frameBuffer = FrameBuffer.SUPPORTS_REUSING_BITMAP
       ? new DoubleFrameBuffer()
       : new SingleFrameBuffer();
 

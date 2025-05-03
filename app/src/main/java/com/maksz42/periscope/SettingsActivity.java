@@ -64,7 +64,7 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
       return true;
     });
 
-    if (!FrameBuffer.supportsWEBP()) {
+    if (!FrameBuffer.SUPPORTS_WEBP) {
       findPreference(settings.ImageFormatKey).setEnabled(false);
     }
 
