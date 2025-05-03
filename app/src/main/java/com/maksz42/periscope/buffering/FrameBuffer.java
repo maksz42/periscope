@@ -30,6 +30,7 @@ public abstract class FrameBuffer {
   private static final boolean HAS_NATIVE_STREAM_BUFFER = (SDK_INT >= KITKAT);
 
   private final Lock lock = SUPPORTS_REUSING_BITMAP ? new ReentrantLock() : null;
+  private final byte[] tempStorage = new byte[16 * 1024];
 
   public void lock() {
     if (lock != null) {
@@ -50,10 +51,11 @@ public abstract class FrameBuffer {
   }
 
   @RequiresApi(HONEYCOMB)
-  private static BitmapFactory.Options createReusableBitmapOptions(Bitmap reusableBitmap) {
+  private BitmapFactory.Options createReusableBitmapOptions(Bitmap reusableBitmap) {
     BitmapFactory.Options options = new BitmapFactory.Options();
     options.inMutable = true;
     options.inBitmap = reusableBitmap;
+    options.inTempStorage = tempStorage;
     // https://stackoverflow.com/questions/16034756
     options.inSampleSize = 1;
     return options;
