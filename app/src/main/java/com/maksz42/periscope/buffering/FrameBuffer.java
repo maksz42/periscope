@@ -1,6 +1,7 @@
 package com.maksz42.periscope.buffering;
 
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.GINGERBREAD_MR1;
 import static android.os.Build.VERSION_CODES.HONEYCOMB;
 import static android.os.Build.VERSION_CODES.KITKAT;
 
@@ -28,6 +29,7 @@ public abstract class FrameBuffer {
   public static final boolean SUPPORTS_WEBP = (SDK_INT >= KITKAT);
   static final boolean SUPPORTS_REUSING_BITMAP = (SDK_INT >= HONEYCOMB);
   private static final boolean HAS_NATIVE_STREAM_BUFFER = (SDK_INT >= KITKAT);
+  private static final boolean SHOULD_RECYCLE_BITMAP = (SDK_INT <= GINGERBREAD_MR1);
 
   private final Lock lock = SUPPORTS_REUSING_BITMAP ? new ReentrantLock() : null;
   private final byte[] tempStorage = new byte[16 * 1024];
@@ -103,6 +105,10 @@ public abstract class FrameBuffer {
     }
     if (bitmap == null) {
       throw new IOException("Failed to decode image");
+    }
+    // https://developer.android.com/topic/performance/graphics/manage-memory#recycle
+    if (SHOULD_RECYCLE_BITMAP && reusableBitmap != null) {
+      reusableBitmap.recycle();
     }
     return bitmap;
   }
