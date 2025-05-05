@@ -34,6 +34,13 @@ public abstract class FrameBuffer {
   private final Lock lock = SUPPORTS_REUSING_BITMAP ? new ReentrantLock() : null;
   private final byte[] tempStorage = new byte[16 * 1024];
 
+
+  public static FrameBuffer newNonBlockingFrameBuffer() {
+    return FrameBuffer.SUPPORTS_REUSING_BITMAP
+        ? new DoubleFrameBuffer()
+        : new SingleFrameBuffer();
+  }
+
   public void lock() {
     if (lock != null) {
       lock.lock();

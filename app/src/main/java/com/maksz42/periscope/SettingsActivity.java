@@ -55,15 +55,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
         (preference, newValue) -> Misc.inRange((String) newValue, 0, maxTimeout)
     );
 
-    if (settings.getDisplayImplementation() == CameraView.DisplayImplementation.SURFACEVIEW) {
-      findPreference(settings.IgnoreAspectRatioKey).setEnabled(false);
-    }
-    findPreference(settings.DisplayImplementationKey).setOnPreferenceChangeListener((preference, newValue) -> {
-      Preference p = findPreference(settings.IgnoreAspectRatioKey);
-      p.setEnabled(!newValue.equals(CameraView.DisplayImplementation.SURFACEVIEW.toString()));
-      return true;
-    });
-
     if (!FrameBuffer.SUPPORTS_WEBP) {
       findPreference(settings.ImageFormatKey).setEnabled(false);
     }

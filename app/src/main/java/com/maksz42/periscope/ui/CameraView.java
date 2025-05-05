@@ -20,7 +20,7 @@ import com.maksz42.periscope.R;
 import com.maksz42.periscope.camera.CameraPlayer;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
 import com.maksz42.periscope.frigate.Media;
-import com.maksz42.periscope.ui.cameradisplayimpl.ImageViewDisplay;
+import com.maksz42.periscope.ui.cameradisplayimpl.BitmapDisplay;
 import com.maksz42.periscope.ui.cameradisplayimpl.SurfaceViewDisplay;
 
 import javax.net.ssl.SSLException;
@@ -44,14 +44,19 @@ public class CameraView extends FrameLayout {
   private OnErrorListener onErrorListener;
   private short timeout = -1;
 
-  public CameraView(Context context, Media media, DisplayImplementation displayImplementation) {
+  public CameraView(
+      Context context,
+      Media media,
+      DisplayImplementation displayImplementation,
+      boolean ignoreAspectRatio
+      ) {
     super(context);
 
     this.media = media;
 
     cameraDisplay = switch (displayImplementation) {
-      case IMAGEVIEW -> new ImageViewDisplay(context);
-      case SURFACEVIEW -> new SurfaceViewDisplay(context);
+      case IMAGEVIEW -> new BitmapDisplay(context, ignoreAspectRatio);
+      case SURFACEVIEW -> new SurfaceViewDisplay(context, ignoreAspectRatio);
     };
     addView((View) cameraDisplay, MATCH_PARENT, MATCH_PARENT);
 
@@ -143,9 +148,5 @@ public class CameraView extends FrameLayout {
 
   public void setLoading(boolean loading) {
     loader.setVisibility(loading ? VISIBLE : GONE);
-  }
-
-  public void setIgnoreAspectRatio(boolean ignore) {
-    cameraDisplay.setIgnoreAspectRatio(ignore);
   }
 }

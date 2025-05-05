@@ -185,7 +185,8 @@ public class MatrixActivity extends AbstractPreviewActivity {
       Media media = new Media(cameraName, imageFormat, -1);
       Intent intent = new Intent(this, SingleCameraActivity.class);
       intent.putExtra("camera_name", cameraName);
-      CameraView cameraView = new CameraView(this, media, displayImplementation);
+      CameraView cameraView =
+          new CameraView(this, media, displayImplementation, ignoreAspectRatio);
       cameraView.setOnClickListener(v -> {
         Bitmap bitmap = ((CameraView) v).getCameraDisplay()
             .getFrameBuffer()
@@ -194,7 +195,6 @@ public class MatrixActivity extends AbstractPreviewActivity {
         startActivity(intent);
       });
       cameraView.setTimeout(timeout);
-      cameraView.setIgnoreAspectRatio(ignoreAspectRatio);
       cameraView.setOnErrorListener(this::handleCommonErrors);
       cameraViews.add(cameraView);
     }
