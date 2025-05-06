@@ -36,6 +36,8 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     }
     setContentView(cameraView);
     cameraView.start(0, 100);
+
+    checkForUpdates(2_000);
   }
 
   @Override

@@ -38,6 +38,7 @@ import androidx.annotation.RequiresApi;
 
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
+import com.maksz42.periscope.helper.Settings;
 import com.maksz42.periscope.io.RetryInputStream;
 
 import java.security.cert.CertificateException;
@@ -312,6 +313,14 @@ public abstract class AbstractPreviewActivity extends Activity {
   }
 
   @Override
+  protected void onDestroy() {
+    super.onDestroy();
+    if (alertDialog != null) {
+      alertDialog.dismiss();
+    }
+  }
+
+  @Override
   public boolean dispatchKeyEvent(KeyEvent event) {
     scheduleUIHide();
     if (findViewById(R.id.floating_bar).getVisibility() != VISIBLE) {
@@ -319,5 +328,34 @@ public abstract class AbstractPreviewActivity extends Activity {
       return true;
     }
     return super.dispatchKeyEvent(event);
+  }
+
+  protected void checkForUpdates(int delay) {
+    if (Settings.getInstance(this).getAutoCheckForUpdates()) {
+      // TODO do this in AlarmManager or something
+      handler.postDelayed(new Runnable() {
+        @Override
+        public void run() {
+          UpdateManager updateManager = new UpdateManager(AbstractPreviewActivity.this);
+          updateManager.checkForUpdate((um, versionName, changelog) ->
+              showDialog(new AlertDialog.Builder(AbstractPreviewActivity.this)
+                  .setTitle(getString(R.string.new_update, versionName))
+                  .setMessage(changelog)
+                  .setCancelable(false)
+                  .setPositiveButton(
+                      R.string.install_update,
+                      (dialog, which) -> um.downloadAndInstallUpdate()
+                  )
+                  .setNeutralButton(R.string.later, (dialog, which) ->
+                      handler.postDelayed(this, 1000 * 60 * 60 * 24)
+                  )
+                  .setNegativeButton(R.string.ignore, (dialog, which) ->
+                      Settings.getInstance(AbstractPreviewActivity.this).setAutoCheckForUpdates(false)
+                  )
+              )
+          );
+        }
+      }, delay);
+    }
   }
 }
