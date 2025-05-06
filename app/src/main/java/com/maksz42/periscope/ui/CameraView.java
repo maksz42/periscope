@@ -31,6 +31,7 @@ public class CameraView extends FrameLayout {
   }
 
   public enum DisplayImplementation {
+    // it's no longer ImageView but changing would break existing configs
     IMAGEVIEW,
     SURFACEVIEW
   }
