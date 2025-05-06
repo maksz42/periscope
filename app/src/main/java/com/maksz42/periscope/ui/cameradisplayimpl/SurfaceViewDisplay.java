@@ -5,6 +5,7 @@ import static android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Process;
@@ -23,14 +24,15 @@ public class SurfaceViewDisplay extends SurfaceView
   private volatile boolean bitmapWaiting;
   private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
   private final SingleFrameBuffer frameBuffer = new SingleFrameBuffer();
-  private final Rect cachedRect;
+  private final boolean ignoreAspectRatio;
+  private volatile Rect surfaceRect;
   private final Object newBitmapLock = new Object();
   private Thread drawingThread;
 
 
   public SurfaceViewDisplay(Context context, boolean ignoreAspectRatio) {
     super(context);
-    this.cachedRect = ignoreAspectRatio ? null : new Rect();
+    this.ignoreAspectRatio = ignoreAspectRatio;
     getHolder().addCallback(this);
     frameBuffer.setOnFrameUpdateListener(this::drawBitmapRequest);
   }
@@ -42,12 +44,15 @@ public class SurfaceViewDisplay extends SurfaceView
 
   @Override
   public void surfaceCreated(@NonNull SurfaceHolder holder) {
-    drawingThread = newDrawingThread();
+    drawingThread = ignoreAspectRatio
+        ? newDrawingThreadIgnoreRatio()
+        : newDrawingThreadKeepRatio();
     drawingThread.start();
   }
 
   @Override
   public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+    surfaceRect = new Rect(0, 0, width, height);
     drawBitmapRequest();
   }
 
@@ -72,17 +77,21 @@ public class SurfaceViewDisplay extends SurfaceView
     }
   }
 
-  private Thread newDrawingThread() {
+  private void waitForBitmap() throws InterruptedException {
+    synchronized (newBitmapLock) {
+      while (!bitmapWaiting) {
+        newBitmapLock.wait();
+      }
+      bitmapWaiting = false;
+    }
+  }
+
+  private Thread newDrawingThreadIgnoreRatio() {
     return new Thread(() -> {
       Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
       try {
         while (true) {
-          synchronized (newBitmapLock) {
-            while (!bitmapWaiting) {
-              newBitmapLock.wait();
-            }
-            bitmapWaiting = false;
-          }
+          waitForBitmap();
           frameBuffer.lockInterruptibly();
           try {
             Bitmap frame = frameBuffer.getFrame();
@@ -90,23 +99,50 @@ public class SurfaceViewDisplay extends SurfaceView
             SurfaceHolder holder = getHolder();
             Canvas canvas = holder.lockCanvas();
             if (canvas == null) continue;
-            Rect surfaceRect = holder.getSurfaceFrame();
-            Rect dstRect = surfaceRect;
-            if (cachedRect != null) {
-              int fw = frame.getWidth();
-              int fh = frame.getHeight();
-              int sw = surfaceRect.width();
-              int sh = surfaceRect.height();
-              Graphics.scaleRectKeepRatio(fw, fh, sw, sh, cachedRect);
-              dstRect = cachedRect;
-            }
-            canvas.drawBitmap(frame, null, dstRect, paint);
+            canvas.drawBitmap(frame, null, surfaceRect, paint);
             holder.unlockCanvasAndPost(canvas);
           } finally {
             frameBuffer.unlock();
           }
         }
-      } catch (InterruptedException ignored) { }
+      } catch (InterruptedException ignored) { /* exit loop */ }
+    });
+  }
+
+  private Thread newDrawingThreadKeepRatio() {
+    return new Thread(() -> {
+      Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
+      final Rect currentDstRect = new Rect();
+      final Rect prevDstRect = new Rect();
+      final Rect dirtyRect = new Rect();
+      try {
+        while (true) {
+          waitForBitmap();
+          frameBuffer.lockInterruptibly();
+          try {
+            Bitmap frame = frameBuffer.getFrame();
+            if (frame == null) continue;
+            Graphics.scaleRectKeepRatio(
+                frame.getWidth(), frame.getHeight(),
+                surfaceRect.right, surfaceRect.bottom,
+                currentDstRect
+            );
+            dirtyRect.set(currentDstRect);
+            dirtyRect.union(prevDstRect);
+            SurfaceHolder holder = getHolder();
+            Canvas canvas = holder.lockCanvas(dirtyRect);
+            if (canvas == null) continue;
+            if (!dirtyRect.equals(currentDstRect)) {
+              canvas.drawColor(Color.BLACK);
+            }
+            canvas.drawBitmap(frame, null, currentDstRect, paint);
+            holder.unlockCanvasAndPost(canvas);
+          } finally {
+            frameBuffer.unlock();
+          }
+          prevDstRect.set(currentDstRect);
+        }
+      } catch (InterruptedException ignored) { /* exit loop */ }
     });
   }
 }
