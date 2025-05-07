@@ -10,11 +10,13 @@ public class SingleFrameBuffer extends FrameBuffer {
 
   @Override
   public void decodeStream(InputStream input) throws IOException {
-    lock();
+    lockIfSupportsReusingBitmaps();
     try {
-      bitmap = decodeStream(input, bitmap);
+      Bitmap oldBitmap = bitmap;
+      bitmap = decodeStream(input, oldBitmap);
+      recycleBitmapIfNeeded(oldBitmap);
     } finally {
-      unlock();
+      unlockIfSupportsReusingBitmaps();
     }
     onUpdate();
   }
@@ -28,9 +30,7 @@ public class SingleFrameBuffer extends FrameBuffer {
   public Bitmap getFrameCopy() {
     lock();
     try {
-      return SUPPORTS_REUSING_BITMAP
-          ? bitmap.copy(bitmap.getConfig(), true)
-          : bitmap;
+      return bitmap.copy(bitmap.getConfig(), SUPPORTS_REUSING_BITMAP);
     } finally {
       unlock();
     }
@@ -40,5 +40,18 @@ public class SingleFrameBuffer extends FrameBuffer {
   public void setFrame(Bitmap bitmap) {
     this.bitmap = bitmap;
     onUpdate();
+  }
+
+  // TODO find a better way to recycle bitmaps
+  private void recycleBitmapIfNeeded(Bitmap bitmap) {
+    // https://developer.android.com/topic/performance/graphics/manage-memory#recycle
+    if (SUPPORTS_REUSING_BITMAP || bitmap == null) return;
+    // api <= 10
+    lock();
+    try {
+      bitmap.recycle();
+    } finally {
+      unlock();
+    }
   }
 }

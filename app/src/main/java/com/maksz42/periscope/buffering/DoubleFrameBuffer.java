@@ -36,9 +36,7 @@ class DoubleFrameBuffer extends FrameBuffer {
   public Bitmap getFrameCopy() {
     lock();
     try {
-      return SUPPORTS_REUSING_BITMAP
-          ? frontBuffer.copy(frontBuffer.getConfig(), true)
-          : frontBuffer;
+      return frontBuffer.copy(frontBuffer.getConfig(), true);
     } finally {
       unlock();
     }
