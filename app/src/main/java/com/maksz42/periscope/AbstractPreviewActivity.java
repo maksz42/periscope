@@ -40,7 +40,6 @@ import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
 import com.maksz42.periscope.helper.Settings;
 
-import java.nio.BufferOverflowException;
 import java.security.cert.CertificateException;
 
 import javax.net.ssl.SSLException;

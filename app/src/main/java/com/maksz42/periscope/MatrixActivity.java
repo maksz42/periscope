@@ -4,7 +4,6 @@ import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;

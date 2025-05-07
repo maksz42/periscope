@@ -14,7 +14,6 @@ import android.widget.TextView;
 import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.helper.Settings;
-import com.maksz42.periscope.ui.CameraView;
 import com.maksz42.periscope.utils.Misc;
 import com.maksz42.periscope.utils.Net;
 
