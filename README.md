@@ -18,9 +18,8 @@ Upcycle your old Android tablet into a live viewer for Frigate NVR and hang it o
 Fill in the host field (IP or domain), port, and protocol. Android <5.0 doesn't support HTTPS.
 If you're using the protected port, fill in the user and password fields, otherwise leave them empty.
 
-### What's the difference between ImageView and SurfaceView display implementation?
-- **ImageView:** Single-threaded.
-- **SurfaceView:** Multithreaded and may use less memory. Minor visual glitches.
+### What's the difference between single-threaded and multi-threaded display implementation?
+Apart from threading, multi-threaded display uses less memory but suffers from minor visual glitches. There are more implementation nuances.
 
 Choose the one that works best for you.
 
