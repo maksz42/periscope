@@ -10,8 +10,6 @@ import android.graphics.BitmapFactory;
 
 import androidx.annotation.RequiresApi;
 
-import com.maksz42.periscope.io.RetryInputStream;
-
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +17,31 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class FrameBuffer {
+  private static class FastBIS extends BufferedInputStream {
+    private final int minimumMark;
+
+    public FastBIS(InputStream in, byte[] buf) {
+      // hack
+      super(in, 1);
+      this.minimumMark = buf.length;
+      this.buf = buf;
+    }
+
+    @Override
+    public void mark(int readlimit) {
+      super.mark(Math.max(readlimit, minimumMark));
+    }
+
+    @Override
+    public void reset() {
+      try {
+        super.reset();
+      } catch (IOException e) {
+        throw new IllegalStateException(e);
+      }
+    }
+  }
+
   public interface OnFrameUpdateListener {
     void onFrameUpdate();
   }
@@ -33,6 +56,7 @@ public abstract class FrameBuffer {
 
   private final Lock lock = SUPPORTS_REUSING_BITMAP ? new ReentrantLock() : null;
   private final byte[] tempStorage = new byte[16 * 1024];
+  private final byte[] streamBuffer = new byte[16 * 1024];
 
 
   public static FrameBuffer newNonBlockingFrameBuffer() {
@@ -86,25 +110,21 @@ public abstract class FrameBuffer {
   }
 
   final protected Bitmap decodeStream(InputStream input, Bitmap reusableBitmap) throws IOException {
-    boolean canReuseBitmaps = SUPPORTS_REUSING_BITMAP;
     BitmapFactory.Options opts = null;
-    if (canReuseBitmaps) {
+    input = new FastBIS(input, streamBuffer);
+    if (SUPPORTS_REUSING_BITMAP) {
       opts = createReusableBitmapOptions(reusableBitmap);
+      // mark() could be called unconditionally but it's synchronized,
+      // so not free
       if (HAS_NATIVE_STREAM_BUFFER) {
-        // api >= Kitkat, BitmapFactory buffers the stream in native code
-        // test shows 1kB should be enough
-        input = new RetryInputStream(input, 1024);
-      } else {
-        // api < Kitkat, BitmapFactory buffers the stream in java
-        // BitmapFactory.decodeStream() internally calls mark(1024)
-        input = new BufferedInputStream(input, 16 * 1024);
+        input.mark(streamBuffer.length);
       }
     }
     Bitmap bitmap = null;
     try {
       bitmap = BitmapFactory.decodeStream(input, null, opts);
     } catch (IllegalArgumentException e) {
-      if (canReuseBitmaps) {
+      if (SUPPORTS_REUSING_BITMAP) {
         input.reset();
         opts.inBitmap = null;
         bitmap = BitmapFactory.decodeStream(input, null, opts);

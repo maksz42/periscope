@@ -39,8 +39,8 @@ import androidx.annotation.RequiresApi;
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
 import com.maksz42.periscope.helper.Settings;
-import com.maksz42.periscope.io.RetryInputStream;
 
+import java.nio.BufferOverflowException;
 import java.security.cert.CertificateException;
 
 import javax.net.ssl.SSLException;
@@ -291,10 +291,16 @@ public abstract class AbstractPreviewActivity extends Activity {
               (dialog, which) -> startActivity(new Intent(this, SettingsActivity.class))
           )
       );
-    } else if (e instanceof RetryInputStream.RetryBufferDiscardedException) {
+    } else if (e instanceof IllegalStateException) {
       showDialog(new AlertDialog.Builder(this)
-          .setTitle("RetryBufferDiscardedException")
-          .setMessage(getString(R.string.retry_buffer_discarded_exception_msg, getString(R.string.repo_link)))
+          .setTitle(e.getClass().getSimpleName())
+          .setMessage(
+              getString(
+                  R.string.retry_buffer_discarded_exception_msg,
+                  getString(R.string.repo_link)
+              )
+              + "\n\n" + e.getMessage()
+          )
           .setPositiveButton(android.R.string.ok, null)
       );
     } else {
