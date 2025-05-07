@@ -13,6 +13,7 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 
+import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.frigate.Config;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
 import com.maksz42.periscope.frigate.InvalidResponseException;
@@ -163,10 +164,9 @@ public class MatrixActivity extends AbstractPreviewActivity {
       CameraView cameraView =
           new CameraView(this, media, displayImplementation, ignoreAspectRatio);
       cameraView.setOnClickListener(v -> {
-        Bitmap bitmap = ((CameraView) v).getCameraDisplay()
-            .getFrameBuffer()
-            .getFrame();
-        FrameHolder.set(bitmap);
+        FrameBuffer frameBuffer = ((CameraView) v).getCameraDisplay().getFrameBuffer();
+        // maybe try passing the whole frame buffer instead of a copy of the bitmap
+        FrameHolder.set(frameBuffer.getFrameCopy());
         startActivity(intent);
       });
       cameraView.setTimeout(timeout);

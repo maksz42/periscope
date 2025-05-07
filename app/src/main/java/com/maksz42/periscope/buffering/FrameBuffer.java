@@ -100,6 +100,8 @@ public abstract class FrameBuffer {
 
   public abstract Bitmap getFrame();
 
+  public abstract Bitmap getFrameCopy();
+
   public abstract void setFrame(Bitmap bitmap);
 
 

@@ -25,6 +25,18 @@ public class SingleFrameBuffer extends FrameBuffer {
   }
 
   @Override
+  public Bitmap getFrameCopy() {
+    lock();
+    try {
+      return SUPPORTS_REUSING_BITMAP
+          ? bitmap.copy(bitmap.getConfig(), true)
+          : bitmap;
+    } finally {
+      unlock();
+    }
+  }
+
+  @Override
   public void setFrame(Bitmap bitmap) {
     this.bitmap = bitmap;
     onUpdate();

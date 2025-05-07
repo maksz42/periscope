@@ -33,6 +33,18 @@ class DoubleFrameBuffer extends FrameBuffer {
   }
 
   @Override
+  public Bitmap getFrameCopy() {
+    lock();
+    try {
+      return SUPPORTS_REUSING_BITMAP
+          ? frontBuffer.copy(frontBuffer.getConfig(), true)
+          : frontBuffer;
+    } finally {
+      unlock();
+    }
+  }
+
+  @Override
   public void setFrame(Bitmap bitmap) {
     frontBuffer = bitmap;
     onUpdate();
