@@ -34,6 +34,7 @@ public class Settings {
   public final String SelectedCamerasKey;
   public final String AutoCheckForUpdatesKey;
   public final String DisableCertVerificationKey;
+  public final String NextUpdateCheckTimeKey;
 
   /**
    * not thread-safe, expected to be called on the UI thread
@@ -68,6 +69,7 @@ public class Settings {
     SelectedCamerasKey = res.getString(R.string.selected_cameras_key);
     AutoCheckForUpdatesKey = res.getString(R.string.auto_check_for_updates_key);
     DisableCertVerificationKey = res.getString(R.string.disable_cert_verification_key);
+    NextUpdateCheckTimeKey = res.getString(R.string.next_update_check_time_key);
   }
 
   private boolean getBoolean(String key) {
@@ -76,6 +78,14 @@ public class Settings {
 
   private void setBoolean(String key, boolean value) {
     prefs.edit().putBoolean(key, value).commit();
+  }
+
+  private long getLong(String key) {
+    return prefs.getLong(key, -1);
+  }
+
+  private void setLong(String key, long value) {
+    prefs.edit().putLong(key, value).commit();
   }
 
   private String getString(String key) {
@@ -194,5 +204,13 @@ public class Settings {
       return Collections.emptyList();
     }
     return Arrays.asList(selectedCameras.split(","));
+  }
+
+  public long getNextUpdateCheckTime() {
+    return getLong(NextUpdateCheckTimeKey);
+  }
+
+  public void setNextUpdateCheckTime(long value) {
+    setLong(NextUpdateCheckTimeKey, value);
   }
 }

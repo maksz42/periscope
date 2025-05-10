@@ -13,4 +13,5 @@
     <string name="selected_cameras_key" translatable="false">selected_cameras</string>
     <string name="auto_check_for_updates_key" translatable="false">auto_check_for_updates</string>
     <string name="disable_cert_verification_key" translatable="false">disable_cert_verification</string>
+    <string name="next_update_check_time_key" translatable="false">next_update_check_time</string>
 </resources>

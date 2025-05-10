@@ -330,31 +330,41 @@ public abstract class AbstractPreviewActivity extends Activity {
   }
 
   protected void checkForUpdates(int delay) {
-    if (Settings.getInstance(this).getAutoCheckForUpdates()) {
-      // TODO do this in AlarmManager or something
-      handler.postDelayed(new Runnable() {
-        @Override
-        public void run() {
-          UpdateManager updateManager = new UpdateManager(AbstractPreviewActivity.this);
-          updateManager.checkForUpdate((um, versionName, changelog) ->
-              showDialog(new AlertDialog.Builder(AbstractPreviewActivity.this)
-                  .setTitle(getString(R.string.new_update, versionName))
-                  .setMessage(changelog)
-                  .setCancelable(false)
-                  .setPositiveButton(
-                      R.string.install_update,
-                      (dialog, which) -> um.downloadAndInstallUpdate()
-                  )
-                  .setNeutralButton(R.string.later, (dialog, which) ->
-                      handler.postDelayed(this, 1000 * 60 * 60 * 24)
-                  )
-                  .setNegativeButton(R.string.ignore, (dialog, which) ->
-                      Settings.getInstance(AbstractPreviewActivity.this).setAutoCheckForUpdates(false)
-                  )
-              )
-          );
-        }
-      }, delay);
-    }
+    // TODO do this in AlarmManager or something
+    Settings settings = Settings.getInstance(this);
+    if (!settings.getAutoCheckForUpdates()) return;
+    Runnable updateCheckAction = new Runnable() {
+      @Override
+      public void run() {
+        UpdateManager updateManager = new UpdateManager(AbstractPreviewActivity.this);
+        updateManager.checkForUpdate((um, versionName, changelog) ->
+            showDialog(new AlertDialog.Builder(AbstractPreviewActivity.this)
+                .setTitle(getString(R.string.new_update, versionName))
+                .setMessage(changelog)
+                .setCancelable(false)
+                .setPositiveButton(
+                    R.string.install_update,
+                    (dialog, which) -> um.downloadAndInstallUpdate()
+                )
+                .setNeutralButton(R.string.later, (dialog, which) -> {
+                  final long dayMillis = 1000 * 60 * 60 * 24;
+                  handler.postDelayed(this, dayMillis);
+                  Settings.getInstance(AbstractPreviewActivity.this)
+                      .setNextUpdateCheckTime(System.currentTimeMillis() + dayMillis);
+                })
+                .setNegativeButton(R.string.ignore, (dialog, which) ->
+                    Settings.getInstance(AbstractPreviewActivity.this).setAutoCheckForUpdates(false)
+                )
+            )
+        );
+      }
+    };
+    long currentTime = System.currentTimeMillis();
+    long requestedUpdateTime = currentTime + delay;
+    long nextUpdateTime = settings.getNextUpdateCheckTime();
+    handler.postDelayed(
+        updateCheckAction,
+        (nextUpdateTime > requestedUpdateTime) ? nextUpdateTime - currentTime : delay
+    );
   }
 }
