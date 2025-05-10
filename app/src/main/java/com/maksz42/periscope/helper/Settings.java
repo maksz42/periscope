@@ -5,6 +5,7 @@ import static android.content.Context.MODE_PRIVATE;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.os.Build;
 import android.preference.PreferenceManager;
 
 import com.maksz42.periscope.R;
@@ -20,7 +21,8 @@ public class Settings {
   private static Settings Instance;
 
   public final String PREF_FILE_NAME = "settings";
-  public final SharedPreferences prefs;
+  private final SharedPreferences prefs;
+  private final SharedPreferences.Editor editor;
   public final String IgnoreAspectRatioKey;
   public final String HostKey;
   public final String PortKey;
@@ -55,6 +57,7 @@ public class Settings {
         true
     );
     prefs = context.getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
+    editor = prefs.edit();
     Resources res = context.getResources();
     IgnoreAspectRatioKey = res.getString(R.string.ignore_aspect_ratio_key);
     HostKey = res.getString(R.string.host_key);
@@ -77,7 +80,7 @@ public class Settings {
   }
 
   private void setBoolean(String key, boolean value) {
-    prefs.edit().putBoolean(key, value).commit();
+    editor.putBoolean(key, value);
   }
 
   private long getLong(String key) {
@@ -85,7 +88,7 @@ public class Settings {
   }
 
   private void setLong(String key, long value) {
-    prefs.edit().putLong(key, value).commit();
+    editor.putLong(key, value);
   }
 
   private String getString(String key) {
@@ -93,107 +96,128 @@ public class Settings {
   }
 
   private void setString(String key, String value) {
-    prefs.edit().putString(key, value).commit();
+    editor.putString(key, value);
+  }
+
+  public void apply() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+      editor.apply();
+    } else {
+      editor.commit();
+    }
   }
 
   public boolean getIgnoreAspectRatio() {
     return getBoolean(IgnoreAspectRatioKey);
   }
 
-  public void setIgnoreAspectRatio(boolean enable) {
+  public Settings setIgnoreAspectRatio(boolean enable) {
     setBoolean(IgnoreAspectRatioKey, enable);
+    return this;
   }
 
   public String getHost() {
     return getString(HostKey);
   }
 
-  public void setHost(String value) {
+  public Settings setHost(String value) {
     setString(HostKey, value);
+    return this;
   }
 
   public int getPort() {
     return Integer.parseInt(getString(PortKey));
   }
 
-  public void setPort(int value) {
+  public Settings setPort(int value) {
     setString(PortKey, String.valueOf(value));
+    return this;
   }
 
   public int getInterval() {
     return Integer.parseInt(getString(IntervalKey));
   }
 
-  public void setInterval(int value) {
+  public Settings setInterval(int value) {
     setString(IntervalKey, String.valueOf(value));
+    return this;
   }
 
   public Client.Protocol getProtocol() {
     return Client.Protocol.valueOf(getString(ProtocolKey));
   }
 
-  public void setProtocol(Client.Protocol value) {
+  public Settings setProtocol(Client.Protocol value) {
     setString(ProtocolKey, String.valueOf(value));
+    return this;
   }
 
   public short getTimeout() {
     return Short.parseShort(getString(TimeoutKey));
   }
 
-  public void setTimeout(short value) {
+  public Settings setTimeout(short value) {
     setString(HostKey, String.valueOf(value));
+    return this;
   }
 
   public Media.ImageFormat getImageFormat() {
     return Media.ImageFormat.valueOf(getString(ImageFormatKey));
   }
 
-  public void setImageFormat(Media.ImageFormat value) {
+  public Settings setImageFormat(Media.ImageFormat value) {
     setString(ImageFormatKey, String.valueOf(value));
+    return this;
   }
 
   public CameraView.DisplayImplementation getDisplayImplementation() {
     return CameraView.DisplayImplementation.valueOf(getString(DisplayImplementationKey));
   }
 
-  public void setDisplayImplementation(CameraView.DisplayImplementation value) {
+  public Settings setDisplayImplementation(CameraView.DisplayImplementation value) {
     setString(DisplayImplementationKey, String.valueOf(value));
+    return this;
   }
 
   public String getUser() {
     return getString(UserKey);
   }
 
-  public void setUser(String value) {
+  public Settings setUser(String value) {
     setString(UserKey, value);
+    return this;
   }
 
   public String getPassword() {
     return getString(PasswordKey);
   }
 
-  public void setPassword(String value) {
+  public Settings setPassword(String value) {
     setString(PasswordKey, value);
-  }
-
-  public void setSelectedCameras(List<String> cameraNames) {
-    setString(SelectedCamerasKey, String.join(",", cameraNames));
+    return this;
   }
 
   public boolean getAutoCheckForUpdates() {
     return getBoolean(AutoCheckForUpdatesKey);
   }
 
-  public void setAutoCheckForUpdates(boolean enable) {
+  public Settings setAutoCheckForUpdates(boolean enable) {
     setBoolean(AutoCheckForUpdatesKey, enable);
+    return this;
   }
 
   public boolean getDisableCheckCertVerification() {
     return getBoolean(DisableCertVerificationKey);
   }
 
-  public void setDisableCertVerification(boolean value) {
+  public Settings setDisableCertVerification(boolean value) {
     setBoolean(DisableCertVerificationKey, value);
+    return this;
+  }
+
+  public Settings setSelectedCameras(List<String> cameraNames) {
+    setString(SelectedCamerasKey, String.join(",", cameraNames));
+    return this;
   }
 
   public List<String> getSelectedCameras() {
@@ -210,7 +234,8 @@ public class Settings {
     return getLong(NextUpdateCheckTimeKey);
   }
 
-  public void setNextUpdateCheckTime(long value) {
+  public Settings setNextUpdateCheckTime(long value) {
     setLong(NextUpdateCheckTimeKey, value);
+    return this;
   }
 }

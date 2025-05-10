@@ -103,7 +103,7 @@ public class CamerasOrderActivity extends Activity {
         selectedCameras.add(cameraItem.name);
       }
     }
-    Settings.getInstance(this).setSelectedCameras(selectedCameras);
+    Settings.getInstance(this).setSelectedCameras(selectedCameras).apply();
   }
 
   @Override

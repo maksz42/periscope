@@ -350,10 +350,13 @@ public abstract class AbstractPreviewActivity extends Activity {
                   final long dayMillis = 1000 * 60 * 60 * 24;
                   handler.postDelayed(this, dayMillis);
                   Settings.getInstance(AbstractPreviewActivity.this)
-                      .setNextUpdateCheckTime(System.currentTimeMillis() + dayMillis);
+                      .setNextUpdateCheckTime(System.currentTimeMillis() + dayMillis)
+                      .apply();
                 })
                 .setNegativeButton(R.string.ignore, (dialog, which) ->
-                    Settings.getInstance(AbstractPreviewActivity.this).setAutoCheckForUpdates(false)
+                    Settings.getInstance(AbstractPreviewActivity.this)
+                        .setAutoCheckForUpdates(false)
+                        .apply()
                 )
             )
         );
