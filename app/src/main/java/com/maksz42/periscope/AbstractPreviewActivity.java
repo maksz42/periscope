@@ -290,18 +290,6 @@ public abstract class AbstractPreviewActivity extends Activity {
               (dialog, which) -> startActivity(new Intent(this, SettingsActivity.class))
           )
       );
-    } else if (e instanceof IllegalStateException) {
-      showDialog(new AlertDialog.Builder(this)
-          .setTitle(e.getClass().getSimpleName())
-          .setMessage(
-              getString(
-                  R.string.retry_buffer_discarded_exception_msg,
-                  getString(R.string.repo_link)
-              )
-              + "\n\n" + e.getMessage()
-          )
-          .setPositiveButton(android.R.string.ok, null)
-      );
     } else {
       Log.d(this.getClass().getName(), e.toString());
     }

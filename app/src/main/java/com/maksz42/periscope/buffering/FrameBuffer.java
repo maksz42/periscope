@@ -31,12 +31,12 @@ public abstract class FrameBuffer {
       super.mark(Math.max(readlimit, minimumMark));
     }
 
-    @Override
-    public void reset() {
+    public boolean tryReset() {
       try {
         super.reset();
+        return true;
       } catch (IOException e) {
-        throw new IllegalStateException(e);
+        return false;
       }
     }
   }
@@ -116,8 +116,11 @@ public abstract class FrameBuffer {
   }
 
   final protected Bitmap decodeStream(InputStream input, Bitmap reusableBitmap) throws IOException {
+    return decodeStream(new FastBIS(input, streamBuffer), reusableBitmap);
+  }
+
+  private Bitmap decodeStream(FastBIS input, Bitmap reusableBitmap) throws IOException {
     BitmapFactory.Options opts = null;
-    input = new FastBIS(input, streamBuffer);
     if (SUPPORTS_REUSING_BITMAP) {
       opts = createReusableBitmapOptions(reusableBitmap);
       // mark() could be called unconditionally but it's synchronized,
@@ -130,8 +133,7 @@ public abstract class FrameBuffer {
     try {
       bitmap = BitmapFactory.decodeStream(input, null, opts);
     } catch (IllegalArgumentException e) {
-      if (SUPPORTS_REUSING_BITMAP) {
-        input.reset();
+      if (SUPPORTS_REUSING_BITMAP && input.tryReset()) {
         opts.inBitmap = null;
         bitmap = BitmapFactory.decodeStream(input, null, opts);
       }
