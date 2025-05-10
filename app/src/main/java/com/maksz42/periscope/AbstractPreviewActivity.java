@@ -120,6 +120,12 @@ public abstract class AbstractPreviewActivity extends Activity {
   }
 
   @Override
+  protected void onStart() {
+    super.onStart();
+    scheduleUIHide();
+  }
+
+  @Override
   public void onWindowFocusChanged(boolean hasFocus) {
     super.onWindowFocusChanged(hasFocus);
     if (hasFocus) {
