@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.maksz42.periscope"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.maksz42.periscope"
