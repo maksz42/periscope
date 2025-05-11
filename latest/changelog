@@ -1,3 +1,2 @@
-- Fixed "Ignore aspect ratio" setting not working
-- Multi-threaded display supports keeping the aspect ratio
-- Other fixes and improvements
+- Improve reliability on unstable networks
+- Fix UI controls sometimes not hiding
