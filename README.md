@@ -12,6 +12,11 @@ Upcycle your old Android tablet into a live viewer for Frigate NVR and hang it o
 ## Compatibility
 - **Android:** 2.2 and up (also Android TV)
 
+## Play Protect note
+Some releases are falsely marked as harmful by Play Protect.
+
+During the installation, you might need to tap **`More details` → `Install anyway`**, or temporarily disable Play Protect in the Play Store.
+
 ## FAQ
 
 ### How to setup a connection?
