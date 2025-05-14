@@ -9,38 +9,12 @@ import android.graphics.BitmapFactory;
 
 import androidx.annotation.RequiresApi;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class FrameBuffer {
-  private static class FastBIS extends BufferedInputStream {
-    private final int minimumMark;
-
-    public FastBIS(InputStream in, byte[] buf) {
-      // hack
-      super(in, 1);
-      this.minimumMark = buf.length;
-      this.buf = buf;
-    }
-
-    @Override
-    public void mark(int readlimit) {
-      super.mark(Math.max(readlimit, minimumMark));
-    }
-
-    public boolean tryReset() {
-      try {
-        super.reset();
-        return true;
-      } catch (IOException e) {
-        return false;
-      }
-    }
-  }
-
   public interface OnFrameUpdateListener {
     void onFrameUpdate();
   }
@@ -51,6 +25,7 @@ public abstract class FrameBuffer {
   public static final boolean SUPPORTS_WEBP = (SDK_INT >= KITKAT);
   static final boolean SUPPORTS_REUSING_BITMAP = (SDK_INT >= HONEYCOMB);
   private static final boolean HAS_NATIVE_STREAM_BUFFER = (SDK_INT >= KITKAT);
+  private static final boolean NEEDS_SIGSEGV_MITIGATION = (SDK_INT == KITKAT);
 
   private final Lock lock = new ReentrantLock();
   private final byte[] tempStorage = new byte[16 * 1024];
@@ -116,7 +91,10 @@ public abstract class FrameBuffer {
   }
 
   final protected Bitmap decodeStream(InputStream input, Bitmap reusableBitmap) throws IOException {
-    return decodeStream(new FastBIS(input, streamBuffer), reusableBitmap);
+    FastBIS fastBIS = NEEDS_SIGSEGV_MITIGATION
+        ? new CatchingFastBIS(input, streamBuffer)
+        : new FastBIS(input, streamBuffer);
+    return decodeStream(fastBIS, reusableBitmap);
   }
 
   private Bitmap decodeStream(FastBIS input, Bitmap reusableBitmap) throws IOException {
