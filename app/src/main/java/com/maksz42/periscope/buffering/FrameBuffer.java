@@ -79,8 +79,6 @@ public abstract class FrameBuffer {
 
   public abstract Bitmap getFrame();
 
-  public abstract Bitmap getFrameCopy();
-
   public abstract void setFrame(Bitmap bitmap);
 
 
@@ -124,5 +122,19 @@ public abstract class FrameBuffer {
 
   public void setOnFrameUpdateListener(OnFrameUpdateListener onFrameUpdateListener) {
     this.onFrameUpdateListener = onFrameUpdateListener;
+  }
+
+  public Bitmap getFrameCopy() {
+    Bitmap bitmap = getFrame();
+    if (bitmap == null) {
+      return null;
+    }
+    lock();
+    try {
+      bitmap = getFrame();
+      return bitmap.copy(bitmap.getConfig(), SUPPORTS_REUSING_BITMAP);
+    } finally {
+      unlock();
+    }
   }
 }
