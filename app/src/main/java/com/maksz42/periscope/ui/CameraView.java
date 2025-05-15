@@ -126,7 +126,7 @@ public class CameraView extends FrameLayout {
   }
 
   public void start(long initialDelay, long delay) {
-    cameraPlayer = new CameraPlayer(cameraDisplay.getFrameBuffer(), media);
+    cameraPlayer = new CameraPlayer(cameraDisplay, media);
     cameraPlayer.setOnErrorListener(this::onError);
     cameraPlayer.setOnNewFrameListener(this::onNewFrame);
     if (timeout > 0) {

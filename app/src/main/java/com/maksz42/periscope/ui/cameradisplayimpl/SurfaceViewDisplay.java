@@ -34,7 +34,6 @@ public class SurfaceViewDisplay extends SurfaceView
     super(context);
     this.ignoreAspectRatio = ignoreAspectRatio;
     getHolder().addCallback(this);
-    frameBuffer.setOnFrameUpdateListener(this::drawBitmapRequest);
   }
 
   @Override
@@ -53,7 +52,7 @@ public class SurfaceViewDisplay extends SurfaceView
   @Override
   public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
     surfaceRect = new Rect(0, 0, width, height);
-    drawBitmapRequest();
+    requestDraw();
   }
 
   @Override
@@ -70,7 +69,8 @@ public class SurfaceViewDisplay extends SurfaceView
     }
   }
 
-  private void drawBitmapRequest() {
+  @Override
+  public void requestDraw() {
     synchronized (newBitmapLock) {
       bitmapWaiting = true;
       newBitmapLock.notify();

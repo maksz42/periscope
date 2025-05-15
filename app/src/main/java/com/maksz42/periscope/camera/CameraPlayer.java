@@ -5,6 +5,7 @@ import android.os.Looper;
 
 import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.frigate.Media;
+import com.maksz42.periscope.ui.CameraDisplay;
 import com.maksz42.periscope.utils.LoggingRunnable;
 
 import java.io.InputStream;
@@ -40,15 +41,16 @@ public class CameraPlayer {
   private OnErrorListener onErrorListener;
 
 
-  public CameraPlayer(FrameBuffer buffer, Media media) {
+  public CameraPlayer(CameraDisplay cameraDisplay, Media media) {
     fetchAndDraw = () -> {
       try {
         if (timeout > 0) {
           handler.postDelayed(timeoutAction, timeout);
         }
         try (InputStream input = media.getLatestFrameInputStream()) {
-          buffer.decodeStream(input);
+          cameraDisplay.getFrameBuffer().decodeStream(input);
         }
+        cameraDisplay.requestDraw();
         onNewFrame();
       } catch (InterruptedIOException ignored) {
       } catch (Exception e) {

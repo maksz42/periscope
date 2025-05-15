@@ -18,7 +18,6 @@ public class SingleFrameBuffer extends FrameBuffer {
     } finally {
       unlockIfSupportsReusingBitmaps();
     }
-    onUpdate();
   }
 
   @Override
@@ -29,7 +28,6 @@ public class SingleFrameBuffer extends FrameBuffer {
   @Override
   public void setFrame(Bitmap bitmap) {
     this.bitmap = bitmap;
-    onUpdate();
   }
 
   // TODO find a better way to recycle bitmaps

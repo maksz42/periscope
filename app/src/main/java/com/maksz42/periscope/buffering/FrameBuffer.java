@@ -15,9 +15,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class FrameBuffer {
-  public interface OnFrameUpdateListener {
-    void onFrameUpdate();
-  }
 
   // Although WEBP is supported from ICE_CREAM_SANDWICH
   // BitmapFactory.Options#inBitmap supports WEBP
@@ -73,20 +70,11 @@ public abstract class FrameBuffer {
     return options;
   }
 
-  protected OnFrameUpdateListener onFrameUpdateListener;
-
   public abstract void decodeStream(InputStream input) throws IOException;
 
   public abstract Bitmap getFrame();
 
   public abstract void setFrame(Bitmap bitmap);
-
-
-  protected void onUpdate() {
-    if (onFrameUpdateListener != null) {
-      onFrameUpdateListener.onFrameUpdate();
-    }
-  }
 
   final protected Bitmap decodeStream(InputStream input, Bitmap reusableBitmap) throws IOException {
     FastBIS fastBIS = NEEDS_SIGSEGV_MITIGATION
@@ -118,10 +106,6 @@ public abstract class FrameBuffer {
       throw new IOException("Failed to decode image");
     }
     return bitmap;
-  }
-
-  public void setOnFrameUpdateListener(OnFrameUpdateListener onFrameUpdateListener) {
-    this.onFrameUpdateListener = onFrameUpdateListener;
   }
 
   public Bitmap getFrameCopy() {

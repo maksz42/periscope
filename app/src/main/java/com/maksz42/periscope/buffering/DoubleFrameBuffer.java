@@ -13,7 +13,6 @@ class DoubleFrameBuffer extends FrameBuffer {
   public void decodeStream(InputStream input) throws IOException {
     backBuffer = decodeStream(input, backBuffer);
     swapBuffers();
-    onUpdate();
   }
 
   private void swapBuffers() {
@@ -35,6 +34,5 @@ class DoubleFrameBuffer extends FrameBuffer {
   @Override
   public void setFrame(Bitmap bitmap) {
     frontBuffer = bitmap;
-    onUpdate();
   }
 }

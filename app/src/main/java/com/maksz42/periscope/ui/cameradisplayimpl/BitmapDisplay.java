@@ -23,7 +23,11 @@ public class BitmapDisplay extends View implements CameraDisplay {
   public BitmapDisplay(Context context, boolean ignoreAspectRatio) {
     super(context);
     this.ignoreAspectRatio = ignoreAspectRatio;
-    frameBuffer.setOnFrameUpdateListener(this::postInvalidate);
+  }
+
+  @Override
+  public void requestDraw() {
+    postInvalidate();
   }
 
   @Override
