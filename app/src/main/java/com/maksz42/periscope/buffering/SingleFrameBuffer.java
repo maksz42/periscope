@@ -28,6 +28,9 @@ public class SingleFrameBuffer extends FrameBuffer {
 
   @Override
   public Bitmap getFrameCopy() {
+    if (bitmap == null) {
+      return null;
+    }
     lock();
     try {
       return bitmap.copy(bitmap.getConfig(), SUPPORTS_REUSING_BITMAP);
