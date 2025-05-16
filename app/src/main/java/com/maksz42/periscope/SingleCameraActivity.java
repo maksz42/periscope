@@ -27,8 +27,7 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     Media.ImageFormat imageFormat = settings.getImageFormat();
     CameraView.DisplayImplementation displayImplementation = settings.getDisplayImplementation();
     Media media = new Media(getIntent().getStringExtra("camera_name"), imageFormat, 80);
-    cameraView = new CameraView(this, media, displayImplementation, ignoreAspectRatio);
-    cameraView.setTimeout(timeout);
+    cameraView = new CameraView(this, media, displayImplementation, ignoreAspectRatio, timeout);
     cameraView.setOnErrorListener(this::handleCommonErrors);
     Bitmap bitmap = FrameHolder.getAndClear();
     if (bitmap != null) {

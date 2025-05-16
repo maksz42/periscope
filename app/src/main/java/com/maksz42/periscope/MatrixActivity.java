@@ -161,14 +161,13 @@ public class MatrixActivity extends AbstractPreviewActivity {
       Intent intent = new Intent(this, SingleCameraActivity.class);
       intent.putExtra("camera_name", cameraName);
       CameraView cameraView =
-          new CameraView(this, media, displayImplementation, ignoreAspectRatio);
+          new CameraView(this, media, displayImplementation, ignoreAspectRatio, timeout);
       cameraView.setOnClickListener(v -> {
         FrameBuffer frameBuffer = ((CameraView) v).getCameraDisplay().getFrameBuffer();
         // maybe try passing the whole frame buffer instead of a copy of the bitmap
         FrameHolder.set(frameBuffer.getFrameCopy());
         startActivity(intent);
       });
-      cameraView.setTimeout(timeout);
       cameraView.setOnErrorListener(this::handleCommonErrors);
       cameraViews.add(cameraView);
     }

@@ -32,12 +32,11 @@ public class CameraPlayer {
   private final Handler handler = new Handler(Looper.getMainLooper());
   private final LoggingRunnable fetchImage;
   private final Runnable timeoutAction = () -> onError(new TimeoutException());
-  private volatile short timeout = -1;
   private volatile OnNewFrameListener onNewFrameListener;
   private OnErrorListener onErrorListener;
 
 
-  public CameraPlayer(FrameBuffer frameBuffer, Media media) {
+  public CameraPlayer(FrameBuffer frameBuffer, Media media, short timeout) {
     fetchImage = () -> {
       try {
         if (timeout > 0) {
@@ -61,10 +60,6 @@ public class CameraPlayer {
 
   public void setOnErrorListener(OnErrorListener onErrorListener) {
     this.onErrorListener = onErrorListener;
-  }
-
-  public void setTimeout(short timeout) {
-    this.timeout = timeout;
   }
 
   public void start(long initialDelay, long delay) {

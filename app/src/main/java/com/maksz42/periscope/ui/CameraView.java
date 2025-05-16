@@ -43,17 +43,18 @@ public class CameraView extends FrameLayout {
   private final CameraDisplay cameraDisplay;
   private final Media media;
   private OnErrorListener onErrorListener;
-  private short timeout = -1;
+  private final short timeout;
 
   public CameraView(
       Context context,
       Media media,
       DisplayImplementation displayImplementation,
-      boolean ignoreAspectRatio
+      boolean ignoreAspectRatio,
+      short timeout
       ) {
     super(context);
-
     this.media = media;
+    this.timeout = timeout;
 
     cameraDisplay = switch (displayImplementation) {
       case IMAGEVIEW -> new BitmapDisplay(context, ignoreAspectRatio);
@@ -127,25 +128,15 @@ public class CameraView extends FrameLayout {
   }
 
   public void start(long initialDelay, long delay) {
-    cameraPlayer = new CameraPlayer(cameraDisplay.getFrameBuffer(), media);
+    cameraPlayer = new CameraPlayer(cameraDisplay.getFrameBuffer(), media, timeout);
     cameraPlayer.setOnErrorListener(this::onError);
     cameraPlayer.setOnNewFrameListener(this::onNewFrame);
-    if (timeout > 0) {
-      cameraPlayer.setTimeout(timeout);
-    }
     cameraPlayer.start(initialDelay, delay);
   }
 
   public void stop() {
     cameraPlayer.stop();
     setLoading(false);
-  }
-
-  public void setTimeout(short timeout) {
-    this.timeout = timeout;
-    if (cameraPlayer != null) {
-      cameraPlayer.setTimeout(timeout);
-    }
   }
 
   public void setLoading(boolean loading) {
