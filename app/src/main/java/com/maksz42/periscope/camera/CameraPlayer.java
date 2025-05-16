@@ -5,7 +5,6 @@ import android.os.Looper;
 
 import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.frigate.Media;
-import com.maksz42.periscope.ui.CameraDisplay;
 import com.maksz42.periscope.utils.LoggingRunnable;
 
 import java.io.InputStream;
@@ -17,9 +16,6 @@ import java.util.concurrent.TimeoutException;
 
 public class CameraPlayer {
   public interface OnNewFrameListener {
-    /**
-     * Guaranteed to run on the UI thread
-     */
     void onNewFrame();
   }
 
@@ -34,27 +30,26 @@ public class CameraPlayer {
   private final ScheduledExecutorService executorService =
       Executors.newSingleThreadScheduledExecutor();
   private final Handler handler = new Handler(Looper.getMainLooper());
-  private final LoggingRunnable fetchAndDraw;
+  private final LoggingRunnable fetchImage;
   private final Runnable timeoutAction = () -> onError(new TimeoutException());
   private volatile short timeout = -1;
-  private OnNewFrameListener onNewFrameListener;
+  private volatile OnNewFrameListener onNewFrameListener;
   private OnErrorListener onErrorListener;
 
 
-  public CameraPlayer(CameraDisplay cameraDisplay, Media media) {
-    fetchAndDraw = () -> {
+  public CameraPlayer(FrameBuffer frameBuffer, Media media) {
+    fetchImage = () -> {
       try {
         if (timeout > 0) {
           handler.postDelayed(timeoutAction, timeout);
         }
         try (InputStream input = media.getLatestFrameInputStream()) {
-          cameraDisplay.getFrameBuffer().decodeStream(input);
+          frameBuffer.decodeStream(input);
         }
-        cameraDisplay.requestDraw();
         onNewFrame();
       } catch (InterruptedIOException ignored) {
       } catch (Exception e) {
-        onError(e);
+        handler.post(() -> onError(e));
         throw new RuntimeException(e);
       }
     };
@@ -74,9 +69,9 @@ public class CameraPlayer {
 
   public void start(long initialDelay, long delay) {
     if (initialDelay != 0) {
-      executorService.execute(fetchAndDraw);
+      executorService.execute(fetchImage);
     }
-    executorService.scheduleWithFixedDelay(fetchAndDraw, initialDelay, delay, TimeUnit.MILLISECONDS);
+    executorService.scheduleWithFixedDelay(fetchImage, initialDelay, delay, TimeUnit.MILLISECONDS);
   }
 
   public void stop() {
@@ -85,20 +80,20 @@ public class CameraPlayer {
     executorService.shutdown();
   }
 
+  /**
+   * Make sure it's called on the UI thread
+   */
   private void onError(Throwable throwable) {
-    handler.post(() -> {
-      if (onErrorListener != null) {
-        onErrorListener.onError(throwable);
-      }
-    });
+    if (onErrorListener != null) {
+      onErrorListener.onError(throwable);
+    }
   }
 
   private void onNewFrame() {
     handler.removeCallbacks(timeoutAction);
-    handler.post(() -> {
-      if (onNewFrameListener != null) {
-        onNewFrameListener.onNewFrame();
-      }
-    });
+    OnNewFrameListener listener = onNewFrameListener;
+    if (listener != null) {
+      listener.onNewFrame();
+    }
   }
 }
