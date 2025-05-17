@@ -32,6 +32,7 @@ public class CameraPlayer {
   private final LoggingRunnable fetchImage;
   private final Runnable timeoutAction = () -> onError(new TimeoutException());
   private final FrameBuffer frameBuffer;
+  private final Media media;
   private volatile OnNewFrameListener onNewFrameListener;
   private OnErrorListener onErrorListener;
   private Future<?> scheduledTask;
@@ -42,6 +43,7 @@ public class CameraPlayer {
 
   public CameraPlayer(FrameBuffer frameBuffer, Media media, short timeout) {
     this.frameBuffer = frameBuffer;
+    this.media = media;
     fetchImage = () -> {
       try {
         if (timeout > 0) {
@@ -57,6 +59,10 @@ public class CameraPlayer {
         throw new RuntimeException(e);
       }
     };
+  }
+
+  public Media getMedia() {
+    return media;
   }
 
   public FrameBuffer getFrameBuffer() {
@@ -96,6 +102,10 @@ public class CameraPlayer {
   public void shutdown() {
     removeListeners();
     scheduledExecutor.shutdown();
+  }
+
+  public boolean isShutdown() {
+    return scheduledExecutor.isShutdown();
   }
 
   /**

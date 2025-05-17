@@ -24,14 +24,15 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     short timeout = settings.getTimeout();
     Media.ImageFormat imageFormat = settings.getImageFormat();
     CameraView.DisplayImplementation displayImplementation = settings.getDisplayImplementation();
-    Media media = new Media(getIntent().getStringExtra("camera_name"), imageFormat, 80);
+    String cameraName = getIntent().getStringExtra("camera_name");
+    Media media = new Media(cameraName, imageFormat, 80);
     cameraView = new CameraView(
         this,
         media,
         displayImplementation,
         ignoreAspectRatio,
         timeout,
-        CameraPlayerHolder.getAndClear()
+        CameraPlayerHolder.getAndClear(cameraName)
     );
     cameraView.setOnErrorListener(this::handleCommonErrors);
     setContentView(cameraView);
