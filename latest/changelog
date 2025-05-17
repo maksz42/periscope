@@ -1,2 +1,3 @@
-- Improve reliability on unstable networks
-- Fix UI controls sometimes not hiding
+- Fix occasional crash on Android 4.4 under poor network conditions
+- Fix crash when tapping camera too early
+- Performance improvements
