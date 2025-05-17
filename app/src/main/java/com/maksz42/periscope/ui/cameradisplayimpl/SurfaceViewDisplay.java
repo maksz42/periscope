@@ -14,6 +14,7 @@ import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 
+import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.buffering.SingleFrameBuffer;
 import com.maksz42.periscope.ui.CameraDisplay;
 import com.maksz42.periscope.utils.Graphics;
@@ -23,21 +24,22 @@ public class SurfaceViewDisplay extends SurfaceView
 
   private volatile boolean bitmapWaiting;
   private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
-  private final SingleFrameBuffer frameBuffer = new SingleFrameBuffer();
+  private final FrameBuffer frameBuffer;
   private final boolean ignoreAspectRatio;
   private volatile Rect surfaceRect;
   private final Object newBitmapLock = new Object();
   private Thread drawingThread;
 
 
-  public SurfaceViewDisplay(Context context, boolean ignoreAspectRatio) {
+  public SurfaceViewDisplay(Context context, boolean ignoreAspectRatio, FrameBuffer buffer) {
     super(context);
     this.ignoreAspectRatio = ignoreAspectRatio;
     getHolder().addCallback(this);
+    this.frameBuffer = (buffer != null) ? buffer : new SingleFrameBuffer();
   }
 
   @Override
-  public SingleFrameBuffer getFrameBuffer() {
+  public FrameBuffer getFrameBuffer() {
     return frameBuffer;
   }
 

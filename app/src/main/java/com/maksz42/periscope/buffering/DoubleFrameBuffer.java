@@ -30,9 +30,4 @@ class DoubleFrameBuffer extends FrameBuffer {
   public Bitmap getFrame() {
     return frontBuffer;
   }
-
-  @Override
-  public void setFrame(Bitmap bitmap) {
-    frontBuffer = bitmap;
-  }
 }

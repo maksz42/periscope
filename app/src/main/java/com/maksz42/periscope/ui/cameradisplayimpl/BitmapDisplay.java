@@ -16,13 +16,14 @@ import com.maksz42.periscope.utils.Graphics;
 
 public class BitmapDisplay extends View implements CameraDisplay {
   private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
-  private final FrameBuffer frameBuffer = FrameBuffer.newNonBlockingFrameBuffer();
+  private final FrameBuffer frameBuffer;
   private final boolean ignoreAspectRatio;
   private final Rect dstRect = new Rect();
 
-  public BitmapDisplay(Context context, boolean ignoreAspectRatio) {
+  public BitmapDisplay(Context context, boolean ignoreAspectRatio, FrameBuffer buffer) {
     super(context);
     this.ignoreAspectRatio = ignoreAspectRatio;
+    this.frameBuffer = (buffer != null) ? buffer : FrameBuffer.newNonBlockingFrameBuffer();
   }
 
   @Override

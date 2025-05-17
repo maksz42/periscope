@@ -74,8 +74,6 @@ public abstract class FrameBuffer {
 
   public abstract Bitmap getFrame();
 
-  public abstract void setFrame(Bitmap bitmap);
-
   final protected Bitmap decodeStream(InputStream input, Bitmap reusableBitmap) throws IOException {
     FastBIS fastBIS = NEEDS_SIGSEGV_MITIGATION
         ? new CatchingFastBIS(input, streamBuffer)
@@ -106,19 +104,5 @@ public abstract class FrameBuffer {
       throw new IOException("Failed to decode image");
     }
     return bitmap;
-  }
-
-  public Bitmap getFrameCopy() {
-    Bitmap bitmap = getFrame();
-    if (bitmap == null) {
-      return null;
-    }
-    lock();
-    try {
-      bitmap = getFrame();
-      return bitmap.copy(bitmap.getConfig(), SUPPORTS_REUSING_BITMAP);
-    } finally {
-      unlock();
-    }
   }
 }

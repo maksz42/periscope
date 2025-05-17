@@ -17,6 +17,7 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 
 import com.maksz42.periscope.R;
+import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.camera.CameraPlayer;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
 import com.maksz42.periscope.frigate.Media;
@@ -45,20 +46,36 @@ public class CameraView extends FrameLayout {
   private OnErrorListener onErrorListener;
   private final short timeout;
 
+
   public CameraView(
       Context context,
       Media media,
       DisplayImplementation displayImplementation,
       boolean ignoreAspectRatio,
       short timeout
+  ) {
+    this(context, media, displayImplementation, ignoreAspectRatio, timeout, null);
+  }
+
+  public CameraView(
+      Context context,
+      Media media,
+      DisplayImplementation displayImplementation,
+      boolean ignoreAspectRatio,
+      short timeout,
+      CameraPlayer cameraPlayer
       ) {
     super(context);
     this.media = media;
     this.timeout = timeout;
+    this.cameraPlayer = cameraPlayer;
 
+    FrameBuffer frameBuffer = (cameraPlayer != null)
+        ? cameraPlayer.getFrameBuffer()
+        : null;
     cameraDisplay = switch (displayImplementation) {
-      case IMAGEVIEW -> new BitmapDisplay(context, ignoreAspectRatio);
-      case SURFACEVIEW -> new SurfaceViewDisplay(context, ignoreAspectRatio);
+      case IMAGEVIEW -> new BitmapDisplay(context, ignoreAspectRatio, frameBuffer);
+      case SURFACEVIEW -> new SurfaceViewDisplay(context, ignoreAspectRatio, frameBuffer);
     };
     addView((View) cameraDisplay, MATCH_PARENT, MATCH_PARENT);
 
@@ -71,6 +88,9 @@ public class CameraView extends FrameLayout {
     addView(focusView, MATCH_PARENT, MATCH_PARENT);
 
     this.loader = new ProgressBar(context);
+    if (frameBuffer != null && frameBuffer.getFrame() != null) {
+      setLoading(false);
+    }
     loader.setIndeterminate(true);
     addView(loader, MATCH_PARENT, MATCH_PARENT);
 
@@ -102,10 +122,6 @@ public class CameraView extends FrameLayout {
     cameraNameTextView.setVisibility(visible ? VISIBLE : GONE);
   }
 
-  public CameraDisplay getCameraDisplay() {
-    return cameraDisplay;
-  }
-
   public void setOnErrorListener(OnErrorListener onErrorListener) {
     this.onErrorListener = onErrorListener;
   }
@@ -128,18 +144,29 @@ public class CameraView extends FrameLayout {
   }
 
   public void start(long initialDelay, long delay) {
-    cameraPlayer = new CameraPlayer(cameraDisplay.getFrameBuffer(), media, timeout);
+    if (cameraPlayer == null) {
+      cameraPlayer = new CameraPlayer(cameraDisplay.getFrameBuffer(), media, timeout);
+    }
     cameraPlayer.setOnErrorListener(this::onError);
     cameraPlayer.setOnNewFrameListener(this::onNewFrame);
     cameraPlayer.start(initialDelay, delay);
   }
 
   public void stop() {
-    cameraPlayer.stop();
+    if (cameraPlayer != null) {
+      cameraPlayer.shutdown();
+    }
     setLoading(false);
   }
 
-  public void setLoading(boolean loading) {
+  public CameraPlayer detachPlayer() {
+    CameraPlayer player = cameraPlayer;
+    cameraPlayer = null;
+    player.halt();
+    return player;
+  }
+
+  private void setLoading(boolean loading) {
     loader.setVisibility(loading ? VISIBLE : GONE);
   }
 }

@@ -25,11 +25,6 @@ public class SingleFrameBuffer extends FrameBuffer {
     return bitmap;
   }
 
-  @Override
-  public void setFrame(Bitmap bitmap) {
-    this.bitmap = bitmap;
-  }
-
   // TODO find a better way to recycle bitmaps
   private void recycleBitmapIfNeeded(Bitmap bitmap) {
     // https://developer.android.com/topic/performance/graphics/manage-memory#recycle

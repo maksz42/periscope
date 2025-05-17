@@ -1,12 +1,10 @@
 package com.maksz42.periscope;
 
-import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import com.maksz42.periscope.frigate.Media;
-import com.maksz42.periscope.helper.FrameHolder;
+import com.maksz42.periscope.helper.CameraPlayerHolder;
 import com.maksz42.periscope.helper.Settings;
-import com.maksz42.periscope.ui.CameraDisplay;
 import com.maksz42.periscope.ui.CameraView;
 
 public class SingleCameraActivity extends AbstractPreviewActivity {
@@ -27,15 +25,15 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     Media.ImageFormat imageFormat = settings.getImageFormat();
     CameraView.DisplayImplementation displayImplementation = settings.getDisplayImplementation();
     Media media = new Media(getIntent().getStringExtra("camera_name"), imageFormat, 80);
-    cameraView = new CameraView(this, media, displayImplementation, ignoreAspectRatio, timeout);
+    cameraView = new CameraView(
+        this,
+        media,
+        displayImplementation,
+        ignoreAspectRatio,
+        timeout,
+        CameraPlayerHolder.getAndClear()
+    );
     cameraView.setOnErrorListener(this::handleCommonErrors);
-    Bitmap bitmap = FrameHolder.getAndClear();
-    if (bitmap != null) {
-      CameraDisplay display = cameraView.getCameraDisplay();
-      display.getFrameBuffer().setFrame(bitmap);
-      display.requestDraw();
-      cameraView.setLoading(false);
-    }
     setContentView(cameraView);
     cameraView.start(0, 100);
 

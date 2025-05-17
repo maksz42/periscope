@@ -9,8 +9,8 @@ import com.maksz42.periscope.utils.LoggingRunnable;
 
 import java.io.InputStream;
 import java.io.InterruptedIOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -27,16 +27,21 @@ public class CameraPlayer {
   }
 
 
-  private final ScheduledExecutorService executorService =
-      Executors.newSingleThreadScheduledExecutor();
+  private final ScheduledThreadPoolExecutor scheduledExecutor = new ScheduledThreadPoolExecutor(1);
   private final Handler handler = new Handler(Looper.getMainLooper());
   private final LoggingRunnable fetchImage;
   private final Runnable timeoutAction = () -> onError(new TimeoutException());
+  private final FrameBuffer frameBuffer;
   private volatile OnNewFrameListener onNewFrameListener;
   private OnErrorListener onErrorListener;
+  private Future<?> scheduledTask;
 
+  {
+    scheduledExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+  }
 
   public CameraPlayer(FrameBuffer frameBuffer, Media media, short timeout) {
+    this.frameBuffer = frameBuffer;
     fetchImage = () -> {
       try {
         if (timeout > 0) {
@@ -54,6 +59,10 @@ public class CameraPlayer {
     };
   }
 
+  public FrameBuffer getFrameBuffer() {
+    return frameBuffer;
+  }
+
   public void setOnNewFrameListener(OnNewFrameListener onNewFrameListener) {
     this.onNewFrameListener = onNewFrameListener;
   }
@@ -64,15 +73,29 @@ public class CameraPlayer {
 
   public void start(long initialDelay, long delay) {
     if (initialDelay != 0) {
-      executorService.execute(fetchImage);
+      scheduledExecutor.execute(fetchImage);
     }
-    executorService.scheduleWithFixedDelay(fetchImage, initialDelay, delay, TimeUnit.MILLISECONDS);
+    scheduledTask = scheduledExecutor.scheduleWithFixedDelay(
+        fetchImage,
+        initialDelay,
+        delay,
+        TimeUnit.MILLISECONDS
+    );
   }
 
-  public void stop() {
-    onErrorListener = null;
+  public void removeListeners() {
     onNewFrameListener = null;
-    executorService.shutdown();
+    onErrorListener = null;
+  }
+
+  public void halt() {
+    removeListeners();
+    scheduledTask.cancel(false);
+  }
+
+  public void shutdown() {
+    removeListeners();
+    scheduledExecutor.shutdown();
   }
 
   /**
