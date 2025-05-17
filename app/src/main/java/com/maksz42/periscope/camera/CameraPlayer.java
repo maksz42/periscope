@@ -32,7 +32,7 @@ public class CameraPlayer {
   private final LoggingRunnable fetchImage;
   private final Runnable timeoutAction = () -> onError(new TimeoutException());
   private final FrameBuffer frameBuffer;
-  private final Media media;
+  private volatile Media media;
   private volatile OnNewFrameListener onNewFrameListener;
   private OnErrorListener onErrorListener;
   private Future<?> scheduledTask;
@@ -49,7 +49,7 @@ public class CameraPlayer {
         if (timeout > 0) {
           handler.postDelayed(timeoutAction, timeout);
         }
-        try (InputStream input = media.getLatestFrameInputStream()) {
+        try (InputStream input = this.media.getLatestFrameInputStream()) {
           frameBuffer.decodeStream(input);
         }
         onNewFrame();
@@ -63,6 +63,10 @@ public class CameraPlayer {
 
   public Media getMedia() {
     return media;
+  }
+
+  public void setMedia(Media media) {
+    this.media = media;
   }
 
   public FrameBuffer getFrameBuffer() {

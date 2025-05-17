@@ -15,7 +15,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class FrameBuffer {
-
   // Although WEBP is supported from ICE_CREAM_SANDWICH
   // BitmapFactory.Options#inBitmap supports WEBP
   // for api >= KITKAT
