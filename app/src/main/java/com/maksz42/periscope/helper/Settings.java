@@ -37,6 +37,7 @@ public class Settings {
   public final String AutoCheckForUpdatesKey;
   public final String DisableCertVerificationKey;
   public final String NextUpdateCheckTimeKey;
+  public final String AutostartKey;
 
   /**
    * not thread-safe, expected to be called on the UI thread
@@ -73,6 +74,7 @@ public class Settings {
     AutoCheckForUpdatesKey = res.getString(R.string.auto_check_for_updates_key);
     DisableCertVerificationKey = res.getString(R.string.disable_cert_verification_key);
     NextUpdateCheckTimeKey = res.getString(R.string.next_update_check_time_key);
+    AutostartKey = res.getString(R.string.autostart_key);
   }
 
   private boolean getBoolean(String key) {
@@ -236,6 +238,15 @@ public class Settings {
 
   public Settings setNextUpdateCheckTime(long value) {
     setLong(NextUpdateCheckTimeKey, value);
+    return this;
+  }
+
+  public boolean getAutostart() {
+    return getBoolean(AutostartKey);
+  }
+
+  public Settings setAutostart(boolean value) {
+    setBoolean(AutostartKey, value);
     return this;
   }
 }

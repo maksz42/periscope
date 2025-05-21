@@ -55,6 +55,11 @@
         android:key="@string/ignore_aspect_ratio_key"
         />
     <CheckBoxPreference
+        android:title="@string/autostart"
+        android:key="@string/autostart_key"
+        android:defaultValue="false"
+        />
+    <CheckBoxPreference
         android:title="@string/auto_check_for_updates"
         android:key="@string/auto_check_for_updates_key"
         android:defaultValue="true"

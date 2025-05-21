@@ -36,4 +36,5 @@
     <string name="security_hazard">Security hazard</string>
     <string name="single_threaded_impl">single-threaded</string>
     <string name="multi_threaded_impl">multi-threaded</string>
+    <string name="autostart">Autostart</string>
 </resources>

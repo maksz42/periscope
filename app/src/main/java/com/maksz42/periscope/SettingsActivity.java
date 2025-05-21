@@ -58,6 +58,12 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
       findPreference(settings.ImageFormatKey).setEnabled(false);
     }
 
+    Preference autostart = findPreference(settings.AutostartKey);
+    autostart.setOnPreferenceChangeListener((preference, newValue) -> {
+      BootReceiver.setEnabled(this, (Boolean) newValue);
+      return true;
+    });
+
     getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.custom_settings_title_bar);
     TextView title = findViewById(R.id.title);
     title.setText(R.string.settings_activity_label);
