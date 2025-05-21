@@ -26,5 +26,7 @@ public class Periscope extends Application {
     if (settings.getDisableCheckCertVerification()) {
       Net.disableCertVerification();
     }
+
+    BootReceiver.setEnabled(this, settings.getAutostart());
   }
 }
