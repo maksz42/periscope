@@ -40,3 +40,6 @@ Specifies how long to wait for a response from Frigate before displaying the loa
 - RTSP(S) support
 
 [yt-review]: https://www.youtube.com/watch?v=KiajZnkMgUQ "Click to watch the review"
+
+## ❤️ Sponsor
+If you like **Periscope**, please consider [becoming a sponsor](https://github.com/sponsors/maksz42)!
