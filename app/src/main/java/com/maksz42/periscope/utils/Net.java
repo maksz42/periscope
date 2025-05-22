@@ -65,7 +65,7 @@ public final class Net {
     };
     try {
       SSLContext sc = SSLContext.getInstance("TLS");
-      sc.init(null, trustAllCerts, new SecureRandom());
+      sc.init(null, trustAllCerts, null);
       HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
       HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
     } catch (GeneralSecurityException e) {
