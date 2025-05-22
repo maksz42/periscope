@@ -26,7 +26,7 @@ public final class CameraPlayerHolder {
       Log.d(TAG, "Player is shutdown");
       return null;
     }
-    if (!p.getMedia().getName().equals(cameraName)) {
+    if (cameraName != null && !p.getMedia().getName().equals(cameraName)) {
       Log.d(TAG, "Player mismatch");
       p.shutdown();
       return null;

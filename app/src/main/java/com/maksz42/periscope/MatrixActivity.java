@@ -12,6 +12,7 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 
+import com.maksz42.periscope.camera.CameraPlayer;
 import com.maksz42.periscope.frigate.Config;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
 import com.maksz42.periscope.frigate.InvalidResponseException;
@@ -155,10 +156,22 @@ public class MatrixActivity extends AbstractPreviewActivity {
     short timeout = settings.getTimeout();
     Media.ImageFormat imageFormat = settings.getImageFormat();
     CameraView.DisplayImplementation displayImplementation = settings.getDisplayImplementation();
+    CameraPlayer cachedPlayer = CameraPlayerHolder.getAndClear(null);
+    String cachedPlayerName = (cachedPlayer != null) ? cachedPlayer.getMedia().getName() : null;
     for (String cameraName : cameras) {
-      Media media = new Media(cameraName, imageFormat, -1);
-      CameraView cameraView =
-          new CameraView(this, media, displayImplementation, ignoreAspectRatio, timeout);
+      CameraPlayer p = null;
+      if (cameraName.equals(cachedPlayerName)) {
+        p = cachedPlayer;
+        cachedPlayer = null;
+      }
+      CameraView cameraView = new CameraView(
+          this,
+          new Media(cameraName, imageFormat, -1),
+          displayImplementation,
+          ignoreAspectRatio,
+          timeout,
+          p
+      );
       cameraView.setOnClickListener(v -> {
         CameraView cv = (CameraView) v;
         CameraPlayerHolder.set(cv.detachPlayer());
@@ -168,6 +181,10 @@ public class MatrixActivity extends AbstractPreviewActivity {
       });
       cameraView.setOnErrorListener(this::handleCommonErrors);
       cameraViews.add(cameraView);
+    }
+    if (cachedPlayer != null) {
+      Log.d("MatrixActivity", "Player mismatch");
+      cachedPlayer.shutdown();
     }
     this.cameraViews = cameraViews;
   }

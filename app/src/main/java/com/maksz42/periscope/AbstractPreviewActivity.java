@@ -202,6 +202,10 @@ public abstract class AbstractPreviewActivity extends Activity {
   }
 
   protected void addFloatingButton(int drawableResID, Class<?> cls) {
+    addFloatingButton(drawableResID, v -> startActivity(new Intent(this, cls)));
+  }
+
+  protected void addFloatingButton(int drawableResID, View.OnClickListener listener) {
     Resources res = getResources();
     int size = res.getDimensionPixelSize(R.dimen.floating_button_size);
     int padding = res.getDimensionPixelSize(R.dimen.floating_button_padding);
@@ -210,7 +214,7 @@ public abstract class AbstractPreviewActivity extends Activity {
     btn.setPadding(padding, padding, padding, padding);
     btn.setImageResource(drawableResID);
     btn.setScaleType(ImageView.ScaleType.FIT_CENTER);
-    btn.setOnClickListener(v -> startActivity(new Intent(this, cls)));
+    btn.setOnClickListener(listener);
     // TODO find a better way
     btn.setOnKeyListener((v, keyCode, event) -> {
       if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {

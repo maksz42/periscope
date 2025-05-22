@@ -1,5 +1,6 @@
 package com.maksz42.periscope;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import com.maksz42.periscope.frigate.Media;
@@ -13,7 +14,10 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    addFloatingButton(android.R.drawable.ic_dialog_dialer, MatrixActivity.class);
+    addFloatingButton(android.R.drawable.ic_dialog_dialer, v -> {
+      cachePlayer();
+      startActivity(new Intent(this, MatrixActivity.class));
+    });
   }
 
   @Override
@@ -45,11 +49,20 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
   protected void onStop() {
     super.onStop();
     cameraView.stop();
-    setContentView(null);
   }
 
   @Override
   protected void onAppUIVisibilityChange(boolean visible) {
     cameraView.setCameraNameVisible(visible);
+  }
+
+  private void cachePlayer() {
+    CameraPlayerHolder.set(cameraView.detachPlayer());
+  }
+
+  @Override
+  public void onBackPressed() {
+    cachePlayer();
+    super.onBackPressed();
   }
 }
