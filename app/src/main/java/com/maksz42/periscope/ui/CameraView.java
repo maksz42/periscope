@@ -171,4 +171,8 @@ public class CameraView extends FrameLayout {
   private void setLoading(boolean loading) {
     loader.setVisibility(loading ? VISIBLE : GONE);
   }
+
+  public Media getMedia() {
+    return media;
+  }
 }

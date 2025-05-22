@@ -157,12 +157,13 @@ public class MatrixActivity extends AbstractPreviewActivity {
     CameraView.DisplayImplementation displayImplementation = settings.getDisplayImplementation();
     for (String cameraName : cameras) {
       Media media = new Media(cameraName, imageFormat, -1);
-      Intent intent = new Intent(this, SingleCameraActivity.class);
-      intent.putExtra("camera_name", cameraName);
       CameraView cameraView =
           new CameraView(this, media, displayImplementation, ignoreAspectRatio, timeout);
       cameraView.setOnClickListener(v -> {
-        CameraPlayerHolder.set(((CameraView) v).detachPlayer());
+        CameraView cv = (CameraView) v;
+        CameraPlayerHolder.set(cv.detachPlayer());
+        Intent intent = new Intent(this, SingleCameraActivity.class);
+        intent.putExtra("camera_name", cv.getMedia().getName());
         startActivity(intent);
       });
       cameraView.setOnErrorListener(this::handleCommonErrors);
