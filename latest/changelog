@@ -1,3 +1,5 @@
-- Fix occasional crash on Android 4.4 under poor network conditions
-- Fix crash when tapping camera too early
+- Autostart option (see FAQ)
 - Performance improvements
+
+If you find Periscope useful, please consider becoming a ❤ Sponsor at
+github.com/sponsors/maksz42
