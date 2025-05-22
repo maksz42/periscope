@@ -34,6 +34,9 @@ It's a network vs CPU tradeoff. WEBP can work on slower networks but uses more C
 ### What is the timeout setting?
 Specifies how long to wait for a response from Frigate before displaying the loading indicator.
 
+### What is autostart?
+Periscope can start automatically after booting up the device. This is especially useful if you disable the lock screen in the developer settings. Android >= 10 requires additional permissions. Autostart probably won't work on Android >= 13, and it's better to disable it then.
+
 
 ## TODO
 - Adaptive resolution
