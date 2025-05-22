@@ -22,6 +22,12 @@ public class BootReceiver extends BroadcastReceiver {
         );
   }
 
+  public static boolean getEnabled(Context context) {
+    ComponentName componentName = new ComponentName(context, BootReceiver.class);
+    int state = context.getPackageManager().getComponentEnabledSetting(componentName);
+    return state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+  }
+
   @Override
   public void onReceive(Context context, Intent intent) {
     if (!Settings.getInstance(context).getAutostart()) return;

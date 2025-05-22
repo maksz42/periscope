@@ -57,6 +57,7 @@
     <CheckBoxPreference
         android:title="@string/autostart"
         android:key="@string/autostart_key"
+        android:summary="@string/autostart_new_devices_warning"
         android:defaultValue="false"
         />
     <CheckBoxPreference

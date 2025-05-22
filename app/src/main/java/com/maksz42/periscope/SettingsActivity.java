@@ -1,7 +1,10 @@
 package com.maksz42.periscope;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -10,6 +13,8 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
 import android.view.Window;
 import android.widget.TextView;
+
+import androidx.annotation.RequiresApi;
 
 import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.frigate.Client;
@@ -61,6 +66,9 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     Preference autostart = findPreference(settings.AutostartKey);
     autostart.setOnPreferenceChangeListener((preference, newValue) -> {
       BootReceiver.setEnabled(this, (Boolean) newValue);
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        return requestSystemAlertWindowPermission();
+      }
       return true;
     });
 
@@ -68,6 +76,19 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     TextView title = findViewById(R.id.title);
     title.setText(R.string.settings_activity_label);
     findViewById(R.id.btn_back).setOnClickListener(v -> onBackPressed());
+  }
+
+  @RequiresApi(Build.VERSION_CODES.Q)
+  private boolean requestSystemAlertWindowPermission() {
+    if(!android.provider.Settings.canDrawOverlays(this)) {
+      Intent intent = new Intent(
+          android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+          Uri.parse("package:" + this.getPackageName())
+      );
+      startActivity(intent);
+      return false;
+    }
+    return true;
   }
 
   @Override

@@ -37,4 +37,5 @@
     <string name="single_threaded_impl">single-threaded</string>
     <string name="multi_threaded_impl">multi-threaded</string>
     <string name="autostart">Autostart</string>
+    <string name="autostart_new_devices_warning">May not work on newer devices</string>
 </resources>

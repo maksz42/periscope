@@ -1,6 +1,7 @@
 package com.maksz42.periscope;
 
 import android.app.Application;
+import android.os.Build;
 
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.helper.Settings;
@@ -27,6 +28,11 @@ public class Periscope extends Application {
       Net.disableCertVerification();
     }
 
-    BootReceiver.setEnabled(this, settings.getAutostart());
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+      BootReceiver.setEnabled(this, settings.getAutostart());
+    } else {
+      boolean enabled = BootReceiver.getEnabled(this);
+      settings.setAutostart(enabled).apply();
+    }
   }
 }

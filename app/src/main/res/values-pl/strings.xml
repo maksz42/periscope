@@ -32,4 +32,5 @@
     <string name="security_hazard">Zagrożenie bezpieczeństwa</string>
     <string name="single_threaded_impl">jednowątkowa</string>
     <string name="multi_threaded_impl">wielowątkowa</string>
+    <string name="autostart_new_devices_warning">Może nie działać na nowszych urządzeniach</string>
 </resources>
