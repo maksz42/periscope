@@ -12,8 +12,8 @@ android {
         // TODO api 35
         // forces edge-to-edge
         targetSdk = 34
-        versionCode = 6
-        versionName = "0.6"
+        versionCode = 7
+        versionName = "0.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
