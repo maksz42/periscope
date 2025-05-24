@@ -40,6 +40,7 @@ android {
 
 dependencies {
     compileOnly(libs.annotation.jvm)
+    implementation(libs.conscrypt.android)
 //    implementation(libs.appcompat)
 //    testImplementation(libs.junit)
 //    androidTestImplementation(libs.ext.junit)

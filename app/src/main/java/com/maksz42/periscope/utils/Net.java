@@ -1,11 +1,16 @@
 package com.maksz42.periscope.utils;
 
+import android.os.Build;
+import android.util.Log;
+
+import org.conscrypt.Conscrypt;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
+import java.security.Security;
 import java.security.cert.X509Certificate;
 
 import javax.net.ssl.HostnameVerifier;
@@ -44,6 +49,25 @@ public final class Net {
     return openConnectionWithTimeout(url, connectTimeout, readTimeout).getInputStream();
   }
 
+  public static void enableTls13() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) return;
+    try {
+      Conscrypt.ProviderBuilder providerBuilder = Conscrypt.newProviderBuilder();
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        // https://github.com/google/conscrypt/issues/603
+        providerBuilder.provideTrustManager(true);
+      }
+      Security.insertProviderAt(providerBuilder.build(), 1);
+
+      SSLContext sc = SSLContext.getInstance("TLS");
+      sc.init(null, null, null);
+
+      HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+    } catch (GeneralSecurityException | UnsatisfiedLinkError e) {
+      Log.w("TLS", "Failed to update security provider", e);
+    }
+  }
+
   public static void disableCertVerification() {
     // https://stackoverflow.com/a/2893932
     if (defaultSSLSocketFactory == null) {
@@ -69,7 +93,7 @@ public final class Net {
       HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
       HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
     } catch (GeneralSecurityException e) {
-      e.printStackTrace();
+      Log.w("TLS", "Failed to disable certificate verification", e);
     }
   }
 

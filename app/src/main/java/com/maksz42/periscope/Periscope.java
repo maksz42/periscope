@@ -24,6 +24,7 @@ public class Periscope extends Application {
     String password = settings.getPassword();
     Client.setCredentials(user, password);
 
+    Net.enableTls13();
     if (settings.getDisableCheckCertVerification()) {
       Net.disableCertVerification();
     }
