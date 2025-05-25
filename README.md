@@ -20,7 +20,7 @@ During the installation, you might need to tap **`More details` → `Install any
 ## FAQ
 
 ### How to setup a connection?
-Fill in the host field (IP or domain), port, and protocol. Android <5.0 doesn't support HTTPS.
+Fill in the host field (IP or domain), port, and protocol. HTTPS is supported on Android 4.1 and later.
 If you're using the protected port, fill in the user and password fields, otherwise leave them empty.
 
 ### What's the difference between single-threaded and multi-threaded display implementation?
