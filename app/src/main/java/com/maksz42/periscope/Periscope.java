@@ -28,11 +28,12 @@ public class Periscope extends Application {
       Net.configureSSLSocketFactory(settings.getDisableCertVerification());
     }
 
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-      BootReceiver.setEnabled(this, settings.getAutostart());
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        && !android.provider.Settings.canDrawOverlays(this)) {
+      BootReceiver.setEnabled(this, false);
+      settings.setAutostart(false).apply();
     } else {
-      boolean enabled = BootReceiver.getEnabled(this);
-      settings.setAutostart(enabled).apply();
+      BootReceiver.setEnabled(this, settings.getAutostart());
     }
   }
 }
