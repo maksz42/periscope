@@ -1,5 +1,6 @@
 package com.maksz42.periscope.utils;
 
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -42,5 +43,13 @@ public final class Misc {
       return false;
     }
     return inRange(i, min, max);
+  }
+
+  public static String getPrimaryAbi() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      return Build.SUPPORTED_ABIS[0];
+    } else {
+      return Build.CPU_ABI;
+    }
   }
 }

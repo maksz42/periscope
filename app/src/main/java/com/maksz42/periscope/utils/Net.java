@@ -50,7 +50,19 @@ public final class Net {
   }
 
   public static void enableTls13() {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) return;
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN
+      || Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+      return;
+    }
+    String abi = Misc.getPrimaryAbi();
+    if (
+        !abi.equals("armeabi-v7a")
+        && !abi.equals("arm64-v8a")
+        && !abi.equals("x86")
+        && !abi.equals("x86_64")
+    ) {
+      return;
+    }
     try {
       Conscrypt.ProviderBuilder providerBuilder = Conscrypt.newProviderBuilder();
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
