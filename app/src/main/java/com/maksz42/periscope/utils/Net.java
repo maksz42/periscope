@@ -16,12 +16,11 @@ import java.security.cert.X509Certificate;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 public final class Net {
-  private static SSLSocketFactory defaultSSLSocketFactory;
+  private static boolean tls13AlreadyEnabled = false;
   private static HostnameVerifier defaultHostnameVerifier;
 
   private Net() { }
@@ -49,72 +48,58 @@ public final class Net {
     return openConnectionWithTimeout(url, connectTimeout, readTimeout).getInputStream();
   }
 
-  public static void enableTls13() {
+  private static boolean canEnableTls13() {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN
-      || Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-      return;
+        || Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+      return false;
+    }
+    if (tls13AlreadyEnabled) {
+      return false;
     }
     String abi = Misc.getPrimaryAbi();
-    if (
-        !abi.equals("armeabi-v7a")
-        && !abi.equals("arm64-v8a")
-        && !abi.equals("x86")
-        && !abi.equals("x86_64")
-    ) {
-      return;
-    }
-    try {
+    return abi.equals("armeabi-v7a")
+        || abi.equals("arm64-v8a")
+        || abi.equals("x86")
+        || abi.equals("x86_64");
+  }
+
+  public static void configureSSLSocketFactory(boolean disableCertVerification) {
+    if (canEnableTls13()) {
       Conscrypt.ProviderBuilder providerBuilder = Conscrypt.newProviderBuilder();
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
         // https://github.com/google/conscrypt/issues/603
         providerBuilder.provideTrustManager(true);
       }
       Security.insertProviderAt(providerBuilder.build(), 1);
-
-      SSLContext sc = SSLContext.getInstance("TLS");
-      sc.init(null, null, null);
-
-      HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-    } catch (GeneralSecurityException | UnsatisfiedLinkError e) {
-      Log.w("TLS", "Failed to update security provider", e);
+      tls13AlreadyEnabled = true;
     }
-  }
 
-  public static void disableCertVerification() {
-    // https://stackoverflow.com/a/2893932
-    if (defaultSSLSocketFactory == null) {
-      defaultSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
+    TrustManager[] trustAllCerts = null;
+    if (disableCertVerification) {
+      trustAllCerts = new TrustManager[] {
+          new X509TrustManager() {
+            public X509Certificate[] getAcceptedIssuers() {
+              return new X509Certificate[0];
+            }
+            public void checkClientTrusted(X509Certificate[] certs, String authType) { }
+            public void checkServerTrusted(X509Certificate[] certs, String authType) { }
+          }
+      };
+      if (defaultHostnameVerifier == null) {
+        defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
+      }
+      HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
+    } else {
+      if (defaultHostnameVerifier != null) {
+        HttpsURLConnection.setDefaultHostnameVerifier(defaultHostnameVerifier);
+      }
     }
-    if (defaultHostnameVerifier == null) {
-      defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
-    }
-    TrustManager[] trustAllCerts = new TrustManager[] {
-        new X509TrustManager() {
-          public X509Certificate[] getAcceptedIssuers() {
-            return new X509Certificate[0];
-          }
-          public void checkClientTrusted(X509Certificate[] certs, String authType) {
-          }
-          public void checkServerTrusted(X509Certificate[] certs, String authType) {
-          }
-        }
-    };
     try {
       SSLContext sc = SSLContext.getInstance("TLS");
       sc.init(null, trustAllCerts, null);
       HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-      HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
     } catch (GeneralSecurityException e) {
-      Log.w("TLS", "Failed to disable certificate verification", e);
-    }
-  }
-
-  public static void enableCertVerification() {
-    if (defaultSSLSocketFactory != null) {
-      HttpsURLConnection.setDefaultSSLSocketFactory(defaultSSLSocketFactory);
-    }
-    if (defaultHostnameVerifier != null) {
-      HttpsURLConnection.setDefaultHostnameVerifier(defaultHostnameVerifier);
+      Log.w("TLS", "Failed to configure SSLSocketFactory", e);
     }
   }
 }

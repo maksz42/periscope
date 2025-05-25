@@ -130,12 +130,6 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 
   @Override
   public void onBackPressed() {
-    if (settings.getDisableCheckCertVerification()) {
-      Net.disableCertVerification();
-    } else {
-      Net.enableCertVerification();
-    }
-
     EditTextPreference hostPreference = (EditTextPreference) findPreference(settings.HostKey);
     String host = hostPreference.getText();
     if (host == null || host.isBlank()) {
@@ -173,6 +167,8 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     EditTextPreference user = (EditTextPreference) findPreference("user");
     EditTextPreference password = (EditTextPreference) findPreference("password");
     Client.setCredentials(user.getText(), password.getText());
+
+    Net.configureSSLSocketFactory(settings.getDisableCertVerification());
     super.onBackPressed();
   }
 }

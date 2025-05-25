@@ -208,7 +208,7 @@ public class Settings {
     return this;
   }
 
-  public boolean getDisableCheckCertVerification() {
+  public boolean getDisableCertVerification() {
     return getBoolean(DisableCertVerificationKey);
   }
 
