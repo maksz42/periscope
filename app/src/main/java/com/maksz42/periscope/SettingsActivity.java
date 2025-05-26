@@ -168,7 +168,7 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     EditTextPreference password = (EditTextPreference) findPreference("password");
     Client.setCredentials(user.getText(), password.getText());
 
-    Net.configureSSLSocketFactory(settings.getDisableCertVerification());
+    Net.configureSSLSocketFactory(this, settings.getDisableCertVerification());
     super.onBackPressed();
   }
 }

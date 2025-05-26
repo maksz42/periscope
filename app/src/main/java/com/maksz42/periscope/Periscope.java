@@ -25,7 +25,7 @@ public class Periscope extends Application {
     Client.setCredentials(user, password);
 
     if (settings.getProtocol() == Client.Protocol.HTTPS) {
-      Net.configureSSLSocketFactory(settings.getDisableCertVerification());
+      Net.configureSSLSocketFactory(this, settings.getDisableCertVerification());
     }
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
