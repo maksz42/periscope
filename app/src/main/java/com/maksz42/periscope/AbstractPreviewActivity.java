@@ -57,7 +57,7 @@ public abstract class AbstractPreviewActivity extends Activity {
     if (Client.getBaseUrl() == null) {
       startActivity(new Intent(this, SettingsActivity.class));
     }
-    super.setContentView(R.layout.activity_preview);
+    setContentView(R.layout.activity_preview);
     // TODO figure this out
     // Without FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS android 14 emulator shows a black bar
     // in place of the navbar but only if SYSTEM_UI_FLAG_HIDE_NAVIGATION was set in
@@ -76,7 +76,7 @@ public abstract class AbstractPreviewActivity extends Activity {
     View.OnFocusChangeListener fcl = (v, hasFocus) -> {
       if (!hasFocus) return;
       if (hasFocusableCameraView()) {
-        getPreviewRoot().requestFocus();
+        getPreview().requestFocus();
       } else {
         v.focusSearch(FOCUS_LEFT).requestFocus();
       }
@@ -113,7 +113,7 @@ public abstract class AbstractPreviewActivity extends Activity {
   }
 
   private boolean hasFocusableCameraView() {
-    ViewGroup rootPreview = getPreviewRoot();
+    View rootPreview = getPreview();
     return android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O
         ? rootPreview.hasExplicitFocusable()
         : rootPreview.hasFocusable();
@@ -228,37 +228,21 @@ public abstract class AbstractPreviewActivity extends Activity {
     floatingBar.addView(btn, floatingBar.getChildCount() - 2, params);
   }
 
-  @Override
-  public void setContentView(int layoutResID) {
-    getLayoutInflater().inflate(layoutResID, resetPreviewRoot());
-  }
-
-  @Override
-  public void setContentView(View view) {
-    setContentView(view, null);
-  }
-
-  @Override
-  public void setContentView(View view, ViewGroup.LayoutParams params) {
-    ViewGroup previewRoot = resetPreviewRoot();
-    if (view == null) {
-      return;
-    }
-    if (params != null) {
-      previewRoot.addView(view, params);
-    } else {
-      previewRoot.addView(view);
-    }
-  }
-
-  private ViewGroup getPreviewRoot() {
+  protected <T extends View> T getPreview() {
     return findViewById(R.id.preview_root);
   }
 
-  private ViewGroup resetPreviewRoot() {
-    ViewGroup previewRoot = getPreviewRoot();
-    previewRoot.removeAllViews();
-    return previewRoot;
+  protected void setPreview(View view) {
+    View currentPreview = getPreview();
+    ViewGroup parent = (ViewGroup) currentPreview.getParent();
+    int index = parent.indexOfChild(currentPreview);
+    parent.removeView(currentPreview);
+    if (view == null) {
+      view = new View(this);
+      view.setVisibility(GONE);
+    }
+    view.setId(R.id.preview_root);
+    parent.addView(view, index, currentPreview.getLayoutParams());
   }
 
   private TextView getWallpaperTextView() {

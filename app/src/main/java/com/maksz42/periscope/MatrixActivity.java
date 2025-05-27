@@ -137,11 +137,11 @@ public class MatrixActivity extends AbstractPreviewActivity {
       }
       matrixLayout.addView(row, rwoParams);
     }
-    setContentView(matrixLayout);
+    setPreview(matrixLayout);
   }
 
   private void removeCameraViews() {
-    setContentView(null);
+    setPreview(null);
     if (cameraViews == null) return;
     for (View cameraView : cameraViews) {
       ViewGroup parent = (ViewGroup) cameraView.getParent();
