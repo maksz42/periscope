@@ -1,8 +1,5 @@
-- Support HTTPS on Android 4.1-4.4
-- Improved HTTPS performance on Android 5-9
-
-APK size increased from 51 kB to 3.4 MB.
-Android 7.0 and lower may need to disable certificate verification for HTTPS to work, for now.
+- Bundle Let's Encrypt certificates for secure HTTPS on old devices
+- Performance improvements
 
 If you find Periscope useful, please consider becoming a ❤ Sponsor!
 github.com/sponsors/maksz42
