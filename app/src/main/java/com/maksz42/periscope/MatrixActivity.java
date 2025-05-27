@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
@@ -37,6 +36,11 @@ public class MatrixActivity extends AbstractPreviewActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     addFloatingButton(android.R.drawable.ic_menu_sort_by_size, CamerasOrderActivity.class);
+
+    LinearLayout matrixLayout = new LinearLayout(this);
+    matrixLayout.setOrientation(LinearLayout.VERTICAL);
+    setPreview(matrixLayout);
+
     checkForUpdates(10_000);
   }
 
@@ -108,8 +112,6 @@ public class MatrixActivity extends AbstractPreviewActivity {
 
   private void addCameraViews() {
     if (cameraViews == null) return;
-    LinearLayout matrixLayout = new LinearLayout(this);
-    matrixLayout.setOrientation(LinearLayout.VERTICAL);
     int numberOfCameras = cameraViews.size();
     int numberOfRows = (int) Math.floor(Math.sqrt(numberOfCameras));
     int numberOfColumns = (int) Math.ceil((double) numberOfCameras / numberOfRows);
@@ -119,6 +121,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
       numberOfRows = numberOfColumns;
       numberOfColumns = temp;
     }
+    LinearLayout matrixLayout = getPreview();
     LinearLayout.LayoutParams colParams =
         new LinearLayout.LayoutParams(0, MATCH_PARENT);
     colParams.weight = 1;
@@ -141,12 +144,11 @@ public class MatrixActivity extends AbstractPreviewActivity {
   }
 
   private void removeCameraViews() {
-    setPreview(null);
-    if (cameraViews == null) return;
-    for (View cameraView : cameraViews) {
-      ViewGroup parent = (ViewGroup) cameraView.getParent();
-      parent.removeView(cameraView);
+    LinearLayout matrixLayout = getPreview();
+    for (int i = 0; i < matrixLayout.getChildCount(); i++) {
+      ((ViewGroup) matrixLayout.getChildAt(i)).removeAllViews();
     }
+    matrixLayout.removeAllViews();
   }
 
   private void initCameraViews(List<String> cameras) {
