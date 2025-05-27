@@ -24,6 +24,7 @@ import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.zip.GZIPInputStream;
 
 public class UpdateManager {
   public static class InstallReceiver extends BroadcastReceiver {
@@ -47,7 +48,8 @@ public class UpdateManager {
     }
   }
 
-  private final static String APK_NAME = "periscope.apk";
+  private final static String TAG = "UpdateManager";
+  private final static String APK_NAME = "periscope.apk.gz";
   private final static URL UPDATE_URL;
 
   static {
@@ -100,32 +102,30 @@ public class UpdateManager {
 
         Misc.runOnUIThread(() -> onUpdateAvailableListener.onUpdate(this, versionName, changelog));
       } catch (IOException e) {
-        Log.w(UpdateManager.class.getSimpleName(), "Couldn't check for update", e);
+        Log.w(TAG, "Couldn't check for update", e);
       }
     }).start();
   }
 
   public void downloadAndInstallUpdate() {
     new Thread(() -> {
+      Context context = ContextRef.get();
+      if (context == null) return;
       try {
         URL url = new URL(UPDATE_URL, APK_NAME);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-          installNewMethod(url);
+          installNewMethod(context, url);
         } else {
-          installOldMethod(url);
+          installOldMethod(context, url);
         }
       } catch (IOException e) {
-        Log.e(UpdateManager.class.getSimpleName(), "Couldn't install update", e);
+        Log.e(TAG, "Couldn't install update", e);
       }
     }).start();
   }
 
   @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-  private void installNewMethod(URL url) throws IOException {
-    Context context = ContextRef.get();
-    if (context == null) {
-      return;
-    }
+  private void installNewMethod(Context context, URL url) throws IOException {
     PackageInstaller installer = context.getPackageManager().getPackageInstaller();
     PackageInstaller.SessionParams params =
         new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
@@ -133,7 +133,7 @@ public class UpdateManager {
     try (PackageInstaller.Session session = installer.openSession(sessionId)) {
       HttpURLConnection conn = (HttpURLConnection) Net.openConnectionWithTimeout(url);
       int len = conn.getContentLength();
-      try (InputStream input = conn.getInputStream();
+      try (InputStream input = new GZIPInputStream(conn.getInputStream());
            OutputStream output = session.openWrite(APK_NAME, 0, len)
       ) {
         IO.transferStream(input, output);
@@ -150,13 +150,9 @@ public class UpdateManager {
     }
   }
 
-  private void installOldMethod(URL url) throws IOException {
-    Context context = ContextRef.get();
-    if (context == null) {
-      return;
-    }
+  private void installOldMethod(Context context, URL url) throws IOException {
     // see https://stackoverflow.com/a/47220833
-    try (InputStream input = Net.openStreamWithTimeout(url);
+    try (InputStream input = new GZIPInputStream(Net.openStreamWithTimeout(url));
          OutputStream output = context.openFileOutput(APK_NAME, Context.MODE_WORLD_READABLE)
     ) {
       IO.transferStream(input, output);
