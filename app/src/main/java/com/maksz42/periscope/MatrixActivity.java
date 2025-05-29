@@ -123,15 +123,15 @@ public class MatrixActivity extends AbstractPreviewActivity {
     LinearLayout matrixLayout = getPreview();
     LinearLayout.LayoutParams colParams = new LinearLayout.LayoutParams(0, MATCH_PARENT);
     colParams.weight = 1;
-    LinearLayout.LayoutParams rwoParams = new LinearLayout.LayoutParams(MATCH_PARENT, 0);
-    rwoParams.weight = 1;
+    LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(MATCH_PARENT, 0);
+    rowParams.weight = 1;
     for (int start = 0; start < numberOfCameras; start += columns) {
       LinearLayout row = new LinearLayout(this);
       int end = Math.min(start + columns, numberOfCameras);
       for (int i = start; i < end; i++) {
         row.addView(cameraViews.get(i), colParams);
       }
-      matrixLayout.addView(row, rwoParams);
+      matrixLayout.addView(row, rowParams);
     }
   }
 
