@@ -113,31 +113,23 @@ public class MatrixActivity extends AbstractPreviewActivity {
   private void addCameraViews() {
     if (cameraViews == null) return;
     int numberOfCameras = cameraViews.size();
-    int numberOfRows = (int) Math.sqrt(numberOfCameras);
+    int rows = (int) Math.sqrt(numberOfCameras);
     // https://stackoverflow.com/a/2745086
-    int numberOfColumns = (numberOfCameras + numberOfRows - 1) / numberOfRows;
+    int columns = (numberOfCameras + rows - 1) / rows;
     int orientation = getResources().getConfiguration().orientation;
     if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-      int temp = numberOfRows;
-      numberOfRows = numberOfColumns;
-      numberOfColumns = temp;
+      columns = rows;
     }
     LinearLayout matrixLayout = getPreview();
-    LinearLayout.LayoutParams colParams =
-        new LinearLayout.LayoutParams(0, MATCH_PARENT);
+    LinearLayout.LayoutParams colParams = new LinearLayout.LayoutParams(0, MATCH_PARENT);
     colParams.weight = 1;
-    LinearLayout.LayoutParams rwoParams =
-        new LinearLayout.LayoutParams(MATCH_PARENT, 0);
+    LinearLayout.LayoutParams rwoParams = new LinearLayout.LayoutParams(MATCH_PARENT, 0);
     rwoParams.weight = 1;
-    for (int i = 0; i < numberOfRows; i++) {
+    for (int start = 0; start < numberOfCameras; start += columns) {
       LinearLayout row = new LinearLayout(this);
-      for (int j = 0; j < numberOfColumns; j++) {
-        int idx = i * numberOfColumns + j;
-        if (idx >= numberOfCameras) {
-          break;
-        }
-        CameraView view = cameraViews.get(idx);
-        row.addView(view, colParams);
+      int end = Math.min(start + columns, numberOfCameras);
+      for (int i = start; i < end; i++) {
+        row.addView(cameraViews.get(i), colParams);
       }
       matrixLayout.addView(row, rwoParams);
     }
