@@ -113,8 +113,9 @@ public class MatrixActivity extends AbstractPreviewActivity {
   private void addCameraViews() {
     if (cameraViews == null) return;
     int numberOfCameras = cameraViews.size();
-    int numberOfRows = (int) Math.floor(Math.sqrt(numberOfCameras));
-    int numberOfColumns = (int) Math.ceil((double) numberOfCameras / numberOfRows);
+    int numberOfRows = (int) Math.sqrt(numberOfCameras);
+    // https://stackoverflow.com/a/2745086
+    int numberOfColumns = (numberOfCameras + numberOfRows - 1) / numberOfRows;
     int orientation = getResources().getConfiguration().orientation;
     if (orientation == Configuration.ORIENTATION_PORTRAIT) {
       int temp = numberOfRows;
