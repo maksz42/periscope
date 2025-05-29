@@ -140,7 +140,6 @@ public class MatrixActivity extends AbstractPreviewActivity {
       }
       matrixLayout.addView(row, rwoParams);
     }
-    setPreview(matrixLayout);
   }
 
   private void removeCameraViews() {
