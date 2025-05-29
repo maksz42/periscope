@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
@@ -126,19 +127,30 @@ public class MatrixActivity extends AbstractPreviewActivity {
     LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(MATCH_PARENT, 0);
     rowParams.weight = 1;
     for (int start = 0; start < numberOfCameras; start += columns) {
-      LinearLayout row = new LinearLayout(this);
       int end = Math.min(start + columns, numberOfCameras);
-      for (int i = start; i < end; i++) {
-        row.addView(cameraViews.get(i), colParams);
-      }
+      View row = createRow(start, end, colParams);
       matrixLayout.addView(row, rowParams);
     }
+  }
+
+  private View createRow(int start, int end, LinearLayout.LayoutParams colParams) {
+    if (end - start == 1) {
+      // don't wrap if only 1 camera in row
+      return cameraViews.get(start);
+    }
+    LinearLayout row = new LinearLayout(this);
+    for (int i = start; i < end; i++) {
+      row.addView(cameraViews.get(i), colParams);
+    }
+    return row;
   }
 
   private void removeCameraViews() {
     LinearLayout matrixLayout = getPreview();
     for (int i = 0; i < matrixLayout.getChildCount(); i++) {
-      ((ViewGroup) matrixLayout.getChildAt(i)).removeAllViews();
+      View row = matrixLayout.getChildAt(i);
+      if (row instanceof CameraView) continue;
+      ((ViewGroup) row).removeAllViews();
     }
     matrixLayout.removeAllViews();
   }
