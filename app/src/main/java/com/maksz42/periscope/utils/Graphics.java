@@ -17,8 +17,8 @@ public final class Graphics {
       dstH = limitH;
       dstW = (srcW * limitH) / srcH;
     }
-    int left = (limitW - dstW) / 2;
-    int top = (limitH - dstH) / 2;
+    int left = (limitW - dstW) >>> 1;
+    int top = (limitH - dstH) >>> 1;
     dstRect.set(left, top, left + dstW, top + dstH);
   }
 }
