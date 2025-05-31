@@ -4,6 +4,7 @@ package com.maksz42.periscope.ui.cameradisplayimpl;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.view.View;
@@ -19,6 +20,13 @@ public class BitmapDisplay extends View implements CameraDisplay {
   private final FrameBuffer frameBuffer;
   private final boolean ignoreAspectRatio;
   private final Rect dstRect = new Rect();
+  private final Rect blackBarLeftTop = new Rect();
+  private final Rect blackBarRightBottom = new Rect();
+
+  {
+    paint.setStyle(Paint.Style.FILL);
+    paint.setColor(Color.BLACK);
+  }
 
   public BitmapDisplay(Context context, boolean ignoreAspectRatio, FrameBuffer buffer) {
     super(context);
@@ -42,6 +50,7 @@ public class BitmapDisplay extends View implements CameraDisplay {
     try {
       Bitmap bitmap = frameBuffer.getFrame();
       if (bitmap == null) {
+        canvas.drawColor(Color.BLACK);
         return;
       }
       int vw = getWidth();
@@ -52,9 +61,13 @@ public class BitmapDisplay extends View implements CameraDisplay {
       } else {
         int bw = bitmap.getWidth();
         int bh = bitmap.getHeight();
-        Graphics.scaleRectKeepRatio(bw, bh, vw, vh, dstRect);
+        Graphics.scaleRectKeepRatio(
+            bw, bh, vw, vh, dstRect, blackBarLeftTop, blackBarRightBottom
+        );
       }
       canvas.drawBitmap(bitmap, null, dstRect, paint);
+      canvas.drawRect(blackBarLeftTop, paint);
+      canvas.drawRect(blackBarRightBottom, paint);
     } finally {
       frameBuffer.unlock();
     }

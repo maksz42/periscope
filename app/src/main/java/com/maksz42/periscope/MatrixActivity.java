@@ -63,7 +63,6 @@ public class MatrixActivity extends AbstractPreviewActivity {
           try {
             List<String> cameraNames = config.getCameras();
             runOnUiThread(() -> {
-              showWallpaperMsg(null);
               initCameraViews(cameraNames.subList(0, Math.min(4, cameraNames.size())));
               addCameraViews();
               startPreview();
@@ -196,6 +195,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
   }
 
   private void startPreview() {
+    showWallpaperMsg(null);
     long interval = Settings.getInstance(this).getInterval();
     int numberOfCameras = cameraViews.size();
     long timeShift = interval / numberOfCameras;

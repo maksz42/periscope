@@ -5,24 +5,43 @@ import android.graphics.Rect;
 public final class Graphics {
   private Graphics() { }
 
-  public static void scaleRectKeepRatio(int srcW, int srcH, int limitW, int limitH, Rect dstRect) {
+  public static void scaleRectKeepRatio(int srcW, int srcH, int limitW, int limitH, Rect outDstRect) {
+    scaleRectKeepRatio(srcW, srcH, limitW, limitH, outDstRect, null, null);
+  }
+
+  public static void scaleRectKeepRatio(
+      int srcW, int srcH, int limitW, int limitH,
+      Rect outDstRect, Rect outBarLeftTop, Rect outBarRightBottom
+  ) {
     int dstW, dstH;
-    int left, top, right, bottom;
+    int dstLeft, dstTop, dstRight, dstBottom;
     if (srcW * limitH > srcH * limitW) {
       // width limit
       dstH = (srcH * limitW) / srcW;
-      left = 0;
-      top = (limitH - dstH) >>> 1;
-      right = limitW;
-      bottom = top + dstH;
+      dstLeft = 0;
+      dstTop = (limitH - dstH) >>> 1;
+      dstRight = limitW;
+      dstBottom = dstTop + dstH;
+      if (outBarLeftTop != null) {
+        outBarLeftTop.set(0, 0, dstRight, dstTop);
+      }
+      if (outBarRightBottom != null) {
+        outBarRightBottom.set(0, dstBottom, dstRight, limitH);
+      }
     } else {
       // height limit
       dstW = (srcW * limitH) / srcH;
-      left = (limitW - dstW) >>> 1;
-      top = 0;
-      right = left + dstW;
-      bottom = limitH;
+      dstLeft = (limitW - dstW) >>> 1;
+      dstTop = 0;
+      dstRight = dstLeft + dstW;
+      dstBottom = limitH;
+      if (outBarLeftTop != null) {
+        outBarLeftTop.set(0, 0, dstLeft, dstBottom);
+      }
+      if (outBarRightBottom != null) {
+        outBarRightBottom.set(dstRight, 0, limitW, dstBottom);
+      }
     }
-    dstRect.set(left, top, right, bottom);
+    outDstRect.set(dstLeft, dstTop, dstRight, dstBottom);
   }
 }

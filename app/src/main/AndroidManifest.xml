@@ -22,7 +22,7 @@
 
         <activity
             android:name=".MatrixActivity"
-            android:theme="@android:style/Theme.Black.NoTitleBar"
+            android:theme="@style/Theme.Black.NoTitleBar.NoBackground"
             android:launchMode="singleTask"
             android:configChanges="orientation|screenLayout|screenSize"
             android:exported="true">
@@ -34,7 +34,7 @@
         </activity>
         <activity
             android:name=".SingleCameraActivity"
-            android:theme="@android:style/Theme.Black.NoTitleBar"
+            android:theme="@style/Theme.Black.NoTitleBar.NoBackground"
             android:configChanges="orientation|screenLayout|screenSize"
             android:exported="true" />
         <activity
