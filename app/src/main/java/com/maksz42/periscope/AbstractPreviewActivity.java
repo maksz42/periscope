@@ -312,12 +312,18 @@ public abstract class AbstractPreviewActivity extends Activity {
     }
   }
 
+  protected boolean shouldIgnoreFirstKey(int keyCode) {
+    return true;
+  }
+
   @Override
   public boolean dispatchKeyEvent(KeyEvent event) {
     scheduleUIHide();
     if (findViewById(R.id.floating_bar).getVisibility() != VISIBLE) {
       setUIVisible(true);
-      return true;
+      if (shouldIgnoreFirstKey(event.getKeyCode())) {
+        return true;
+      }
     }
     return super.dispatchKeyEvent(event);
   }

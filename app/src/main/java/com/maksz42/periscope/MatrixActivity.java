@@ -2,10 +2,12 @@ package com.maksz42.periscope;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -291,6 +293,35 @@ public class MatrixActivity extends AbstractPreviewActivity {
     super.onConfigurationChanged(newConfig);
     removeCameraViews();
     addCameraViews();
+  }
+
+  @SuppressLint("InlinedApi")
+  @Override
+  protected boolean shouldIgnoreFirstKey(int keyCode) {
+    return (keyCode < KeyEvent.KEYCODE_1 || keyCode > KeyEvent.KEYCODE_9) &&
+        (keyCode < KeyEvent.KEYCODE_NUMPAD_1 || keyCode > KeyEvent.KEYCODE_NUMPAD_9);
+  }
+
+  @SuppressLint("InlinedApi")
+  @Override
+  public boolean onKeyDown(int keyCode, KeyEvent event) {
+    if (cameraViews != null && !cameraViews.isEmpty()) {
+      int idx = -1;
+      if (keyCode >= KeyEvent.KEYCODE_1 && keyCode <= KeyEvent.KEYCODE_9) {
+        idx = keyCode - KeyEvent.KEYCODE_1;
+      } else if (keyCode >= KeyEvent.KEYCODE_NUMPAD_1 && keyCode <= KeyEvent.KEYCODE_NUMPAD_9) {
+        idx = keyCode - KeyEvent.KEYCODE_NUMPAD_1;
+      }
+      if (idx >= 0) {
+        int size = cameraViews.size();
+        if (idx >= size) {
+          idx = size - 1;
+        }
+        cameraViews.get(idx).requestFocus();
+        return true;
+      }
+    }
+    return super.onKeyDown(keyCode, event);
   }
 
   @Override
