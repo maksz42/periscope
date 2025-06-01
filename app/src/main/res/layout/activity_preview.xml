@@ -1,17 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
-<!--    TODO figure out a better way-->
-<!--    This hack places a pixel off-screen to capture next focus left/up-->
-<!--    and redirect it to the floating bar-->
-<!--    for android tv and keyboard control-->
-    <View
-        android:layout_width="1px"
-        android:layout_height="1px"
-        android:layout_marginLeft="-1px"
-        android:layout_marginTop="-1px"
-        android:focusable="true"
-        android:id="@+id/dummy_menu_focus_grabber" />
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"

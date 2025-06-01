@@ -109,6 +109,42 @@ public class MatrixActivity extends AbstractPreviewActivity {
     }
   }
 
+  private void configureFocusLandscape(ViewGroup matrixLayout) {
+    for (int i = 0; i < matrixLayout.getChildCount(); i++) {
+      View child = matrixLayout.getChildAt(i);
+      if (child instanceof CameraView) {
+        child.setNextFocusLeftId((i == 0) ? R.id.preferences_button : View.NO_ID);
+        child.setNextFocusUpId(R.id.preferences_button);
+      } else {
+        ViewGroup wrapper = (ViewGroup) child;
+        for (int j = 0; j < wrapper.getChildCount(); j++) {
+          View cam = wrapper.getChildAt(j);
+          cam.setNextFocusUpId((i == 0) ? R.id.preferences_button : View.NO_ID);
+          cam.setNextFocusLeftId(View.NO_ID);
+        }
+        wrapper.getChildAt(0).setNextFocusLeftId(R.id.preferences_button);
+      }
+    }
+  }
+
+  private void configureFocusPortrait(ViewGroup matrixLayout) {
+    for (int i = 0; i < matrixLayout.getChildCount(); i++) {
+      View child = matrixLayout.getChildAt(i);
+      if (child instanceof CameraView) {
+        child.setNextFocusUpId((i == 0) ? R.id.preferences_button : View.NO_ID);
+        child.setNextFocusLeftId(R.id.preferences_button);
+      } else {
+        ViewGroup wrapper = (ViewGroup) child;
+        for (int j = 0; j < wrapper.getChildCount(); j++) {
+          View cam = wrapper.getChildAt(j);
+          cam.setNextFocusLeftId((i == 0) ? R.id.preferences_button : View.NO_ID);
+          cam.setNextFocusUpId(View.NO_ID);
+        }
+        wrapper.getChildAt(0).setNextFocusUpId(R.id.preferences_button);
+      }
+    }
+  }
+
   private void addCameraViews() {
     if (cameraViews == null) return;
     int totalCams = cameraViews.size();
@@ -127,12 +163,14 @@ public class MatrixActivity extends AbstractPreviewActivity {
       } else {
         columnMatrix(totalCams, columns, matrixLayout, colParams, rowParams);
       }
+      configureFocusLandscape(matrixLayout);
     } else {
       if (rows != 1 && rows * columns == totalCams) {
         columnMatrix(totalCams, rows, matrixLayout, colParams, rowParams);
       } else {
         rowMatrix(totalCams, rows, matrixLayout, colParams, rowParams);
       }
+      configureFocusPortrait(matrixLayout);
     }
   }
 

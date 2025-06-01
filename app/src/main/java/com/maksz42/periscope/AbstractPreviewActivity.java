@@ -2,6 +2,7 @@ package com.maksz42.periscope;
 
 import static android.view.View.FOCUS_LEFT;
 import static android.view.View.GONE;
+import static android.view.View.NO_ID;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
@@ -64,15 +65,10 @@ public abstract class AbstractPreviewActivity extends Activity {
     // postDelayed() and the theme is @android:style/Theme(.*)
     // On my physical devices it doesn't matter
     getWindow().addFlags(FLAG_KEEP_SCREEN_ON | FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-    addFloatingButton(android.R.drawable.ic_menu_preferences, SettingsActivity.class);
+    addFloatingButton(android.R.drawable.ic_menu_preferences, R.id.preferences_button, SettingsActivity.class);
 
     // This is a hack for android tv for navigating in and out of the floating bar
     findViewById(R.id.floating_bar).requestFocus();
-    findViewById(R.id.dummy_menu_focus_grabber).setOnFocusChangeListener((v, hasFocus) -> {
-      if (hasFocus) {
-        findViewById(R.id.floating_bar).requestFocus();
-      }
-    });
     View.OnFocusChangeListener fcl = (v, hasFocus) -> {
       if (!hasFocus) return;
       if (hasFocusableCameraView()) {
@@ -202,10 +198,18 @@ public abstract class AbstractPreviewActivity extends Activity {
   }
 
   protected void addFloatingButton(int drawableResID, Class<?> cls) {
-    addFloatingButton(drawableResID, v -> startActivity(new Intent(this, cls)));
+    addFloatingButton(drawableResID, NO_ID, cls);
+  }
+
+  protected void addFloatingButton(int drawableResID, int id, Class<?> cls) {
+    addFloatingButton(drawableResID, id, v -> startActivity(new Intent(this, cls)));
   }
 
   protected void addFloatingButton(int drawableResID, View.OnClickListener listener) {
+    addFloatingButton(drawableResID, NO_ID, listener);
+  }
+
+  protected void addFloatingButton(int drawableResID, int id, View.OnClickListener listener) {
     Resources res = getResources();
     int size = res.getDimensionPixelSize(R.dimen.floating_button_size);
     int padding = res.getDimensionPixelSize(R.dimen.floating_button_padding);
@@ -215,6 +219,7 @@ public abstract class AbstractPreviewActivity extends Activity {
     btn.setImageResource(drawableResID);
     btn.setScaleType(ImageView.ScaleType.FIT_CENTER);
     btn.setOnClickListener(listener);
+    btn.setId(id);
     // TODO find a better way
     btn.setOnKeyListener((v, keyCode, event) -> {
       if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
