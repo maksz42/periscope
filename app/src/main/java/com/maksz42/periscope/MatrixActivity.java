@@ -39,7 +39,6 @@ public class MatrixActivity extends AbstractPreviewActivity {
     addFloatingButton(android.R.drawable.ic_menu_sort_by_size, CamerasOrderActivity.class);
 
     LinearLayout matrixLayout = new LinearLayout(this);
-    matrixLayout.setOrientation(LinearLayout.VERTICAL);
     setPreview(matrixLayout);
 
     checkForUpdates(10_000);
@@ -112,44 +111,81 @@ public class MatrixActivity extends AbstractPreviewActivity {
 
   private void addCameraViews() {
     if (cameraViews == null) return;
-    int numberOfCameras = cameraViews.size();
-    int rows = (int) Math.sqrt(numberOfCameras);
+    int totalCams = cameraViews.size();
+    int rows = (int) Math.sqrt(totalCams);
     // https://stackoverflow.com/a/2745086
-    int columns = (numberOfCameras + rows - 1) / rows;
-    int orientation = getResources().getConfiguration().orientation;
-    if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-      columns = rows;
-    }
+    int columns = (totalCams + rows - 1) / rows;
     LinearLayout matrixLayout = getPreview();
     LinearLayout.LayoutParams colParams = new LinearLayout.LayoutParams(0, MATCH_PARENT);
     colParams.weight = 1;
     LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(MATCH_PARENT, 0);
     rowParams.weight = 1;
-    for (int start = 0; start < numberOfCameras; start += columns) {
-      int end = Math.min(start + columns, numberOfCameras);
-      View row = createRow(start, end, colParams);
+    int orientation = getResources().getConfiguration().orientation;
+    if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+      if (rows != 1) {
+        rowMatrix(totalCams, columns, matrixLayout, colParams, rowParams);
+      } else {
+        columnMatrix(totalCams, columns, matrixLayout, colParams, rowParams);
+      }
+    } else {
+      if (rows != 1 && rows * columns == totalCams) {
+        columnMatrix(totalCams, rows, matrixLayout, colParams, rowParams);
+      } else {
+        rowMatrix(totalCams, rows, matrixLayout, colParams, rowParams);
+      }
+    }
+  }
+
+  private void rowMatrix(
+      int totalCams,
+      int columns,
+      LinearLayout matrixLayout,
+      LinearLayout.LayoutParams colParams,
+      LinearLayout.LayoutParams rowParams
+  ) {
+    matrixLayout.setOrientation(LinearLayout.VERTICAL);
+    for (int start = 0; start < totalCams; start += columns) {
+      int end = Math.min(start + columns, totalCams);
+      View row = createWrapper(start, end, 1, LinearLayout.HORIZONTAL, colParams);
       matrixLayout.addView(row, rowParams);
     }
   }
 
-  private View createRow(int start, int end, LinearLayout.LayoutParams colParams) {
+  private void columnMatrix(
+      int totalCams,
+      int columns,
+      LinearLayout matrixLayout,
+      LinearLayout.LayoutParams colParams,
+      LinearLayout.LayoutParams rowParams
+  ) {
+    matrixLayout.setOrientation(LinearLayout.HORIZONTAL);
+    int offset = totalCams - columns + 1;
+    for (int start = 0; start < columns; start++) {
+      int end = start + offset;
+      View column = createWrapper(start, end, columns, LinearLayout.VERTICAL, rowParams);
+      matrixLayout.addView(column, colParams);
+    }
+  }
+
+  private View createWrapper(int start, int end, int step, int orientation, LinearLayout.LayoutParams params) {
     if (end - start == 1) {
       // don't wrap if only 1 camera in row
       return cameraViews.get(start);
     }
-    LinearLayout row = new LinearLayout(this);
-    for (int i = start; i < end; i++) {
-      row.addView(cameraViews.get(i), colParams);
+    LinearLayout wrapper = new LinearLayout(this);
+    wrapper.setOrientation(orientation);
+    for (int i = start; i < end; i += step) {
+      wrapper.addView(cameraViews.get(i), params);
     }
-    return row;
+    return wrapper;
   }
 
   private void removeCameraViews() {
     LinearLayout matrixLayout = getPreview();
     for (int i = 0; i < matrixLayout.getChildCount(); i++) {
-      View row = matrixLayout.getChildAt(i);
-      if (row instanceof CameraView) continue;
-      ((ViewGroup) row).removeAllViews();
+      View wrapper = matrixLayout.getChildAt(i);
+      if (wrapper instanceof CameraView) continue;
+      ((ViewGroup) wrapper).removeAllViews();
     }
     matrixLayout.removeAllViews();
   }
