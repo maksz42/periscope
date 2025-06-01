@@ -267,6 +267,9 @@ public class MatrixActivity extends AbstractPreviewActivity {
       Log.d("MatrixActivity", "Player mismatch");
       cachedPlayer.shutdown();
     }
+    if (!cameraViews.isEmpty()) {
+      cameraViews.get(0).setId(R.id.focus_camera_view);
+    }
     this.cameraViews = cameraViews;
   }
 

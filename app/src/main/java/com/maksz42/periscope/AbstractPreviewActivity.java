@@ -67,18 +67,7 @@ public abstract class AbstractPreviewActivity extends Activity {
     getWindow().addFlags(FLAG_KEEP_SCREEN_ON | FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
     addFloatingButton(android.R.drawable.ic_menu_preferences, R.id.preferences_button, SettingsActivity.class);
 
-    // This is a hack for android tv for navigating in and out of the floating bar
     findViewById(R.id.floating_bar).requestFocus();
-    View.OnFocusChangeListener fcl = (v, hasFocus) -> {
-      if (!hasFocus) return;
-      if (hasFocusableCameraView()) {
-        getPreview().requestFocus();
-      } else {
-        v.focusSearch(FOCUS_LEFT).requestFocus();
-      }
-    };
-    findViewById(R.id.dummy_preview_focus_grabber_1).setOnFocusChangeListener(fcl);
-    findViewById(R.id.dummy_preview_focus_grabber_2).setOnFocusChangeListener(fcl);
 
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
       return;
@@ -220,17 +209,16 @@ public abstract class AbstractPreviewActivity extends Activity {
     btn.setScaleType(ImageView.ScaleType.FIT_CENTER);
     btn.setOnClickListener(listener);
     btn.setId(id);
-    // TODO find a better way
-    btn.setOnKeyListener((v, keyCode, event) -> {
-      if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-        return true;
-      }
-      return keyCode == KeyEvent.KEYCODE_DPAD_DOWN && !hasFocusableCameraView();
-    });
+    btn.setNextFocusDownId(R.id.focus_camera_view);
+    btn.setNextFocusRightId(R.id.focus_camera_view);
     LinearLayout floatingBar = findViewById(R.id.floating_bar);
+    int childCount = floatingBar.getChildCount();
+    if (childCount > 0) {
+      floatingBar.getChildAt(childCount - 1).setNextFocusRightId(NO_ID);
+    }
     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
     params.rightMargin = margin;
-    floatingBar.addView(btn, floatingBar.getChildCount() - 2, params);
+    floatingBar.addView(btn, params);
   }
 
   protected <T extends View> T getPreview() {

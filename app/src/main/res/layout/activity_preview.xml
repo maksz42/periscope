@@ -22,22 +22,5 @@
         android:paddingLeft="10dp"
         android:paddingTop="10dp"
         android:id="@+id/floating_bar"
-        >
-        <!--    TODO figure out a better way-->
-        <!--    This hack places 2 dummy views to capture next-->
-        <!--    focus right/down and redirect it to the preview view-->
-        <!--    for android tv and keyboard control-->
-        <View
-            android:layout_width="1px"
-            android:layout_height="1px"
-            android:layout_marginBottom="-1px"
-            android:focusable="true"
-            android:layout_gravity="bottom"
-            android:id="@+id/dummy_preview_focus_grabber_1" />
-        <View
-            android:layout_width="1px"
-            android:layout_height="1px"
-            android:focusable="true"
-            android:id="@+id/dummy_preview_focus_grabber_2" />
-    </LinearLayout>
+        />
 </merge>
