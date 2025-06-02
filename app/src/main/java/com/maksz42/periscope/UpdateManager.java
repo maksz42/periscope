@@ -50,15 +50,7 @@ public class UpdateManager {
 
   private final static String TAG = "UpdateManager";
   private final static String APK_NAME = "periscope.apk.gz";
-  private final static URL UPDATE_URL;
-
-  static {
-    try {
-      UPDATE_URL = new URL("http://periscope.freeddns.org/latest/");
-    } catch (MalformedURLException e) {
-      throw new RuntimeException("WTF", e);
-    }
-  }
+  private final static String UPDATE_URL = "http://periscope.freeddns.org/latest/";
 
   private final WeakReference<Context> ContextRef;
 
@@ -78,7 +70,7 @@ public class UpdateManager {
         new File(context.getFilesDir(), APK_NAME).delete();
       }
       try {
-        URL url = new URL(UPDATE_URL, "version_code");
+        URL url = new URL(UPDATE_URL + "version_code");
         String resp;
         try (InputStream is = Net.openStreamWithTimeout(url)) {
           resp = IO.readAllText(is);
@@ -88,13 +80,13 @@ public class UpdateManager {
           return;
         }
 
-        url = new URL(UPDATE_URL, "version_name");
+        url = new URL(UPDATE_URL + "version_name");
         try (InputStream is = Net.openStreamWithTimeout(url)) {
           resp = IO.readAllText(is);
         }
         String versionName = resp;
 
-        url = new URL(UPDATE_URL, "changelog");
+        url = new URL(UPDATE_URL + "changelog");
         try (InputStream is = Net.openStreamWithTimeout(url)) {
           resp = IO.readAllText(is);
         }
@@ -112,7 +104,7 @@ public class UpdateManager {
       Context context = ContextRef.get();
       if (context == null) return;
       try {
-        URL url = new URL(UPDATE_URL, APK_NAME);
+        URL url = new URL(UPDATE_URL + APK_NAME);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
           installNewMethod(context, url);
         } else {
