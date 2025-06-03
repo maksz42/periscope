@@ -161,10 +161,16 @@ public class CameraView extends FrameLayout {
     setLoading(false);
   }
 
+  public void attachPlayer(CameraPlayer player) {
+    cameraPlayer = player;
+  }
+
   public CameraPlayer detachPlayer() {
     CameraPlayer player = cameraPlayer;
-    cameraPlayer = null;
-    player.halt();
+    if (player != null) {
+      cameraPlayer = null;
+      player.halt();
+    }
     return player;
   }
 

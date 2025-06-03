@@ -33,6 +33,7 @@ import javax.net.ssl.SSLException;
 public class MatrixActivity extends AbstractPreviewActivity {
   private List<CameraView> cameraViews;
   private volatile boolean refreshing;
+  private CameraView haltedCameraView;
 
 
   @Override
@@ -50,6 +51,18 @@ public class MatrixActivity extends AbstractPreviewActivity {
   protected void onRestart() {
     super.onRestart();
     checkForUpdates(4_000);
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    if (haltedCameraView != null) {
+      String name = haltedCameraView.getMedia().getName();
+      CameraPlayer player = CameraPlayerHolder.getAndClear(name);
+      haltedCameraView.attachPlayer(player);
+      haltedCameraView.start(0, Settings.getInstance(this).getInterval());
+      haltedCameraView = null;
+    }
   }
 
   @Override
@@ -101,6 +114,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
     stopPreview();
     removeCameraViews();
     cameraViews = null;
+    haltedCameraView = null;
   }
 
   @Override
@@ -255,6 +269,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
       );
       cameraView.setOnClickListener(v -> {
         CameraView cv = (CameraView) v;
+        haltedCameraView = cv;
         CameraPlayerHolder.set(cv.detachPlayer());
         Intent intent = new Intent(this, SingleCameraActivity.class);
         intent.putExtra("camera_name", cv.getMedia().getName());
