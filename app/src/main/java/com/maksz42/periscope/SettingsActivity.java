@@ -72,6 +72,10 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
       return true;
     });
 
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+      getPreferenceScreen().removePreference(findPreference(settings.HideNavBarKey));
+    }
+
     getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.custom_settings_title_bar);
     TextView title = findViewById(R.id.title);
     title.setText(R.string.settings_activity_label);

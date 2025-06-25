@@ -1,6 +1,5 @@
 package com.maksz42.periscope;
 
-import static android.view.View.FOCUS_LEFT;
 import static android.view.View.GONE;
 import static android.view.View.NO_ID;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
@@ -108,6 +107,15 @@ public abstract class AbstractPreviewActivity extends Activity {
   protected void onStart() {
     super.onStart();
     scheduleUIHide();
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      Settings settings = Settings.getInstance(this);
+      if (!settings.getHideStatusBar() || !settings.getHideNavBar()) {
+        setupSystemUIListener();
+      } else {
+        removeSystemUIListener();
+      }
+    }
   }
 
   @Override
@@ -146,6 +154,11 @@ public abstract class AbstractPreviewActivity extends Activity {
     });
   }
 
+  @RequiresApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+  private void removeSystemUIListener() {
+    getWindow().getDecorView().setOnSystemUiVisibilityChangeListener(null);
+  }
+
   private void scheduleUIHide() {
     handler.removeCallbacks(hideUIAction);
     handler.postDelayed(hideUIAction, UI_TIME);
@@ -167,21 +180,32 @@ public abstract class AbstractPreviewActivity extends Activity {
 
   @SuppressLint("InlinedApi")
   private void setSystemUIVisible(boolean visible) {
+    Settings settings = Settings.getInstance(this);
+    boolean hideStatusBar = settings.getHideStatusBar();
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
       int flags = 0;
       if (!visible) {
-        flags = SYSTEM_UI_FLAG_FULLSCREEN
-              | SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-          // SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN can only be set on devices
-          // that support immersive mode, so that the app is responsible
-          // hiding/showing system bars
-          flags |= SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                 | SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        boolean hideNavBar = settings.getHideNavBar();
+        if (hideStatusBar) {
+          flags |= SYSTEM_UI_FLAG_FULLSCREEN;
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            // SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN can only be set on devices
+            // that support immersive mode, so that the app is responsible
+            // hiding/showing system bars
+            flags |= SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+          }
+        }
+        if (hideNavBar) {
+          flags |= SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
+            && hideStatusBar
+            && hideNavBar) {
+          flags |= SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
         }
       }
       getWindow().getDecorView().setSystemUiVisibility(flags);
-    } else {
+    } else if (hideStatusBar) {
       getWindow().setFlags(visible ? 0 : FLAG_FULLSCREEN, FLAG_FULLSCREEN);
     }
   }

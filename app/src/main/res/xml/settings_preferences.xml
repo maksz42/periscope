@@ -64,6 +64,16 @@
         android:key="@string/ignore_aspect_ratio_key"
         />
     <CheckBoxPreference
+        android:title="@string/hide_status_bar"
+        android:key="@string/hide_status_bar_key"
+        android:defaultValue="true"
+        />
+    <CheckBoxPreference
+        android:title="@string/hide_nav_bar"
+        android:key="@string/hide_nav_bar_key"
+        android:defaultValue="true"
+        />
+    <CheckBoxPreference
         android:title="@string/autostart"
         android:key="@string/autostart_key"
         android:summary="@string/autostart_new_devices_warning"

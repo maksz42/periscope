@@ -15,4 +15,6 @@
     <string name="disable_cert_verification_key" translatable="false">disable_cert_verification</string>
     <string name="next_update_check_time_key" translatable="false">next_update_check_time</string>
     <string name="autostart_key" translatable="false">autostart</string>
+    <string name="hide_status_bar_key" translatable="false">hide_status_bar</string>
+    <string name="hide_nav_bar_key" translatable="false">hide_nav_bar</string>
 </resources>

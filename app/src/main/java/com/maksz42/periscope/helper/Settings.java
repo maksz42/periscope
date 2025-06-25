@@ -38,6 +38,8 @@ public class Settings {
   public final String DisableCertVerificationKey;
   public final String NextUpdateCheckTimeKey;
   public final String AutostartKey;
+  public final String HideStatusBarKey;
+  public final String HideNavBarKey;
 
   /**
    * not thread-safe, expected to be called on the UI thread
@@ -75,6 +77,8 @@ public class Settings {
     DisableCertVerificationKey = res.getString(R.string.disable_cert_verification_key);
     NextUpdateCheckTimeKey = res.getString(R.string.next_update_check_time_key);
     AutostartKey = res.getString(R.string.autostart_key);
+    HideStatusBarKey = res.getString(R.string.hide_status_bar_key);
+    HideNavBarKey = res.getString(R.string.hide_nav_bar_key);
   }
 
   private boolean getBoolean(String key) {
@@ -247,6 +251,24 @@ public class Settings {
 
   public Settings setAutostart(boolean value) {
     setBoolean(AutostartKey, value);
+    return this;
+  }
+
+  public boolean getHideStatusBar() {
+    return getBoolean(HideStatusBarKey);
+  }
+
+  public Settings setHideStatusBar(boolean value) {
+    setBoolean(HideStatusBarKey, value);
+    return this;
+  }
+
+  public boolean getHideNavBar() {
+    return getBoolean(HideNavBarKey);
+  }
+
+  public Settings setHideNavBar(boolean value) {
+    setBoolean(HideNavBarKey, value);
     return this;
   }
 }
