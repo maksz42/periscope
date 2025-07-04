@@ -1,5 +1,5 @@
 [versions]
-agp = "8.9.3"
+agp = "8.11.0"
 conscryptAndroid = "2.5.3"
 junit = "4.13.2"
 junitVersion = "1.2.1"
