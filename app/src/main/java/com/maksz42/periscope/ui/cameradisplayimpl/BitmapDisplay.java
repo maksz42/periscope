@@ -20,18 +20,23 @@ public class BitmapDisplay extends View implements CameraDisplay {
   private final FrameBuffer frameBuffer;
   private final boolean ignoreAspectRatio;
   private final Rect dstRect = new Rect();
-  private final Rect blackBarLeftTop = new Rect();
-  private final Rect blackBarRightBottom = new Rect();
+  private final Rect blackBarLeftTop;
+  private final Rect blackBarRightBottom;
 
-  {
-    paint.setStyle(Paint.Style.FILL);
-    paint.setColor(Color.BLACK);
-  }
 
   public BitmapDisplay(Context context, boolean ignoreAspectRatio, FrameBuffer buffer) {
     super(context);
     this.ignoreAspectRatio = ignoreAspectRatio;
     this.frameBuffer = (buffer != null) ? buffer : FrameBuffer.newNonBlockingFrameBuffer();
+    if (ignoreAspectRatio) {
+      this.blackBarLeftTop = null;
+      this.blackBarRightBottom = null;
+    } else {
+      this.blackBarLeftTop = new Rect();
+      this.blackBarRightBottom = new Rect();
+      paint.setStyle(Paint.Style.FILL);
+      paint.setColor(Color.BLACK);
+    }
   }
 
   @Override
@@ -64,10 +69,10 @@ public class BitmapDisplay extends View implements CameraDisplay {
         Graphics.scaleRectKeepRatio(
             bw, bh, vw, vh, dstRect, blackBarLeftTop, blackBarRightBottom
         );
+        canvas.drawRect(blackBarLeftTop, paint);
+        canvas.drawRect(blackBarRightBottom, paint);
       }
       canvas.drawBitmap(bitmap, null, dstRect, paint);
-      canvas.drawRect(blackBarLeftTop, paint);
-      canvas.drawRect(blackBarRightBottom, paint);
     } finally {
       frameBuffer.unlock();
     }
