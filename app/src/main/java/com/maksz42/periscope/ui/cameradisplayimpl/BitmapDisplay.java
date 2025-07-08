@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.os.Build;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -66,11 +67,16 @@ public class BitmapDisplay extends View implements CameraDisplay {
       } else {
         int bw = bitmap.getWidth();
         int bh = bitmap.getHeight();
-        Graphics.scaleRectKeepRatio(
-            bw, bh, vw, vh, dstRect, blackBarLeftTop, blackBarRightBottom
-        );
-        canvas.drawRect(blackBarLeftTop, paint);
-        canvas.drawRect(blackBarRightBottom, paint);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB && canvas.isHardwareAccelerated()) {
+          Graphics.scaleRectKeepRatio(bw, bh, vw, vh, dstRect);
+          canvas.drawColor(Color.BLACK);
+        } else {
+          Graphics.scaleRectKeepRatio(
+              bw, bh, vw, vh, dstRect, blackBarLeftTop, blackBarRightBottom
+          );
+          canvas.drawRect(blackBarLeftTop, paint);
+          canvas.drawRect(blackBarRightBottom, paint);
+        }
       }
       canvas.drawBitmap(bitmap, null, dstRect, paint);
     } finally {
