@@ -45,9 +45,11 @@ public class SurfaceViewDisplay extends SurfaceView
 
   @Override
   public void surfaceCreated(@NonNull SurfaceHolder holder) {
-    drawingThread = ignoreAspectRatio
-        ? newDrawingThreadIgnoreRatio()
-        : newDrawingThreadKeepRatio();
+    drawingThread = new Thread(
+        ignoreAspectRatio
+        ? newDrafterIgnoreRatio()
+        : newDrafterKeepRatio()
+    );
     drawingThread.start();
   }
 
@@ -88,8 +90,8 @@ public class SurfaceViewDisplay extends SurfaceView
     }
   }
 
-  private Thread newDrawingThreadIgnoreRatio() {
-    return new Thread(() -> {
+  private Runnable newDrafterIgnoreRatio() {
+    return () -> {
       Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
       try {
         while (true) {
@@ -108,11 +110,11 @@ public class SurfaceViewDisplay extends SurfaceView
           }
         }
       } catch (InterruptedException ignored) { /* exit loop */ }
-    });
+    };
   }
 
-  private Thread newDrawingThreadKeepRatio() {
-    return new Thread(() -> {
+  private Runnable newDrafterKeepRatio() {
+    return () -> {
       Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
       final Rect currentDstRect = new Rect();
       final Rect prevDstRect = new Rect();
@@ -145,6 +147,6 @@ public class SurfaceViewDisplay extends SurfaceView
           prevDstRect.set(currentDstRect);
         }
       } catch (InterruptedException ignored) { /* exit loop */ }
-    });
+    };
   }
 }
