@@ -5,7 +5,6 @@ import static android.os.Process.THREAD_PRIORITY_MORE_FAVORABLE;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Process;
@@ -116,8 +115,6 @@ public class SurfaceViewDisplay extends SurfaceView
   private Runnable newDrafterKeepRatio() {
     return () -> {
       Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
-      paint.setStyle(Paint.Style.FILL);
-      paint.setColor(Color.BLACK);
       final Rect currentDstRect = new Rect();
       final Rect prevDstRect = new Rect();
       final Rect dirtyRect = new Rect();

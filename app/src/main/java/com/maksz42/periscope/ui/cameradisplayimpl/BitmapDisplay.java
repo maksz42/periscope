@@ -35,8 +35,6 @@ public class BitmapDisplay extends View implements CameraDisplay {
     } else {
       this.blackBarLeftTop = new Rect();
       this.blackBarRightBottom = new Rect();
-      paint.setStyle(Paint.Style.FILL);
-      paint.setColor(Color.BLACK);
     }
   }
 
