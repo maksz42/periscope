@@ -92,6 +92,7 @@ public class SurfaceViewDisplay extends SurfaceView
   private Runnable newDrafterIgnoreRatio() {
     return () -> {
       Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
+      SurfaceHolder holder = getHolder();
       try {
         while (true) {
           waitForBitmap();
@@ -99,7 +100,6 @@ public class SurfaceViewDisplay extends SurfaceView
           try {
             Bitmap frame = frameBuffer.getFrame();
             if (frame == null) continue;
-            SurfaceHolder holder = getHolder();
             Canvas canvas = holder.lockCanvas();
             if (canvas == null) continue;
             canvas.drawBitmap(frame, null, surfaceRect, paint);
@@ -115,6 +115,7 @@ public class SurfaceViewDisplay extends SurfaceView
   private Runnable newDrafterKeepRatio() {
     return () -> {
       Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
+      SurfaceHolder holder = getHolder();
       final Rect currentDstRect = new Rect();
       final Rect prevDstRect = new Rect();
       final Rect dirtyRect = new Rect();
@@ -134,7 +135,6 @@ public class SurfaceViewDisplay extends SurfaceView
             );
             dirtyRect.set(currentDstRect);
             dirtyRect.union(prevDstRect);
-            SurfaceHolder holder = getHolder();
             Canvas canvas = holder.lockCanvas(dirtyRect);
             if (canvas == null) continue;
             if (!dirtyRect.equals(currentDstRect)) {
