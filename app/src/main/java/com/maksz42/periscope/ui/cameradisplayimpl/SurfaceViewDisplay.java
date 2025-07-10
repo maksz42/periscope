@@ -116,9 +116,13 @@ public class SurfaceViewDisplay extends SurfaceView
   private Runnable newDrafterKeepRatio() {
     return () -> {
       Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
+      paint.setStyle(Paint.Style.FILL);
+      paint.setColor(Color.BLACK);
       final Rect currentDstRect = new Rect();
       final Rect prevDstRect = new Rect();
       final Rect dirtyRect = new Rect();
+      final Rect blackBarLeftTop = new Rect();
+      final Rect blackBarRightBottom = new Rect();
       try {
         while (true) {
           waitForBitmap();
@@ -129,7 +133,7 @@ public class SurfaceViewDisplay extends SurfaceView
             Graphics.scaleRectKeepRatio(
                 frame.getWidth(), frame.getHeight(),
                 surfaceRect.right, surfaceRect.bottom,
-                currentDstRect
+                currentDstRect, blackBarLeftTop, blackBarRightBottom
             );
             dirtyRect.set(currentDstRect);
             dirtyRect.union(prevDstRect);
@@ -137,7 +141,8 @@ public class SurfaceViewDisplay extends SurfaceView
             Canvas canvas = holder.lockCanvas(dirtyRect);
             if (canvas == null) continue;
             if (!dirtyRect.equals(currentDstRect)) {
-              canvas.drawColor(Color.BLACK);
+              canvas.drawRect(blackBarLeftTop, paint);
+              canvas.drawRect(blackBarRightBottom, paint);
             }
             canvas.drawBitmap(frame, null, currentDstRect, paint);
             holder.unlockCanvasAndPost(canvas);
