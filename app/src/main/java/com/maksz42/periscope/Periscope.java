@@ -10,6 +10,9 @@ import com.maksz42.periscope.utils.Net;
 import java.net.MalformedURLException;
 
 public class Periscope extends Application {
+  public static final boolean HWUI = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB);
+
+
   @Override
   public void onCreate() {
     super.onCreate();

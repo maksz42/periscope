@@ -22,6 +22,7 @@ import com.maksz42.periscope.frigate.Media;
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.helper.CameraPlayerHolder;
 import com.maksz42.periscope.helper.Settings;
+import com.maksz42.periscope.ui.BlackLinearLayout;
 import com.maksz42.periscope.ui.CameraView;
 
 import java.io.IOException;
@@ -41,7 +42,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
     super.onCreate(savedInstanceState);
     addFloatingButton(android.R.drawable.ic_menu_sort_by_size, CamerasOrderActivity.class);
 
-    LinearLayout matrixLayout = new LinearLayout(this);
+    LinearLayout matrixLayout = new BlackLinearLayout(this);
     setPreview(matrixLayout);
 
     checkForUpdates(10_000);
@@ -244,6 +245,10 @@ public class MatrixActivity extends AbstractPreviewActivity {
     matrixLayout.removeAllViews();
   }
 
+  private boolean shouldDrawBackground(boolean ignoreAspectRatio, CameraView.DisplayImplementation displayImplementation) {
+    return Periscope.HWUI && !ignoreAspectRatio && displayImplementation == CameraView.DisplayImplementation.IMAGEVIEW;
+  }
+
   private void initCameraViews(List<String> cameras) {
     List<CameraView> cameraViews = new ArrayList<>(cameras.size());
     Settings settings = Settings.getInstance(this);
@@ -264,6 +269,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
           new Media(cameraName, imageFormat, -1),
           displayImplementation,
           ignoreAspectRatio,
+          false,
           timeout,
           p
       );
@@ -286,6 +292,8 @@ public class MatrixActivity extends AbstractPreviewActivity {
       cameraViews.get(0).setId(R.id.focus_camera_view);
     }
     this.cameraViews = cameraViews;
+
+    getPreview().setWillNotDraw(!shouldDrawBackground(ignoreAspectRatio, displayImplementation));
   }
 
   private void startPreview() {

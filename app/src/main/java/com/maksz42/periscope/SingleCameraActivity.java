@@ -35,6 +35,7 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
         media,
         displayImplementation,
         ignoreAspectRatio,
+        true,
         timeout,
         CameraPlayerHolder.getAndClear(cameraName)
     );

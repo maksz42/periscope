@@ -47,21 +47,13 @@ public class CameraView extends FrameLayout {
   private final short timeout;
 
 
-  public CameraView(
-      Context context,
-      Media media,
-      DisplayImplementation displayImplementation,
-      boolean ignoreAspectRatio,
-      short timeout
-  ) {
-    this(context, media, displayImplementation, ignoreAspectRatio, timeout, null);
-  }
 
   public CameraView(
       Context context,
       Media media,
       DisplayImplementation displayImplementation,
       boolean ignoreAspectRatio,
+      boolean drawLetterboxHW,
       short timeout,
       CameraPlayer cameraPlayer
       ) {
@@ -74,7 +66,7 @@ public class CameraView extends FrameLayout {
         ? cameraPlayer.getFrameBuffer()
         : null;
     cameraDisplay = switch (displayImplementation) {
-      case IMAGEVIEW -> new BitmapDisplay(context, ignoreAspectRatio, frameBuffer);
+      case IMAGEVIEW -> new BitmapDisplay(context, ignoreAspectRatio, drawLetterboxHW, frameBuffer);
       case SURFACEVIEW -> new SurfaceViewDisplay(context, ignoreAspectRatio, frameBuffer);
     };
     addView((View) cameraDisplay, MATCH_PARENT, MATCH_PARENT);

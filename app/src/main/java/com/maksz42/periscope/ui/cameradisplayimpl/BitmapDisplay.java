@@ -7,11 +7,11 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.os.Build;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 
+import com.maksz42.periscope.Periscope;
 import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.ui.CameraDisplay;
 import com.maksz42.periscope.utils.Graphics;
@@ -20,14 +20,16 @@ public class BitmapDisplay extends View implements CameraDisplay {
   private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
   private final FrameBuffer frameBuffer;
   private final boolean ignoreAspectRatio;
+  private final boolean drawLetterboxHW;
   private final Rect dstRect = new Rect();
   private final Rect blackBarLeftTop;
   private final Rect blackBarRightBottom;
 
 
-  public BitmapDisplay(Context context, boolean ignoreAspectRatio, FrameBuffer buffer) {
+  public BitmapDisplay(Context context, boolean ignoreAspectRatio, boolean drawLetterboxHW, FrameBuffer buffer) {
     super(context);
     this.ignoreAspectRatio = ignoreAspectRatio;
+    this.drawLetterboxHW = drawLetterboxHW;
     this.frameBuffer = (buffer != null) ? buffer : FrameBuffer.newNonBlockingFrameBuffer();
     if (ignoreAspectRatio) {
       this.blackBarLeftTop = null;
@@ -65,9 +67,11 @@ public class BitmapDisplay extends View implements CameraDisplay {
       } else {
         int bw = bitmap.getWidth();
         int bh = bitmap.getHeight();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        if (Periscope.HWUI) {
           Graphics.scaleRectKeepRatio(bw, bh, vw, vh, dstRect);
-          canvas.drawColor(Color.BLACK);
+          if (drawLetterboxHW) {
+            canvas.drawColor(Color.BLACK);
+          }
         } else {
           Graphics.scaleRectKeepRatio(
               bw, bh, vw, vh, dstRect, blackBarLeftTop, blackBarRightBottom
