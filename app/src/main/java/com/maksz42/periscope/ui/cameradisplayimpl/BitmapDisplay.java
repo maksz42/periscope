@@ -65,7 +65,7 @@ public class BitmapDisplay extends View implements CameraDisplay {
       } else {
         int bw = bitmap.getWidth();
         int bh = bitmap.getHeight();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB && canvas.isHardwareAccelerated()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
           Graphics.scaleRectKeepRatio(bw, bh, vw, vh, dstRect);
           canvas.drawColor(Color.BLACK);
         } else {
