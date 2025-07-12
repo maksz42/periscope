@@ -1,4 +1,5 @@
-- Add options not to hide status bar and/or navigation bar
+- Improved rendering performance
+- Enabled UI hardware acceleration on Android 3.*
 
 Please consider becoming a ❤ Sponsor!
 github.com/sponsors/maksz42
