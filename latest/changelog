@@ -1,5 +1,4 @@
-- Improved rendering performance
-- Enabled UI hardware acceleration on Android 3.*
+- Fix no icon on Google TV in apps only mode
 
 Please consider becoming a ❤ Sponsor!
 github.com/sponsors/maksz42
