@@ -56,7 +56,7 @@ public class BitmapDisplay extends View implements CameraDisplay {
     try {
       Bitmap bitmap = frameBuffer.getFrame();
       if (bitmap == null) {
-        if (!Periscope.HWUI || drawLetterboxHW) {
+        if (!Periscope.HWUI || drawLetterboxHW || ignoreAspectRatio) {
           canvas.drawColor(Color.BLACK);
         }
         return;
