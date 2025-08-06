@@ -135,6 +135,7 @@ public abstract class AbstractPreviewActivity extends Activity {
   protected void onStop() {
     super.onStop();
     handler.removeCallbacksAndMessages(null);
+    showWallpaperMsg("");
   }
 
   @Override
