@@ -136,6 +136,9 @@ public abstract class AbstractPreviewActivity extends Activity {
     super.onStop();
     handler.removeCallbacksAndMessages(null);
     showWallpaperMsg("");
+    if (alertDialog != null) {
+      alertDialog.dismiss();
+    }
   }
 
   @Override
@@ -320,14 +323,6 @@ public abstract class AbstractPreviewActivity extends Activity {
       alertDialog = dialog;
       dialog.show();
     });
-  }
-
-  @Override
-  protected void onDestroy() {
-    super.onDestroy();
-    if (alertDialog != null) {
-      alertDialog.dismiss();
-    }
   }
 
   protected boolean shouldIgnoreFirstKey(int keyCode) {
