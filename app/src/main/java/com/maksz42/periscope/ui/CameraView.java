@@ -19,12 +19,9 @@ import androidx.annotation.Nullable;
 import com.maksz42.periscope.R;
 import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.camera.CameraPlayer;
-import com.maksz42.periscope.frigate.InvalidCredentialsException;
 import com.maksz42.periscope.frigate.Media;
 import com.maksz42.periscope.ui.cameradisplayimpl.BitmapDisplay;
 import com.maksz42.periscope.ui.cameradisplayimpl.SurfaceViewDisplay;
-
-import javax.net.ssl.SSLException;
 
 public class CameraView extends FrameLayout {
   public interface OnErrorListener {
@@ -128,12 +125,7 @@ public class CameraView extends FrameLayout {
   }
 
   private void onError(Throwable throwable) {
-    if (throwable instanceof InvalidCredentialsException
-        || throwable instanceof SSLException) {
-      stop();
-    }// else {
-      setLoading(true);
-    //}
+    setLoading(true);
     if (onErrorListener != null) {
       onErrorListener.onError(throwable, this);
     }
