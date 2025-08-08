@@ -39,7 +39,7 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
         timeout,
         CameraPlayerHolder.getAndClear(cameraName)
     );
-    cameraView.setOnErrorListener(this::handleCommonErrors);
+    cameraView.setOnErrorListener(cameraViewErrorListener);
     showWallpaperMsg(null);
     setPreview(cameraView);
     cameraView.start(0, 100);

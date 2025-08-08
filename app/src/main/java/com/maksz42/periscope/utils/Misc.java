@@ -4,6 +4,10 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+
 public final class Misc {
   private static final Thread UIThread = Looper.getMainLooper().getThread();
   private static final Handler handler = new Handler(Looper.getMainLooper());
@@ -20,6 +24,12 @@ public final class Misc {
     } else {
       handler.post(action);
     }
+  }
+
+  public static <T> T runOnUiThreadAndWait(Callable<T> callable) throws InterruptedException, ExecutionException {
+    FutureTask<T> future = new FutureTask<>(callable);
+    handler.post(future);
+    return future.get();
   }
 
   public static boolean isNumeric(String s) {

@@ -24,10 +24,12 @@ import com.maksz42.periscope.helper.CameraPlayerHolder;
 import com.maksz42.periscope.helper.Settings;
 import com.maksz42.periscope.ui.BlackLinearLayout;
 import com.maksz42.periscope.ui.CameraView;
+import com.maksz42.periscope.utils.Misc;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import javax.net.ssl.SSLException;
 
@@ -74,6 +76,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
       refreshing = true;
       new Thread(() -> {
         Config config = new Config();
+        Runnable recoverable = null;
         while (refreshing) {
           try {
             List<String> cameraNames = config.getCameras();
@@ -82,20 +85,24 @@ public class MatrixActivity extends AbstractPreviewActivity {
               addCameraViews();
               startPreview();
             });
+            if (recoverable != null) {
+              recoverable.run();
+            }
             break;
           } catch (InvalidCredentialsException | SSLException e) {
-            handleCommonErrors(e);
-            return;
+            try {
+              recoverable = Misc.runOnUiThreadAndWait(() -> handleCommonErrors(e));
+            } catch (InterruptedException | ExecutionException ignored) { }
           } catch (IOException | InterruptedException | InvalidResponseException e) {
             Log.e(MatrixActivity.this.getClass().getName(), "Error getting cameras", e);
             runOnUiThread(
                 () -> showWallpaperMsg(getString(R.string.error_getting_cameras, Client.getBaseUrl()))
             );
-            try {
-              Thread.sleep(500);
-            } catch (InterruptedException ex) {
-              throw new RuntimeException(ex);
-            }
+          }
+          try {
+            Thread.sleep(500);
+          } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
           }
         }
       }).start();
@@ -281,7 +288,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
         intent.putExtra("camera_name", cv.getMedia().getName());
         startActivity(intent);
       });
-      cameraView.setOnErrorListener(this::handleCommonErrors);
+      cameraView.setOnErrorListener(cameraViewErrorListener);
       cameraViews.add(cameraView);
     }
     if (cachedPlayer != null) {

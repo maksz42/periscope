@@ -39,6 +39,7 @@ import androidx.annotation.RequiresApi;
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
 import com.maksz42.periscope.helper.Settings;
+import com.maksz42.periscope.ui.CameraView;
 
 import java.security.cert.CertificateException;
 
@@ -50,6 +51,17 @@ public abstract class AbstractPreviewActivity extends Activity {
   private final Handler handler = new Handler(Looper.getMainLooper());
   private final Runnable hideUIAction = () -> setUIVisible(false);
   private Dialog alertDialog;
+
+  final protected CameraView.OnErrorListener cameraViewErrorListener =
+      (t, cv) -> {
+        Runnable recoverable = handleCommonErrors(t);
+        if (recoverable != null) {
+          cv.setOnNewFrameListener(cv_ -> {
+            recoverable.run();
+            cv_.setOnErrorListener(null);
+          });
+        }
+      };
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -285,10 +297,10 @@ public abstract class AbstractPreviewActivity extends Activity {
     }
   }
 
-  protected void handleCommonErrors(Throwable e) {
+  protected Runnable handleCommonErrors(Throwable e) {
     if (e instanceof InvalidCredentialsException) {
       Log.e(this.getClass().getName(), "Invalid credentials", e);
-      showDialog(new AlertDialog.Builder(this)
+      return showDialog(new AlertDialog.Builder(this)
           .setMessage(getString(R.string.invalid_credentials))
           .setPositiveButton(getString(R.string.change_credentials),
               (dialog, which) -> startActivity(new Intent(this, SettingsActivity.class))
@@ -296,7 +308,7 @@ public abstract class AbstractPreviewActivity extends Activity {
       );
     } else if (e.getCause() instanceof CertificateException) {
       Log.e(this.getClass().getName(), "Self-signed certificate error", e);
-      showDialog(new AlertDialog.Builder(this)
+      return showDialog(new AlertDialog.Builder(this)
           .setMessage(getString(R.string.self_signed_cert_info))
           .setPositiveButton(getString(R.string.disable_cert_verification),
               (dialog, which) -> startActivity(new Intent(this, SettingsActivity.class))
@@ -304,7 +316,7 @@ public abstract class AbstractPreviewActivity extends Activity {
       );
     } else if (e instanceof SSLException) {
       Log.e(this.getClass().getName(), "Device probably doesn't support TLS", e);
-      showDialog(new AlertDialog.Builder(this)
+      return showDialog(new AlertDialog.Builder(this)
           .setMessage(getString(R.string.tls_error))
           .setPositiveButton(getString(R.string.change_to_http),
               (dialog, which) -> startActivity(new Intent(this, SettingsActivity.class))
@@ -312,17 +324,21 @@ public abstract class AbstractPreviewActivity extends Activity {
       );
     } else {
       Log.d(this.getClass().getName(), e.toString());
+      return null;
     }
   }
 
-  protected void showDialog(AlertDialog.Builder alertDialogBuilder) {
-    runOnUiThread(() -> {
-      if (alertDialog != null) return;
-      Dialog dialog = alertDialogBuilder.create();
-      dialog.setOnDismissListener(d -> alertDialog = null);
-      alertDialog = dialog;
-      dialog.show();
-    });
+  private Runnable showDialog(AlertDialog.Builder alertDialogBuilder) {
+    if (alertDialog != null) {
+      return null;
+    }
+
+    Dialog dialog = alertDialogBuilder.create();
+    dialog.setOnDismissListener(d -> alertDialog = null);
+    alertDialog = dialog;
+    dialog.show();
+
+    return dialog::dismiss;
   }
 
   protected boolean shouldIgnoreFirstKey(int keyCode) {

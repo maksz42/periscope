@@ -28,7 +28,11 @@ import javax.net.ssl.SSLException;
 
 public class CameraView extends FrameLayout {
   public interface OnErrorListener {
-    void onError(Throwable t);
+    void onError(Throwable t, CameraView cv);
+  }
+
+  public interface OnNewFrameListener {
+    void onNewFrame(CameraView cv);
   }
 
   public enum DisplayImplementation {
@@ -44,6 +48,7 @@ public class CameraView extends FrameLayout {
   private final CameraDisplay cameraDisplay;
   private final Media media;
   private OnErrorListener onErrorListener;
+  private OnNewFrameListener onNewFrameListener;
   private final short timeout;
 
 
@@ -118,6 +123,10 @@ public class CameraView extends FrameLayout {
     this.onErrorListener = onErrorListener;
   }
 
+  public void setOnNewFrameListener(OnNewFrameListener onNewFrameListener) {
+    this.onNewFrameListener = onNewFrameListener;
+  }
+
   private void onError(Throwable throwable) {
     if (throwable instanceof InvalidCredentialsException
         || throwable instanceof SSLException) {
@@ -126,13 +135,18 @@ public class CameraView extends FrameLayout {
       setLoading(true);
     //}
     if (onErrorListener != null) {
-      onErrorListener.onError(throwable);
+      onErrorListener.onError(throwable, this);
     }
   }
 
   private void onNewFrame() {
     cameraDisplay.requestDraw();
-    post(() -> setLoading(false));
+    post(() -> {
+      setLoading(false);
+      if (onNewFrameListener != null) {
+        onNewFrameListener.onNewFrame(this);
+      }
+    });
   }
 
   public void start(long initialDelay, long delay) {
