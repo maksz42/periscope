@@ -13,7 +13,6 @@ import android.view.SurfaceView;
 
 import androidx.annotation.NonNull;
 
-import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.buffering.SingleFrameBuffer;
 import com.maksz42.periscope.ui.CameraDisplay;
 import com.maksz42.periscope.utils.Graphics;
@@ -21,24 +20,22 @@ import com.maksz42.periscope.utils.Graphics;
 public class SurfaceViewDisplay extends SurfaceView
     implements CameraDisplay, SurfaceHolder.Callback {
 
-  private volatile boolean bitmapWaiting;
   private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
-  private final FrameBuffer frameBuffer;
+  private final SingleFrameBuffer frameBuffer;
   private final boolean ignoreAspectRatio;
   private volatile Rect surfaceRect;
-  private final Object newBitmapLock = new Object();
   private Thread drawingThread;
 
 
-  public SurfaceViewDisplay(Context context, boolean ignoreAspectRatio, FrameBuffer buffer) {
+  public SurfaceViewDisplay(Context context, boolean ignoreAspectRatio, SingleFrameBuffer buffer) {
     super(context);
     this.ignoreAspectRatio = ignoreAspectRatio;
     getHolder().addCallback(this);
-    this.frameBuffer = (buffer != null) ? buffer : new SingleFrameBuffer();
+    this.frameBuffer = (buffer != null) ? buffer : new SingleFrameBuffer(true);
   }
 
   @Override
-  public FrameBuffer getFrameBuffer() {
+  public SingleFrameBuffer getFrameBuffer() {
     return frameBuffer;
   }
 
@@ -55,7 +52,7 @@ public class SurfaceViewDisplay extends SurfaceView
   @Override
   public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
     surfaceRect = new Rect(0, 0, width, height);
-    requestDraw();
+    frameBuffer.signalFrameReadyNonBlocking();
   }
 
   @Override
@@ -74,19 +71,8 @@ public class SurfaceViewDisplay extends SurfaceView
 
   @Override
   public void requestDraw() {
-    synchronized (newBitmapLock) {
-      bitmapWaiting = true;
-      newBitmapLock.notify();
-    }
-  }
-
-  private void waitForBitmap() throws InterruptedException {
-    synchronized (newBitmapLock) {
-      while (!bitmapWaiting) {
-        newBitmapLock.wait();
-      }
-      bitmapWaiting = false;
-    }
+    // Drawing uses await/signal directly
+    // TODO redesign this
   }
 
   private Runnable newDrafterIgnoreRatio() {
@@ -95,9 +81,9 @@ public class SurfaceViewDisplay extends SurfaceView
       SurfaceHolder holder = getHolder();
       try {
         while (true) {
-          waitForBitmap();
           frameBuffer.lockInterruptibly();
           try {
+            frameBuffer.awaitFrameReady();
             Bitmap frame = frameBuffer.getFrame();
             if (frame == null) continue;
             Canvas canvas = holder.lockCanvas();
@@ -123,9 +109,9 @@ public class SurfaceViewDisplay extends SurfaceView
       final Rect blackBarRightBottom = new Rect();
       try {
         while (true) {
-          waitForBitmap();
           frameBuffer.lockInterruptibly();
           try {
+            frameBuffer.awaitFrameReady();
             Bitmap frame = frameBuffer.getFrame();
             if (frame == null) continue;
             Graphics.scaleRectKeepRatio(

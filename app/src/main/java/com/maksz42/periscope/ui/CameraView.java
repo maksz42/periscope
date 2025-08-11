@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 
 import com.maksz42.periscope.R;
 import com.maksz42.periscope.buffering.FrameBuffer;
+import com.maksz42.periscope.buffering.SingleFrameBuffer;
 import com.maksz42.periscope.camera.CameraPlayer;
 import com.maksz42.periscope.frigate.Media;
 import com.maksz42.periscope.ui.cameradisplayimpl.BitmapDisplay;
@@ -69,7 +70,7 @@ public class CameraView extends FrameLayout {
         : null;
     cameraDisplay = switch (displayImplementation) {
       case IMAGEVIEW -> new BitmapDisplay(context, ignoreAspectRatio, drawLetterboxHW, frameBuffer);
-      case SURFACEVIEW -> new SurfaceViewDisplay(context, ignoreAspectRatio, frameBuffer);
+      case SURFACEVIEW -> new SurfaceViewDisplay(context, ignoreAspectRatio, (SingleFrameBuffer) frameBuffer);
     };
     addView((View) cameraDisplay, MATCH_PARENT, MATCH_PARENT);
 

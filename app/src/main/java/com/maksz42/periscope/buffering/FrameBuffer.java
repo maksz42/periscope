@@ -23,7 +23,7 @@ public abstract class FrameBuffer {
   private static final boolean HAS_NATIVE_STREAM_BUFFER = (SDK_INT >= KITKAT);
   private static final boolean NEEDS_SIGSEGV_MITIGATION = (SDK_INT == KITKAT);
 
-  private final Lock lock = new ReentrantLock();
+  protected final Lock lock = new ReentrantLock();
   private final byte[] tempStorage = new byte[16 * 1024];
   private final byte[] streamBuffer = new byte[16 * 1024];
 
@@ -31,31 +31,15 @@ public abstract class FrameBuffer {
   public static FrameBuffer newNonBlockingFrameBuffer() {
     return FrameBuffer.SUPPORTS_REUSING_BITMAP
         ? new DoubleFrameBuffer()
-        : new SingleFrameBuffer();
+        : new SingleFrameBuffer(false);
   }
 
   public void lock() {
     lock.lock();
   }
 
-  public void lockInterruptibly() throws InterruptedException {
-    lock.lockInterruptibly();
-  }
-
   public void unlock() {
     lock.unlock();
-  }
-
-  void lockIfSupportsReusingBitmaps() {
-    if (SUPPORTS_REUSING_BITMAP) {
-      lock.lock();
-    }
-  }
-
-  void unlockIfSupportsReusingBitmaps() {
-    if (SUPPORTS_REUSING_BITMAP) {
-      lock.unlock();
-    }
   }
 
   @RequiresApi(HONEYCOMB)
