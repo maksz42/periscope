@@ -133,8 +133,10 @@ public class CameraView extends FrameLayout {
   }
 
   private void onNewFrame() {
-    cameraDisplay.requestDraw();
     post(() -> {
+      if (cameraDisplay instanceof BitmapDisplay bitmapDisplay) {
+        bitmapDisplay.invalidate();
+      }
       setLoading(false);
       if (onNewFrameListener != null) {
         onNewFrameListener.onNewFrame(this);

@@ -74,12 +74,6 @@ public class SurfaceViewDisplay extends SurfaceView
     }
   }
 
-  @Override
-  public void requestDraw() {
-    // Drawing uses await/signal directly
-    // TODO redesign this
-  }
-
   private Runnable newDrafterIgnoreRatio() {
     return () -> {
       Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);

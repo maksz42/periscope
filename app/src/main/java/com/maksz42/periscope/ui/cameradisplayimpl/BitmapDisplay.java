@@ -41,11 +41,6 @@ public class BitmapDisplay extends View implements CameraDisplay {
   }
 
   @Override
-  public void requestDraw() {
-    postInvalidate();
-  }
-
-  @Override
   public FrameBuffer getFrameBuffer() {
     return frameBuffer;
   }
