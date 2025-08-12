@@ -22,14 +22,14 @@ public class SurfaceViewDisplay extends SurfaceView
 
   private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
   private final SingleFrameBuffer frameBuffer;
-  private final boolean ignoreAspectRatio;
   private volatile Rect surfaceRect;
-  private Thread drawingThread;
+  private final Thread drawingThread;
+  private final Object DrawingLock = new Object();
+  private volatile boolean paused;
 
 
   public SurfaceViewDisplay(Context context, boolean ignoreAspectRatio, SingleFrameBuffer buffer) {
     super(context);
-    this.ignoreAspectRatio = ignoreAspectRatio;
     getHolder().addCallback(this);
     if (buffer != null) {
       buffer.newConsumer();
@@ -37,6 +37,8 @@ public class SurfaceViewDisplay extends SurfaceView
     } else {
       this.frameBuffer = new SingleFrameBuffer(true);
     }
+    this.drawingThread = new Thread(ignoreAspectRatio ? newDrafterIgnoreRatio() : newDrafterKeepRatio());
+    drawingThread.start();
   }
 
   @Override
@@ -44,14 +46,14 @@ public class SurfaceViewDisplay extends SurfaceView
     return frameBuffer;
   }
 
+  public void interruptDrawingThread() {
+    paused = true;
+    drawingThread.interrupt();
+  }
+
   @Override
   public void surfaceCreated(@NonNull SurfaceHolder holder) {
-    drawingThread = new Thread(
-        ignoreAspectRatio
-        ? newDrafterIgnoreRatio()
-        : newDrafterKeepRatio()
-    );
-    drawingThread.start();
+    paused = false;
   }
 
   @Override
@@ -65,12 +67,8 @@ public class SurfaceViewDisplay extends SurfaceView
     // block until bitmap drawing finishes
     // Attempt to fix random
     // java.lang.IllegalStateException: Surface has already been released.
-    drawingThread.interrupt();
-    while (true) {
-      try {
-        drawingThread.join();
-        break;
-      } catch (InterruptedException ignored) { }
+    synchronized (DrawingLock) {
+      paused = true;
     }
   }
 
@@ -85,10 +83,13 @@ public class SurfaceViewDisplay extends SurfaceView
             frameBuffer.awaitFrameReady();
             Bitmap frame = frameBuffer.getFrame();
             if (frame == null) continue;
-            Canvas canvas = holder.lockCanvas();
-            if (canvas == null) continue;
-            canvas.drawBitmap(frame, null, surfaceRect, paint);
-            holder.unlockCanvasAndPost(canvas);
+            synchronized (DrawingLock) {
+              if (paused) continue;
+              Canvas canvas = holder.lockCanvas();
+              if (canvas == null) continue;
+              canvas.drawBitmap(frame, null, surfaceRect, paint);
+              holder.unlockCanvasAndPost(canvas);
+            }
           } finally {
             frameBuffer.unlock();
           }
@@ -120,14 +121,17 @@ public class SurfaceViewDisplay extends SurfaceView
             );
             dirtyRect.set(currentDstRect);
             dirtyRect.union(prevDstRect);
-            Canvas canvas = holder.lockCanvas(dirtyRect);
-            if (canvas == null) continue;
-            if (!dirtyRect.equals(currentDstRect)) {
-              canvas.drawRect(blackBarLeftTop, paint);
-              canvas.drawRect(blackBarRightBottom, paint);
+            synchronized (DrawingLock) {
+              if (paused) return;
+              Canvas canvas = holder.lockCanvas(dirtyRect);
+              if (canvas == null) continue;
+              if (!dirtyRect.equals(currentDstRect)) {
+                canvas.drawRect(blackBarLeftTop, paint);
+                canvas.drawRect(blackBarRightBottom, paint);
+              }
+              canvas.drawBitmap(frame, null, currentDstRect, paint);
+              holder.unlockCanvasAndPost(canvas);
             }
-            canvas.drawBitmap(frame, null, currentDstRect, paint);
-            holder.unlockCanvasAndPost(canvas);
           } finally {
             frameBuffer.unlock();
           }

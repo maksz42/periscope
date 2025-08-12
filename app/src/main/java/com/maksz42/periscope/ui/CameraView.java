@@ -159,6 +159,9 @@ public class CameraView extends FrameLayout {
     if (cameraPlayer != null) {
       cameraPlayer.shutdown();
     }
+    if (cameraDisplay instanceof SurfaceViewDisplay surfaceViewDisplay) {
+      surfaceViewDisplay.interruptDrawingThread();
+    }
     setLoading(false);
   }
 
