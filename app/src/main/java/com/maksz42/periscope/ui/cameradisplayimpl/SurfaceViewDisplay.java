@@ -31,7 +31,12 @@ public class SurfaceViewDisplay extends SurfaceView
     super(context);
     this.ignoreAspectRatio = ignoreAspectRatio;
     getHolder().addCallback(this);
-    this.frameBuffer = (buffer != null) ? buffer : new SingleFrameBuffer(true);
+    if (buffer != null) {
+      buffer.newConsumer();
+      this.frameBuffer = buffer;
+    } else {
+      this.frameBuffer = new SingleFrameBuffer(true);
+    }
   }
 
   @Override

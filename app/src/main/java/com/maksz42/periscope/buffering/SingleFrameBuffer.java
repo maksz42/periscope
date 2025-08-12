@@ -7,13 +7,26 @@ import java.io.InputStream;
 import java.util.concurrent.locks.Condition;
 
 public class SingleFrameBuffer extends FrameBuffer {
+  private static class FrameReadyGate {
+    private volatile boolean ready = false;
+    private final Condition cond;
+
+    private FrameReadyGate(Condition cond) {
+      this.cond = cond;
+    }
+  }
+
   private volatile Bitmap bitmap;
-  private final Condition frameReadyCond = lock.newCondition();
-  private volatile boolean frameReady = false;
+  private volatile FrameReadyGate frameReadyGate;
   private final boolean shouldSignalFrameReady;
 
   public SingleFrameBuffer(boolean shouldSignalFrameReady) {
     this.shouldSignalFrameReady = shouldSignalFrameReady;
+    newConsumer();
+  }
+
+  public void newConsumer() {
+    frameReadyGate = new FrameReadyGate(lock.newCondition());
   }
 
   public void lockInterruptibly() throws InterruptedException {
@@ -21,15 +34,16 @@ public class SingleFrameBuffer extends FrameBuffer {
   }
 
   public void awaitFrameReady() throws InterruptedException {
-    while (!frameReady) {
-      frameReadyCond.await();
+    FrameReadyGate gate = frameReadyGate;
+    while (!gate.ready) {
+      gate.cond.await();
     }
-    frameReady = false;
+    gate.ready = false;
   }
 
   private void signalFrameReady() {
-    frameReady = true;
-    frameReadyCond.signal();
+    frameReadyGate.ready = true;
+    frameReadyGate.cond.signal();
   }
 
   public void signalFrameReadyNonBlocking() {
