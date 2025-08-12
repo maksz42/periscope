@@ -24,7 +24,6 @@ public class SurfaceViewDisplay extends SurfaceView
   private final SingleFrameBuffer frameBuffer;
   private volatile Rect surfaceRect;
   private final Thread drawingThread;
-  private final Object DrawingLock = new Object();
   private volatile boolean paused;
 
 
@@ -37,7 +36,7 @@ public class SurfaceViewDisplay extends SurfaceView
     } else {
       this.frameBuffer = new SingleFrameBuffer(true);
     }
-    this.drawingThread = new Thread(ignoreAspectRatio ? newDrafterIgnoreRatio() : newDrafterKeepRatio());
+    this.drawingThread = ignoreAspectRatio ? newDrafterIgnoreRatio() : newDrafterKeepRatio();
     drawingThread.start();
   }
 
@@ -67,77 +66,83 @@ public class SurfaceViewDisplay extends SurfaceView
     // block until bitmap drawing finishes
     // Attempt to fix random
     // java.lang.IllegalStateException: Surface has already been released.
-    synchronized (DrawingLock) {
+    synchronized (drawingThread) {
       paused = true;
     }
   }
 
-  private Runnable newDrafterIgnoreRatio() {
-    return () -> {
-      Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
-      SurfaceHolder holder = getHolder();
-      try {
-        while (true) {
-          frameBuffer.lockInterruptibly();
-          try {
-            frameBuffer.awaitFrameReady();
-            Bitmap frame = frameBuffer.getFrame();
-            if (frame == null) continue;
-            synchronized (DrawingLock) {
-              if (paused) continue;
-              Canvas canvas = holder.lockCanvas();
-              if (canvas == null) continue;
-              canvas.drawBitmap(frame, null, surfaceRect, paint);
-              holder.unlockCanvasAndPost(canvas);
+  private Thread newDrafterIgnoreRatio() {
+    return new Thread() {
+      @Override
+      public void run() {
+        Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
+        SurfaceHolder holder = getHolder();
+        try {
+          while (true) {
+            frameBuffer.lockInterruptibly();
+            try {
+              frameBuffer.awaitFrameReady();
+              Bitmap frame = frameBuffer.getFrame();
+              if (frame == null) continue;
+              synchronized (this) {
+                if (paused) continue;
+                Canvas canvas = holder.lockCanvas();
+                if (canvas == null) continue;
+                canvas.drawBitmap(frame, null, surfaceRect, paint);
+                holder.unlockCanvasAndPost(canvas);
+              }
+            } finally {
+              frameBuffer.unlock();
             }
-          } finally {
-            frameBuffer.unlock();
           }
-        }
-      } catch (InterruptedException ignored) { /* exit loop */ }
+        } catch (InterruptedException ignored) { /* exit loop */ }
+      }
     };
   }
 
-  private Runnable newDrafterKeepRatio() {
-    return () -> {
-      Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
-      SurfaceHolder holder = getHolder();
-      final Rect currentDstRect = new Rect();
-      final Rect prevDstRect = new Rect();
-      final Rect dirtyRect = new Rect();
-      final Rect blackBarLeftTop = new Rect();
-      final Rect blackBarRightBottom = new Rect();
-      try {
-        while (true) {
-          frameBuffer.lockInterruptibly();
-          try {
-            frameBuffer.awaitFrameReady();
-            Bitmap frame = frameBuffer.getFrame();
-            if (frame == null) continue;
-            Graphics.scaleRectKeepRatio(
-                frame.getWidth(), frame.getHeight(),
-                surfaceRect.right, surfaceRect.bottom,
-                currentDstRect, blackBarLeftTop, blackBarRightBottom
-            );
-            dirtyRect.set(currentDstRect);
-            dirtyRect.union(prevDstRect);
-            synchronized (DrawingLock) {
-              if (paused) return;
-              Canvas canvas = holder.lockCanvas(dirtyRect);
-              if (canvas == null) continue;
-              if (!dirtyRect.equals(currentDstRect)) {
-                canvas.drawRect(blackBarLeftTop, paint);
-                canvas.drawRect(blackBarRightBottom, paint);
+  private Thread newDrafterKeepRatio() {
+    return new Thread() {
+      @Override
+      public void run() {
+        Process.setThreadPriority(THREAD_PRIORITY_MORE_FAVORABLE);
+        SurfaceHolder holder = getHolder();
+        final Rect currentDstRect = new Rect();
+        final Rect prevDstRect = new Rect();
+        final Rect dirtyRect = new Rect();
+        final Rect blackBarLeftTop = new Rect();
+        final Rect blackBarRightBottom = new Rect();
+        try {
+          while (true) {
+            frameBuffer.lockInterruptibly();
+            try {
+              frameBuffer.awaitFrameReady();
+              Bitmap frame = frameBuffer.getFrame();
+              if (frame == null) continue;
+              Graphics.scaleRectKeepRatio(
+                  frame.getWidth(), frame.getHeight(),
+                  surfaceRect.right, surfaceRect.bottom,
+                  currentDstRect, blackBarLeftTop, blackBarRightBottom
+              );
+              dirtyRect.set(currentDstRect);
+              dirtyRect.union(prevDstRect);
+              synchronized (this) {
+                if (paused) return;
+                Canvas canvas = holder.lockCanvas(dirtyRect);
+                if (canvas == null) continue;
+                if (!dirtyRect.equals(currentDstRect)) {
+                  canvas.drawRect(blackBarLeftTop, paint);
+                  canvas.drawRect(blackBarRightBottom, paint);
+                }
+                canvas.drawBitmap(frame, null, currentDstRect, paint);
+                holder.unlockCanvasAndPost(canvas);
               }
-              canvas.drawBitmap(frame, null, currentDstRect, paint);
-              holder.unlockCanvasAndPost(canvas);
+            } finally {
+              frameBuffer.unlock();
             }
-          } finally {
-            frameBuffer.unlock();
+            prevDstRect.set(currentDstRect);
           }
-          prevDstRect.set(currentDstRect);
-        }
-      } catch (InterruptedException ignored) { /* exit loop */ }
+        } catch (InterruptedException ignored) { /* exit loop */ }
+      }
     };
   }
 }
