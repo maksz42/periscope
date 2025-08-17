@@ -13,8 +13,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public class Config {
-  public Config() { }
-
   public List<String> getCameras() throws IOException, InterruptedException {
     String response;
     try (
