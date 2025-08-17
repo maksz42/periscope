@@ -30,16 +30,21 @@ public class Config {
     } catch (JSONException e) {
       throw new InvalidResponseException(e);
     }
+
+    List<String> cameraNames = new ArrayList<>();
     JSONObject cameras = config.optJSONObject("cameras");
-    if (cameras == null) {
-      return Collections.emptyList();
+    if (cameras != null) {
+      Iterator<String> keys = cameras.keys();
+      while (keys.hasNext()) {
+        cameraNames.add(keys.next());
+      }
     }
-    Iterator<String> keys = cameras.keys();
-    List<String> cameraNames = new ArrayList<>(cameras.length());
-    while (keys.hasNext()) {
-      String key = keys.next();
-      cameraNames.add(key);
+
+    JSONObject birdseye = config.optJSONObject("birdseye");
+    if (birdseye != null && birdseye.optBoolean("enabled") && birdseye.optBoolean("restream")) {
+      cameraNames.add("birdseye");
     }
+
     Collections.sort(cameraNames, String::compareToIgnoreCase);
     return cameraNames;
   }
