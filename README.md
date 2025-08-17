@@ -17,11 +17,25 @@ Some releases are falsely marked as harmful by Play Protect.
 
 During the installation, you might need to tap **`More details` → `Install anyway`**, or temporarily disable Play Protect in the Play Store.
 
+## Home Assistant Operating System (HAOS)
+
+To use Periscope with the Frigate HAOS add-on, you need to expose a port.
+
+1. Open the HAOS web interface.
+2. Navigate to:  
+   **Settings → Add-ons → Frigate → Configuration**
+3. In the **Network** section, enable **Show disabled ports**.
+4. Map the port of either:
+   - **Authenticated Web interface**  
+   - **Unauthenticated Web interface**  
+
+Then use that port and your HAOS IP in Periscope settings.
+
 ## FAQ
 
 ### How to setup a connection?
 Fill in the host field (IP or domain), port, and protocol. HTTPS is supported on Android 4.1 and later.
-If you're using the protected port, fill in the user and password fields, otherwise leave them empty.
+If you're using the authenticated port, fill in the user and password fields, otherwise leave them empty.
 
 ### What's the difference between single-threaded and multi-threaded display implementation?
 Apart from threading, multi-threaded display uses less memory but suffers from minor visual glitches. There are more implementation nuances.
