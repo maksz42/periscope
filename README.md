@@ -44,7 +44,7 @@ birdseye:
   enabled: true
   restream: true
 ```
-**birdseye** should then appear in the camera list.
+**birdseye** should then appear in the camera list in Periscope.
 
 ### What's the difference between single-threaded and multi-threaded display implementation?
 Apart from threading, multi-threaded display uses less memory but suffers from minor visual glitches. There are more implementation nuances.
