@@ -39,7 +39,7 @@ If you're using the authenticated port, fill in the user and password fields, ot
 
 ### How to set up Birdseye?
 Make sure you have Birdseye and restream enabled in Frigate's config:
-```
+```yaml
 birdseye:
   enabled: true
   restream: true
