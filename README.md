@@ -37,6 +37,15 @@ Then use that port and your HAOS IP in Periscope settings.
 Fill in the host field (IP or domain), port, and protocol. HTTPS is supported on Android 4.1 and later.
 If you're using the authenticated port, fill in the user and password fields, otherwise leave them empty.
 
+### How to set up Birdseye?
+Make sure you have Birdseye and restream enabled in Frigate's config:
+```
+birdseye:
+  enabled: true
+  restream: true
+```
+**birdseye** should then appear in the camera list.
+
 ### What's the difference between single-threaded and multi-threaded display implementation?
 Apart from threading, multi-threaded display uses less memory but suffers from minor visual glitches. There are more implementation nuances.
 
