@@ -22,9 +22,9 @@ public class SurfaceViewDisplay extends SurfaceView
 
   private final Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
   private final SingleFrameBuffer frameBuffer;
-  private volatile Rect surfaceRect;
+  private volatile Rect surfaceRect = new Rect();
   private final Thread drawingThread;
-  private volatile boolean paused;
+  private volatile boolean paused = true;
 
 
   public SurfaceViewDisplay(Context context, boolean ignoreAspectRatio, SingleFrameBuffer buffer) {
