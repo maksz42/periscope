@@ -126,7 +126,7 @@ public class SurfaceViewDisplay extends SurfaceView
               dirtyRect.set(currentDstRect);
               dirtyRect.union(prevDstRect);
               synchronized (this) {
-                if (paused) return;
+                if (paused) continue;
                 Canvas canvas = holder.lockCanvas(dirtyRect);
                 if (canvas == null) continue;
                 if (!dirtyRect.equals(currentDstRect)) {
