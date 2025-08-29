@@ -167,6 +167,9 @@ public class CameraView extends FrameLayout {
 
   public void attachPlayer(CameraPlayer player) {
     cameraPlayer = player;
+    if (cameraDisplay instanceof SurfaceViewDisplay surfaceViewDisplay) {
+      surfaceViewDisplay.reinstallFrameReadyGate();
+    }
   }
 
   public CameraPlayer detachPlayer() {

@@ -7,7 +7,7 @@ import java.io.InputStream;
 import java.util.concurrent.locks.Condition;
 
 public class SingleFrameBuffer extends FrameBuffer {
-  private static class FrameReadyGate {
+  public static class FrameReadyGate {
     private volatile boolean ready = false;
     private final Condition cond;
 
@@ -27,6 +27,14 @@ public class SingleFrameBuffer extends FrameBuffer {
 
   public void newConsumer() {
     frameReadyGate = new FrameReadyGate(lock.newCondition());
+  }
+
+  public FrameReadyGate getFrameReadyGate() {
+    return frameReadyGate;
+  }
+
+  public void setFrameReadyGate(FrameReadyGate gate) {
+    frameReadyGate = gate;
   }
 
   public void lockInterruptibly() throws InterruptedException {

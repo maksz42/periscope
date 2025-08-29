@@ -25,6 +25,7 @@ public class SurfaceViewDisplay extends SurfaceView
   private volatile Rect surfaceRect = new Rect();
   private final Thread drawingThread;
   private volatile boolean paused = true;
+  private final SingleFrameBuffer.FrameReadyGate gate;
 
 
   public SurfaceViewDisplay(Context context, boolean ignoreAspectRatio, SingleFrameBuffer buffer) {
@@ -36,6 +37,7 @@ public class SurfaceViewDisplay extends SurfaceView
     } else {
       this.frameBuffer = new SingleFrameBuffer(true);
     }
+    gate = this.frameBuffer.getFrameReadyGate();
     this.drawingThread = ignoreAspectRatio ? newDrafterIgnoreRatio() : newDrafterKeepRatio();
     drawingThread.start();
   }
@@ -43,6 +45,11 @@ public class SurfaceViewDisplay extends SurfaceView
   @Override
   public SingleFrameBuffer getFrameBuffer() {
     return frameBuffer;
+  }
+
+  public void reinstallFrameReadyGate() {
+    frameBuffer.setFrameReadyGate(gate);
+    frameBuffer.signalFrameReadyNonBlocking();
   }
 
   public void interruptDrawingThread() {
