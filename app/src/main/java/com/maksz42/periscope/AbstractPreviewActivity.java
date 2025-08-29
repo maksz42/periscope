@@ -47,7 +47,9 @@ import javax.net.ssl.SSLException;
 
 
 public abstract class AbstractPreviewActivity extends Activity {
+  private static final String TAG = "AbstractPreviewActivity";
   private static final int UI_TIME = 5000;
+
   private final Handler handler = new Handler(Looper.getMainLooper());
   private final Runnable hideUIAction = () -> setUIVisible(false);
   private Dialog alertDialog;
@@ -299,7 +301,7 @@ public abstract class AbstractPreviewActivity extends Activity {
 
   protected Runnable handleCommonErrors(Throwable e) {
     if (e instanceof InvalidCredentialsException) {
-      Log.e(this.getClass().getName(), "Invalid credentials", e);
+      Log.e(TAG, "Invalid credentials", e);
       return showDialog(new AlertDialog.Builder(this)
           .setMessage(getString(R.string.invalid_credentials))
           .setPositiveButton(getString(R.string.change_credentials),
@@ -307,7 +309,7 @@ public abstract class AbstractPreviewActivity extends Activity {
           )
       );
     } else if (e.getCause() instanceof CertificateException) {
-      Log.e(this.getClass().getName(), "Self-signed certificate error", e);
+      Log.e(TAG, "Self-signed certificate error", e);
       return showDialog(new AlertDialog.Builder(this)
           .setMessage(getString(R.string.self_signed_cert_info))
           .setPositiveButton(getString(R.string.disable_cert_verification),
@@ -315,7 +317,7 @@ public abstract class AbstractPreviewActivity extends Activity {
           )
       );
     } else if (e instanceof SSLException) {
-      Log.e(this.getClass().getName(), "Device probably doesn't support TLS", e);
+      Log.e(TAG, "Device probably doesn't support TLS", e);
       return showDialog(new AlertDialog.Builder(this)
           .setMessage(getString(R.string.tls_error))
           .setPositiveButton(getString(R.string.change_to_http),
@@ -323,7 +325,7 @@ public abstract class AbstractPreviewActivity extends Activity {
           )
       );
     } else {
-      Log.d(this.getClass().getName(), e.toString());
+      Log.d(TAG, e.toString());
       return null;
     }
   }
@@ -336,7 +338,12 @@ public abstract class AbstractPreviewActivity extends Activity {
     Dialog dialog = alertDialogBuilder.create();
     dialog.setOnDismissListener(d -> alertDialog = null);
     alertDialog = dialog;
-    dialog.show();
+    try {
+      dialog.show();
+    } catch (WindowManager.BadTokenException e) {
+      Log.e(TAG, "Dialog show failed", e);
+      return null;
+    }
 
     return dialog::dismiss;
   }
