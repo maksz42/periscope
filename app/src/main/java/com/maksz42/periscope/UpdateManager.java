@@ -10,7 +10,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
@@ -43,11 +42,7 @@ public class UpdateManager {
         Intent confirmIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT);
         context.startActivity(confirmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
       } else if (status >= PackageInstaller.STATUS_FAILURE) {
-        Toast.makeText(
-            context,
-            "Error installing update. Status: " + status,
-            Toast.LENGTH_LONG
-        ).show();
+        Log.d(TAG, "Error installing update. Status: " + status);
       }
     }
   }
@@ -167,8 +162,20 @@ public class UpdateManager {
   }
 
   @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+  private static void abandonAllInstallerSessions(PackageInstaller installer) {
+    for (PackageInstaller.SessionInfo sessionInfo : installer.getMySessions()) {
+      try {
+        installer.abandonSession(sessionInfo.getSessionId());
+      } catch (SecurityException e) {
+        Log.e(TAG, "Error abandoning session: ", e);
+      }
+    }
+  }
+
+  @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
   private void installNewMethod(Context context, InputStream input, int len) throws IOException {
     PackageInstaller installer = context.getPackageManager().getPackageInstaller();
+    abandonAllInstallerSessions(installer);
     PackageInstaller.SessionParams params =
         new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
     int sessionId = installer.createSession(params);
