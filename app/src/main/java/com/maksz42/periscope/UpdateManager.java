@@ -18,6 +18,7 @@ import com.maksz42.periscope.utils.IO;
 import com.maksz42.periscope.utils.Misc;
 import com.maksz42.periscope.utils.Net;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -188,7 +189,7 @@ public class UpdateManager {
 
   private void installOldMethod(Context context, InputStream input) throws IOException {
     // see https://stackoverflow.com/a/47220833
-    try (OutputStream output = context.openFileOutput(APK_NAME, Context.MODE_WORLD_READABLE)) {
+    try (OutputStream output = new BufferedOutputStream(context.openFileOutput(APK_NAME, Context.MODE_WORLD_READABLE))) {
       IO.transferStream(input, output);
     }
     Intent intent = new Intent(Intent.ACTION_VIEW);
