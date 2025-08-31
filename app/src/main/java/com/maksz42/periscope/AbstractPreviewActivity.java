@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,6 +33,7 @@ import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
@@ -41,6 +43,7 @@ import com.maksz42.periscope.frigate.InvalidCredentialsException;
 import com.maksz42.periscope.helper.Settings;
 import com.maksz42.periscope.ui.CameraView;
 
+import java.lang.ref.WeakReference;
 import java.security.cert.CertificateException;
 
 import javax.net.ssl.SSLException;
@@ -331,12 +334,20 @@ public abstract class AbstractPreviewActivity extends Activity {
   }
 
   private Runnable showDialog(AlertDialog.Builder alertDialogBuilder) {
-    if (alertDialog != null) {
+    return showDialog(alertDialogBuilder, false);
+  }
+
+  private Runnable showDialog(AlertDialog.Builder alertDialogBuilder, boolean forceShow) {
+    if (alertDialog != null && !forceShow) {
       return null;
     }
 
     Dialog dialog = alertDialogBuilder.create();
-    dialog.setOnDismissListener(d -> alertDialog = null);
+    dialog.setOnDismissListener(d -> {
+      if (d == alertDialog) {
+        alertDialog = null;
+      }
+    });
     alertDialog = dialog;
     try {
       dialog.show();
@@ -364,6 +375,65 @@ public abstract class AbstractPreviewActivity extends Activity {
     return super.dispatchKeyEvent(event);
   }
 
+  private UpdateManager.UpdateProgressListener showUpdateProgressDialog() {
+    ProgressBar progressBar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+    TextView textView = new TextView(this);
+    LinearLayout linearLayout = new LinearLayout(this);
+    linearLayout.setOrientation(LinearLayout.VERTICAL);
+    int padding = getResources().getDimensionPixelSize(R.dimen.update_progress_dialog_padding);
+    linearLayout.setPadding(padding, 0, padding, 0);
+    linearLayout.addView(progressBar);
+    linearLayout.addView(textView);
+    WeakReference<LinearLayout> layoutRef = new WeakReference<>(linearLayout);
+    showDialog(new AlertDialog.Builder(this)
+        .setTitle(R.string.downloading_update)
+        .setView(linearLayout)
+        .setCancelable(false)
+        .setNegativeButton(R.string.hide, null),
+        true
+    );
+    return new UpdateManager.UpdateProgressListener() {
+      private void setProgressText(TextView textView, int val, int max) {
+        textView.setText((val / 1024) + " / " + (max / 1024) + " KB");
+      }
+
+      @Override
+      public void onSizeKnown(int size) {
+        LinearLayout linearLayout = layoutRef.get();
+        if (linearLayout == null) return;
+        ProgressBar bar = (ProgressBar) linearLayout.getChildAt(0);
+        TextView textView = (TextView) linearLayout.getChildAt(1);
+        textView.setGravity(Gravity.RIGHT);
+        if (size <= 0) {
+          bar.setIndeterminate(true);
+          textView.setText(null);
+        } else {
+          bar.setIndeterminate(false);
+          bar.setMax(size);
+          setProgressText(textView, bar.getProgress(), size);
+        }
+      }
+
+      @Override
+      public void onBytesDownloaded(int bytes) {
+        LinearLayout linearLayout = layoutRef.get();
+        if (linearLayout == null) return;
+        ProgressBar bar = (ProgressBar) linearLayout.getChildAt(0);
+        TextView textView = (TextView) linearLayout.getChildAt(1);
+        bar.setProgress(bytes);
+        setProgressText(textView, bytes, bar.getMax());
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        LinearLayout linearLayout = layoutRef.get();
+        if (linearLayout == null) return;
+        TextView textView = (TextView) linearLayout.getChildAt(1);
+        textView.append('\n' + t.toString());
+      }
+    };
+  }
+
   protected void checkForUpdates(int delay) {
     // TODO do this in AlarmManager or something
     Settings settings = Settings.getInstance(this);
@@ -379,7 +449,7 @@ public abstract class AbstractPreviewActivity extends Activity {
                 .setCancelable(false)
                 .setPositiveButton(
                     R.string.install_update,
-                    (dialog, which) -> um.downloadAndInstallUpdate()
+                    (dialog, which) -> um.downloadAndInstallUpdate(showUpdateProgressDialog())
                 )
                 .setNeutralButton(R.string.later, (dialog, which) -> {
                   final long dayMillis = 1000 * 60 * 60 * 24;

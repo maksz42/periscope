@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.pm.PackageInstaller;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -17,13 +19,14 @@ import com.maksz42.periscope.utils.Misc;
 import com.maksz42.periscope.utils.Net;
 
 import java.io.File;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
 
 public class UpdateManager {
@@ -57,6 +60,43 @@ public class UpdateManager {
 
   public interface OnUpdateAvailableListener {
     void onUpdate(UpdateManager updateManager, String version, String changelog);
+  }
+
+  public interface UpdateProgressListener {
+    void onSizeKnown(int size);
+    void onBytesDownloaded(int bytes);
+    void onError(Throwable t);
+  }
+
+  private static class UpdateDownloadObserver extends FilterInputStream implements Runnable {
+    private final UpdateProgressListener updateProgressListener;
+    private final Handler handler;
+    private final AtomicBoolean posted = new AtomicBoolean();
+    private volatile int bytes = 0;
+
+    private UpdateDownloadObserver(InputStream in, Handler handler, UpdateProgressListener updateProgressListener) {
+      super(in);
+      this.updateProgressListener = updateProgressListener;
+      this.handler = handler;
+    }
+
+    @Override
+    public void run() {
+      posted.set(false);
+      updateProgressListener.onBytesDownloaded(bytes);
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+      int readBytes = super.read(b, off, len);
+      if (readBytes > 0) {
+        bytes += readBytes;
+        if (posted.compareAndSet(false, true)) {
+          handler.post(this);
+        }
+      }
+      return readBytes;
+    }
   }
 
   public UpdateManager(Context context) {
@@ -99,39 +139,43 @@ public class UpdateManager {
     }).start();
   }
 
-  public void downloadAndInstallUpdate() {
+  public void downloadAndInstallUpdate(UpdateProgressListener updateProgressListener) {
     new Thread(() -> {
       Context context = ContextRef.get();
       if (context == null) return;
+      Handler handler = new Handler(Looper.getMainLooper());
       try {
         URL url = new URL(UPDATE_URL + APK_NAME);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-          installNewMethod(context, url);
-        } else {
-          installOldMethod(context, url);
+        HttpURLConnection conn = (HttpURLConnection) Net.openConnectionWithTimeout(url);
+        int len = conn.getContentLength();
+        handler.post(() -> updateProgressListener.onSizeKnown(len));
+        UpdateDownloadObserver updateDownloadObserver = new UpdateDownloadObserver(conn.getInputStream(), handler, updateProgressListener);
+        try (InputStream ungzipInput = new GZIPInputStream(updateDownloadObserver, 32768)) {
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            installNewMethod(context, ungzipInput, len);
+          } else {
+            installOldMethod(context, ungzipInput);
+          }
         }
+        conn.disconnect();
       } catch (IOException e) {
+        handler.post(() -> updateProgressListener.onError(e));
         Log.e(TAG, "Couldn't install update", e);
       }
     }).start();
   }
 
   @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-  private void installNewMethod(Context context, URL url) throws IOException {
+  private void installNewMethod(Context context, InputStream input, int len) throws IOException {
     PackageInstaller installer = context.getPackageManager().getPackageInstaller();
     PackageInstaller.SessionParams params =
         new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
     int sessionId = installer.createSession(params);
     try (PackageInstaller.Session session = installer.openSession(sessionId)) {
-      HttpURLConnection conn = (HttpURLConnection) Net.openConnectionWithTimeout(url);
-      int len = conn.getContentLength();
-      try (InputStream input = new GZIPInputStream(conn.getInputStream());
-           OutputStream output = session.openWrite(APK_NAME, 0, len)
-      ) {
+      try (OutputStream output = session.openWrite(APK_NAME, 0, len)) {
         IO.transferStream(input, output);
         session.fsync(output);
       }
-      conn.disconnect();
       PendingIntent callbackIntent = PendingIntent.getBroadcast(
           context,
           0,
@@ -142,11 +186,9 @@ public class UpdateManager {
     }
   }
 
-  private void installOldMethod(Context context, URL url) throws IOException {
+  private void installOldMethod(Context context, InputStream input) throws IOException {
     // see https://stackoverflow.com/a/47220833
-    try (InputStream input = new GZIPInputStream(Net.openStreamWithTimeout(url));
-         OutputStream output = context.openFileOutput(APK_NAME, Context.MODE_WORLD_READABLE)
-    ) {
+    try (OutputStream output = context.openFileOutput(APK_NAME, Context.MODE_WORLD_READABLE)) {
       IO.transferStream(input, output);
     }
     Intent intent = new Intent(Intent.ACTION_VIEW);

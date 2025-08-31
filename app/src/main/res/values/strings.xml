@@ -40,4 +40,6 @@
     <string name="autostart_new_devices_warning">May not work on newer devices</string>
     <string name="hide_status_bar">Hide status bar</string>
     <string name="hide_nav_bar">Hide navigation bar</string>
+    <string name="downloading_update">Downloading the update…</string>
+    <string name="hide">Hide</string>
 </resources>

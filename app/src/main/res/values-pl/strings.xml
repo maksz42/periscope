@@ -35,4 +35,6 @@
     <string name="autostart_new_devices_warning">Może nie działać na nowszych urządzeniach</string>
     <string name="hide_status_bar">Ukryj pasek stanu</string>
     <string name="hide_nav_bar">Ukryj pasek nawigacji</string>
+    <string name="downloading_update">Pobieranie aktualizacji…</string>
+    <string name="hide">Ukryj</string>
 </resources>
