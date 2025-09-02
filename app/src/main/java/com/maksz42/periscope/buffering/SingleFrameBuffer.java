@@ -8,7 +8,7 @@ import java.util.concurrent.locks.Condition;
 
 public class SingleFrameBuffer extends FrameBuffer {
   public static class FrameReadyGate {
-    private volatile boolean ready = false;
+    private boolean ready = false;
     private final Condition cond;
 
     private FrameReadyGate(Condition cond) {
