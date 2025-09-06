@@ -43,13 +43,13 @@ public final class Net {
     private CompositeTrustManager(KeyStore customKeyStore) throws GeneralSecurityException {
       String defaultAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
 
-      TrustManagerFactory defaultTmf = TrustManagerFactory.getInstance(defaultAlgorithm);
-      defaultTmf.init((KeyStore) null);
-      defaultTrustManager = (X509TrustManager) defaultTmf.getTrustManagers()[0];
+      TrustManagerFactory tmf = TrustManagerFactory.getInstance(defaultAlgorithm);
 
-      TrustManagerFactory customTmf = TrustManagerFactory.getInstance(defaultAlgorithm);
-      customTmf.init(customKeyStore);
-      customTrustManager = (X509TrustManager) customTmf.getTrustManagers()[0];
+      tmf.init((KeyStore) null);
+      defaultTrustManager = (X509TrustManager) tmf.getTrustManagers()[0];
+
+      tmf.init(customKeyStore);
+      customTrustManager = (X509TrustManager) tmf.getTrustManagers()[0];
     }
 
     @Override
