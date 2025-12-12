@@ -84,4 +84,31 @@
         android:key="@string/auto_check_for_updates_key"
         android:defaultValue="true"
         />
+    <PreferenceScreen
+        android:title="@string/rtsp_experimental"
+        >
+        <CheckBoxPreference
+            android:title="@string/rtsp_enabled"
+            android:key="@string/rtsp_enabled_key"
+            android:defaultValue="false"
+            />
+        <EditTextPreference
+            android:title="@string/port"
+            android:key="@string/rtsp_port_key"
+            android:defaultValue="8554"
+            android:inputType="number"
+            android:dependency="@string/rtsp_enabled_key"
+            />
+        <EditTextPreference
+            android:title="@string/user"
+            android:key="@string/rtsp_user_key"
+            android:dependency="@string/rtsp_enabled_key"
+            />
+        <EditTextPreference
+            android:title="@string/password"
+            android:key="@string/rtsp_password_key"
+            android:inputType="textPassword"
+            android:dependency="@string/rtsp_enabled_key"
+            />
+    </PreferenceScreen>
 </PreferenceScreen>

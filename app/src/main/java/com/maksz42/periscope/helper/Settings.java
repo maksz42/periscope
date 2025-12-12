@@ -40,6 +40,10 @@ public class Settings {
   public final String AutostartKey;
   public final String HideStatusBarKey;
   public final String HideNavBarKey;
+  public final String RtspEnabledKey;
+  public final String RtspPortKey;
+  public final String RtspUserKey;
+  public final String RtspPasswordKey;
 
   /**
    * not thread-safe, expected to be called on the UI thread
@@ -79,6 +83,10 @@ public class Settings {
     AutostartKey = res.getString(R.string.autostart_key);
     HideStatusBarKey = res.getString(R.string.hide_status_bar_key);
     HideNavBarKey = res.getString(R.string.hide_nav_bar_key);
+    RtspEnabledKey = res.getString(R.string.rtsp_enabled_key);
+    RtspPortKey = res.getString(R.string.rtsp_port_key);
+    RtspUserKey = res.getString(R.string.rtsp_user_key);
+    RtspPasswordKey = res.getString(R.string.rtsp_password_key);
   }
 
   private boolean getBoolean(String key) {
@@ -269,6 +277,42 @@ public class Settings {
 
   public Settings setHideNavBar(boolean value) {
     setBoolean(HideNavBarKey, value);
+    return this;
+  }
+
+  public boolean getRtspEnabled() {
+    return getBoolean(RtspEnabledKey);
+  }
+
+  public Settings setRtspEnabled(boolean value) {
+    setBoolean(RtspEnabledKey, value);
+    return this;
+  }
+
+  public int getRtspPort() {
+    return Integer.parseInt(getString(RtspPortKey));
+  }
+
+  public Settings setRtspPort(int value) {
+    setString(RtspPortKey, String.valueOf(value));
+    return this;
+  }
+
+  public String getRtspUser() {
+    return getString(RtspUserKey);
+  }
+
+  public Settings setRtspUser(String value) {
+    setString(RtspUserKey, value);
+    return this;
+  }
+
+  public String getRtspPassword() {
+    return getString(RtspPasswordKey);
+  }
+
+  public Settings setRtspPassword(String value) {
+    setString(RtspPasswordKey, value);
     return this;
   }
 }

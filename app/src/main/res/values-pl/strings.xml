@@ -37,4 +37,6 @@
     <string name="hide_nav_bar">Ukryj pasek nawigacji</string>
     <string name="downloading_update">Pobieranie aktualizacji…</string>
     <string name="hide">Ukryj</string>
+    <string name="rtsp_experimental">RTSP (eksperymentalne)</string>
+    <string name="rtsp_enabled">RTSP włączone</string>
 </resources>

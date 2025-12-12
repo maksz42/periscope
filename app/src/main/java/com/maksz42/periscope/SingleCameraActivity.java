@@ -2,7 +2,9 @@ package com.maksz42.periscope;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ImageButton;
 
+import com.maksz42.periscope.camera.rtsp.RtspClient;
 import com.maksz42.periscope.frigate.Media;
 import com.maksz42.periscope.helper.CameraPlayerHolder;
 import com.maksz42.periscope.helper.Settings;
@@ -10,6 +12,8 @@ import com.maksz42.periscope.ui.CameraView;
 
 public class SingleCameraActivity extends AbstractPreviewActivity {
   private CameraView cameraView;
+  private RtspClient rtspClient;
+  private ImageButton muteButton;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +28,22 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
   protected void onStart() {
     super.onStart();
     Settings settings = Settings.getInstance(this);
+
+    if (settings.getRtspEnabled() && muteButton == null) {
+      muteButton = addFloatingButton(android.R.drawable.ic_lock_silent_mode_off, v -> {
+        if (rtspClient == null) return;
+        boolean muted = rtspClient.getMuted();
+        rtspClient.setMuted(!muted);
+        ImageButton btn = (ImageButton) v;
+        btn.setImageResource(
+            muted ? android.R.drawable.ic_lock_silent_mode_off : android.R.drawable.ic_lock_silent_mode
+        );
+      });
+    } else if (!settings.getRtspEnabled() && muteButton != null) {
+      removeFloatingButton(muteButton);
+      muteButton = null;
+    }
+
     boolean ignoreAspectRatio = settings.getIgnoreAspectRatio();
     short timeout = settings.getTimeout();
     Media.ImageFormat imageFormat = settings.getImageFormat();
@@ -45,12 +65,27 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     cameraView.start(0, 100);
 
     checkForUpdates(2_000);
+
+    if (settings.getRtspEnabled()) {
+      rtspClient = new RtspClient(
+          settings.getHost(),
+          settings.getRtspPort(),
+          settings.getRtspUser(),
+          settings.getRtspPassword(),
+          cameraName
+      );
+      rtspClient.start();
+    }
   }
 
   @Override
   protected void onStop() {
     super.onStop();
     cameraView.stop();
+    if (rtspClient != null) {
+      rtspClient.stop();
+      rtspClient = null;
+    }
   }
 
   @Override

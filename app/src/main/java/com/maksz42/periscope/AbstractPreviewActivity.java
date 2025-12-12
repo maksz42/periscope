@@ -236,19 +236,19 @@ public abstract class AbstractPreviewActivity extends Activity {
     }
   }
 
-  protected void addFloatingButton(int drawableResID, Class<?> cls) {
-    addFloatingButton(drawableResID, NO_ID, cls);
+  protected ImageButton addFloatingButton(int drawableResID, Class<?> cls) {
+    return addFloatingButton(drawableResID, NO_ID, cls);
   }
 
-  protected void addFloatingButton(int drawableResID, int id, Class<?> cls) {
-    addFloatingButton(drawableResID, id, v -> startActivity(new Intent(this, cls)));
+  protected ImageButton addFloatingButton(int drawableResID, int id, Class<?> cls) {
+    return addFloatingButton(drawableResID, id, v -> startActivity(new Intent(this, cls)));
   }
 
-  protected void addFloatingButton(int drawableResID, View.OnClickListener listener) {
-    addFloatingButton(drawableResID, NO_ID, listener);
+  protected ImageButton addFloatingButton(int drawableResID, View.OnClickListener listener) {
+    return addFloatingButton(drawableResID, NO_ID, listener);
   }
 
-  protected void addFloatingButton(int drawableResID, int id, View.OnClickListener listener) {
+  protected ImageButton addFloatingButton(int drawableResID, int id, View.OnClickListener listener) {
     Resources res = getResources();
     int size = res.getDimensionPixelSize(R.dimen.floating_button_size);
     int padding = res.getDimensionPixelSize(R.dimen.floating_button_padding);
@@ -269,6 +269,12 @@ public abstract class AbstractPreviewActivity extends Activity {
     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
     params.rightMargin = margin;
     floatingBar.addView(btn, params);
+    return btn;
+  }
+
+  protected void removeFloatingButton(ImageButton button) {
+    LinearLayout floatingBar = findViewById(R.id.floating_bar);
+    floatingBar.removeView(button);
   }
 
   protected <T extends View> T getPreview() {

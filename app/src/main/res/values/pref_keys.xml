@@ -17,4 +17,8 @@
     <string name="autostart_key" translatable="false">autostart</string>
     <string name="hide_status_bar_key" translatable="false">hide_status_bar</string>
     <string name="hide_nav_bar_key" translatable="false">hide_nav_bar</string>
+    <string name="rtsp_enabled_key" translatable="false">rtsp_enabled</string>
+    <string name="rtsp_port_key" translatable="false">rtsp_port</string>
+    <string name="rtsp_user_key" translatable="false">rtsp_user</string>
+    <string name="rtsp_password_key" translatable="false">rtsp_password</string>
 </resources>

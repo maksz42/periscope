@@ -42,4 +42,6 @@
     <string name="hide_nav_bar">Hide navigation bar</string>
     <string name="downloading_update">Downloading the update…</string>
     <string name="hide">Hide</string>
+    <string name="rtsp_experimental">RTSP (experimental)</string>
+    <string name="rtsp_enabled">RTSP enabled</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.maksz42.periscope;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -11,7 +12,11 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.view.inputmethod.EditorInfo;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
@@ -78,7 +83,7 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
 
     getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.custom_settings_title_bar);
     TextView title = findViewById(R.id.title);
-    title.setText(R.string.settings_activity_label);
+    title.setText(getTitle());
     findViewById(R.id.btn_back).setOnClickListener(v -> onBackPressed());
   }
 
@@ -100,11 +105,46 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     super.onResume();
     getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     PreferenceScreen preferenceScreen = getPreferenceScreen();
+    postProcessPreferences(preferenceScreen);
+  }
+
+  private void postProcessPreferences(PreferenceScreen preferenceScreen) {
     int count = preferenceScreen.getPreferenceCount();
     for (int i = 0; i < count; i++) {
       Preference preference = preferenceScreen.getPreference(i);
       updatePreferenceSummary(preference);
+      if (preference instanceof PreferenceScreen nestedPreferenceScreen) {
+        nestedPreferenceScreen.setOnPreferenceClickListener(p -> {
+          patchPreferenceScreenDialog((PreferenceScreen) p);
+          return false;
+        });
+        postProcessPreferences(nestedPreferenceScreen);
+      }
     }
+  }
+
+  private void patchPreferenceScreenDialog(PreferenceScreen preferenceScreen) {
+    Dialog dialog = preferenceScreen.getDialog();
+    View titleView = dialog.findViewById(android.R.id.title);
+    if (titleView == null) return;
+    ViewGroup parent = (ViewGroup) titleView.getParent();
+    if (parent instanceof FrameLayout) {
+      View activityTitleContainer = (View) findViewById(R.id.title).getParent().getParent();
+      parent.getLayoutParams().height = activityTitleContainer.getHeight();
+      parent.requestLayout();
+    }
+    int index = parent.indexOfChild(titleView);
+    parent.removeView(titleView);
+    View newTitle = getLayoutInflater().inflate(
+        R.layout.custom_settings_title_bar,
+        parent,
+        false
+    );
+    TextView titleTextView = newTitle.findViewById(R.id.title);
+    titleTextView.setId(android.R.id.title);
+    titleTextView.setText(preferenceScreen.getTitle());
+    newTitle.findViewById(R.id.btn_back).setOnClickListener(v -> dialog.dismiss());
+    parent.addView(newTitle, index);
   }
 
   @Override
@@ -119,10 +159,23 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     updatePreferenceSummary(preference);
   }
 
+  static boolean isPasswordInputType(int inputType) {
+    final int variation =
+        inputType & (EditorInfo.TYPE_MASK_CLASS | EditorInfo.TYPE_MASK_VARIATION);
+    return variation
+        == (EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_VARIATION_PASSWORD)
+//        || variation
+//        == (EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_VARIATION_WEB_PASSWORD)
+//        || variation
+//        == (EditorInfo.TYPE_CLASS_NUMBER | EditorInfo.TYPE_NUMBER_VARIATION_PASSWORD)
+        ;
+  }
+
   private void updatePreferenceSummary(Preference preference) {
     if (preference instanceof EditTextPreference editTextPreference) {
       String text = editTextPreference.getText();
-      if (preference.getKey().equals(settings.PasswordKey) && text != null) {
+      int it = editTextPreference.getEditText().getInputType();
+      if (text != null && isPasswordInputType(it)) {
         preference.setSummary("*".repeat(text.length()));
       } else {
         preference.setSummary(text);
