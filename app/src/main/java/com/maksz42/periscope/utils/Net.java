@@ -131,52 +131,48 @@ public final class Net {
     }
 
     TrustManager[] trustManagers;
+
     try {
-      if (disableCertVerification) {
-        trustManagers = new TrustManager[] {
-            new X509TrustManager() {
-              public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[0];
-              }
-              public void checkClientTrusted(X509Certificate[] certs, String authType) { }
-              public void checkServerTrusted(X509Certificate[] certs, String authType) { }
+        if (disableCertVerification) {
+            if (!BuildConfig.DEBUG) {
+                throw new SecurityException(
+                    "Disabling TLS certificate verification is not allowed in release builds"
+                );
             }
-        };
-        if (defaultHostnameVerifier == null) {
-          defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
-        }
-        HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
-      } else {
-        // Android 14 already has isrg_root_x1 and isrg_root_x2
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.TIRAMISU) {
-          KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-          keyStore.load(null, null);
-          CertificateFactory cf = CertificateFactory.getInstance("X.509");
-          Resources res = context.getResources();
-          // Android 7.1 already has isrg_root_x1
-          if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
-            try (InputStream caInput = res.openRawResource(R.raw.isrgrootx1)) {
-              loadCertificate(caInput, "isrg_root_x1", cf, keyStore);
+
+            Log.w("TLS", "WARNING: TLS certificate and hostname verification DISABLED (DEBUG only)");
+
+            trustManagers = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) { }
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) { }
+                }
+            };
+
+            if (defaultHostnameVerifier == null) {
+                defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
             }
-          }
-          try (InputStream caInput = res.openRawResource(R.raw.isrgrootx2)) {
-            loadCertificate(caInput, "isrg_root_x2", cf, keyStore);
-          }
-          trustManagers = new TrustManager[] { new CompositeTrustManager(keyStore) };
         } else {
-          trustManagers = null;
+            // ✅ secure default behavior
+            trustManagers = null; // system default trust store
+
+            if (defaultHostnameVerifier != null) {
+                HttpsURLConnection.setDefaultHostnameVerifier(defaultHostnameVerifier);
+            }
         }
 
-        if (defaultHostnameVerifier != null) {
-          HttpsURLConnection.setDefaultHostnameVerifier(defaultHostnameVerifier);
-        }
-      }
-      SSLContext sc = SSLContext.getInstance("TLS");
-      sc.init(null, trustManagers, null);
-      HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        SSLContext sc = SSLContext.getInstance("TLS");
+        sc.init(null, trustManagers, null);
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
     } catch (GeneralSecurityException e) {
-      Log.w("TLS", "Failed to configure SSLSocketFactory", e);
-    } catch (IOException e) {
+        Log.w("TLS", "Failed to configure SSLSocketFactory", e);
+    }
+
+    catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
