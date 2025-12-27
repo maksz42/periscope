@@ -81,10 +81,51 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
       getPreferenceScreen().removePreference(findPreference(settings.HideNavBarKey));
     }
 
+    Preference.OnPreferenceChangeListener portListener =
+        (preference, newValue) -> validatePort((String) newValue) > 0;
+    findPreference(settings.PortKey).setOnPreferenceChangeListener(portListener);
+    findPreference(settings.RtspPortKey).setOnPreferenceChangeListener(portListener);
+
+    findPreference(settings.HostKey).setOnPreferenceChangeListener(
+        (preference, newValue) -> validateHost((String) newValue)
+    );
+
     getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.custom_settings_title_bar);
     TextView title = findViewById(R.id.title);
     title.setText(getTitle());
     findViewById(R.id.btn_back).setOnClickListener(v -> onBackPressed());
+  }
+
+  private int parsePort(String value) {
+    try {
+      int port = Integer.parseInt(value);
+      if (Misc.inRange(port, 1, 65535)) {
+        return port;
+      }
+    } catch (NumberFormatException ignored) { }
+    return -1;
+  }
+
+  private int validatePort(String value) {
+    int port = parsePort(value);
+    if (port < 0) {
+      new AlertDialog.Builder(SettingsActivity.this)
+          .setTitle(R.string.invalid_port)
+          .setPositiveButton(R.string.change_port, null)
+          .show();
+    }
+    return port;
+  }
+
+  private boolean validateHost(String value) {
+    if (value == null || value.isBlank()) {
+      new AlertDialog.Builder(this)
+          .setTitle(R.string.invalid_host)
+          .setPositiveButton(R.string.change_host, null)
+          .show();
+      return false;
+    }
+    return true;
   }
 
   @RequiresApi(Build.VERSION_CODES.Q)
@@ -159,7 +200,7 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     updatePreferenceSummary(preference);
   }
 
-  static boolean isPasswordInputType(int inputType) {
+  private static boolean isPasswordInputType(int inputType) {
     final int variation =
         inputType & (EditorInfo.TYPE_MASK_CLASS | EditorInfo.TYPE_MASK_VARIATION);
     return variation
@@ -189,27 +230,10 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
   public void onBackPressed() {
     EditTextPreference hostPreference = (EditTextPreference) findPreference(settings.HostKey);
     String host = hostPreference.getText();
-    if (host == null || host.isBlank()) {
-      new AlertDialog.Builder(this)
-          .setTitle(R.string.invalid_host)
-          .setPositiveButton(R.string.change_host, null)
-          .show();
-      return;
-    }
+    if (!validateHost(host)) return;
     EditTextPreference portPreference = (EditTextPreference) findPreference(settings.PortKey);
-    int port;
-    try {
-      port = Integer.parseInt(portPreference.getText());
-    } catch (NumberFormatException e) {
-      port = -1;
-    }
-    if (port < 0) {
-      new AlertDialog.Builder(this)
-          .setTitle(R.string.invalid_port)
-          .setPositiveButton(R.string.change_port, null)
-          .show();
-      return;
-    }
+    int port = validatePort(portPreference.getText());
+    if (port < 0) return;
     ListPreference protocolPreference = (ListPreference) findPreference(settings.ProtocolKey);
     Client.Protocol protocol = Client.Protocol.valueOf(protocolPreference.getValue());
     try {
