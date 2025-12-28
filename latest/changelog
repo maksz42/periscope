@@ -1,6 +1,7 @@
-- Update download progress dialog
-- Multi-threaded display fixes
-- Fixed some rare crashes
+- Audio over RTSP support (experimental)
+- Improved settings input validation
+
+For more information, see the release on GitHub.
 
 ☕ Buy me a coffee ☕
 ko-fi.com/maksz42
