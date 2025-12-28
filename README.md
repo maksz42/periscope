@@ -63,7 +63,7 @@ Periscope can start automatically after booting up the device. This is especiall
 
 ## TODO
 - Adaptive resolution
-- RTSP(S) support
+- ~RTSP(S) support~ (WIP)
 
 [yt-review]: https://www.youtube.com/watch?v=KiajZnkMgUQ "Click to watch the review"
 
