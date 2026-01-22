@@ -6,6 +6,7 @@ import android.os.Build;
 import android.util.Log;
 
 import com.maksz42.periscope.R;
+import com.maksz42.periscope.tls.TLSSocketFactory;
 
 import org.conscrypt.Conscrypt;
 
@@ -23,7 +24,6 @@ import java.security.cert.X509Certificate;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
@@ -171,9 +171,8 @@ public final class Net {
           HttpsURLConnection.setDefaultHostnameVerifier(defaultHostnameVerifier);
         }
       }
-      SSLContext sc = SSLContext.getInstance("TLS");
-      sc.init(null, trustManagers, null);
-      HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+      TLSSocketFactory tlsSocketFactory = new TLSSocketFactory(null, trustManagers, null);
+      HttpsURLConnection.setDefaultSSLSocketFactory(tlsSocketFactory);
     } catch (GeneralSecurityException e) {
       Log.w("TLS", "Failed to configure SSLSocketFactory", e);
     } catch (IOException e) {
