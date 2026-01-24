@@ -7,8 +7,6 @@ import static android.os.Build.VERSION_CODES.KITKAT;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import androidx.annotation.RequiresApi;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.locks.Lock;
@@ -24,9 +22,19 @@ public abstract class FrameBuffer {
   private static final boolean NEEDS_SIGSEGV_MITIGATION = (SDK_INT == KITKAT);
 
   protected final Lock lock = new ReentrantLock();
-  private final byte[] tempStorage = new byte[16 * 1024];
+  private final BitmapFactory.Options bitmapFactoryOptions;
   private final byte[] streamBuffer = new byte[16 * 1024];
 
+
+  {
+    bitmapFactoryOptions = new BitmapFactory.Options();
+    if (SUPPORTS_REUSING_BITMAP) {
+      bitmapFactoryOptions.inMutable = true;
+      // https://stackoverflow.com/questions/16034756
+      bitmapFactoryOptions.inSampleSize = 1;
+    }
+    bitmapFactoryOptions.inTempStorage = new byte[16 * 1024];
+  }
 
   public static FrameBuffer newNonBlockingFrameBuffer() {
     return FrameBuffer.SUPPORTS_REUSING_BITMAP
@@ -42,17 +50,6 @@ public abstract class FrameBuffer {
     lock.unlock();
   }
 
-  @RequiresApi(HONEYCOMB)
-  private BitmapFactory.Options createReusableBitmapOptions(Bitmap reusableBitmap) {
-    BitmapFactory.Options options = new BitmapFactory.Options();
-    options.inMutable = true;
-    options.inBitmap = reusableBitmap;
-    options.inTempStorage = tempStorage;
-    // https://stackoverflow.com/questions/16034756
-    options.inSampleSize = 1;
-    return options;
-  }
-
   public abstract void decodeStream(InputStream input) throws IOException;
 
   public abstract Bitmap getFrame();
@@ -65,22 +62,20 @@ public abstract class FrameBuffer {
   }
 
   private Bitmap decodeStream(FastBIS input, Bitmap reusableBitmap) throws IOException {
-    BitmapFactory.Options opts = null;
     if (SUPPORTS_REUSING_BITMAP) {
-      opts = createReusableBitmapOptions(reusableBitmap);
-      // mark() could be called unconditionally but it's synchronized,
-      // so not free
+      bitmapFactoryOptions.inBitmap = reusableBitmap;
       if (HAS_NATIVE_STREAM_BUFFER) {
+        // mark() could be called unconditionally but it's synchronized, so not free
         input.mark(streamBuffer.length);
       }
     }
     Bitmap bitmap = null;
     try {
-      bitmap = BitmapFactory.decodeStream(input, null, opts);
+      bitmap = BitmapFactory.decodeStream(input, null, bitmapFactoryOptions);
     } catch (IllegalArgumentException e) {
       if (SUPPORTS_REUSING_BITMAP && input.tryReset()) {
-        opts.inBitmap = null;
-        bitmap = BitmapFactory.decodeStream(input, null, opts);
+        bitmapFactoryOptions.inBitmap = null;
+        bitmap = BitmapFactory.decodeStream(input, null, bitmapFactoryOptions);
       }
     }
     if (bitmap == null) {
