@@ -168,7 +168,7 @@ public class RtspClient {
         int rate = Integer.parseInt(formatParts[1]);
 
 
-        int bufSize = AudioTrack.getMinBufferSize(8000, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        int bufSize = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
         if (audioTrack != null) {
           audioTrack.release();
         }
