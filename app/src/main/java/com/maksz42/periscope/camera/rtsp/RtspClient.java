@@ -18,9 +18,9 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +51,7 @@ public class RtspClient {
   private final ScheduledExecutorService ioExecutor = Executors.newSingleThreadScheduledExecutor();
 
   private final ConcurrentLinkedQueue<OnResponseListener> responseQueue = new ConcurrentLinkedQueue<>();
-  private final LinkedBlockingQueue<short[]> mediaQueue = new LinkedBlockingQueue<>(8);
+  private final ArrayBlockingQueue<short[]> mediaQueue = new ArrayBlockingQueue<>(8, false);
 
   private volatile AudioTrack audioTrack;
   private AudioEncoding encoding;
