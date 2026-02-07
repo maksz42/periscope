@@ -74,6 +74,11 @@
         android:defaultValue="true"
         />
     <CheckBoxPreference
+        android:title="@string/keep_screen_on"
+        android:key="@string/keep_screen_on_key"
+        android:defaultValue="true"
+        />
+    <CheckBoxPreference
         android:title="@string/autostart"
         android:key="@string/autostart_key"
         android:summary="@string/autostart_new_devices_warning"

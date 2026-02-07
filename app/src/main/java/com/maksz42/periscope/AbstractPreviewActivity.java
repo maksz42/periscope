@@ -76,16 +76,14 @@ public abstract class AbstractPreviewActivity extends Activity {
     }
     setContentView(R.layout.activity_preview);
 
-    int windowFlags = FLAG_KEEP_SCREEN_ON;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
       // TODO figure this out
       // Without FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS android 14 emulator shows a black bar
       // in place of the navbar but only if SYSTEM_UI_FLAG_HIDE_NAVIGATION was set in
       // postDelayed() and the theme is @android:style/Theme(.*)
       // On my physical devices it doesn't matter
-      windowFlags |= FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
+      getWindow().addFlags(FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
     }
-    getWindow().addFlags(windowFlags);
     addFloatingButton(android.R.drawable.ic_menu_preferences, R.id.preferences_button, SettingsActivity.class);
 
     findViewById(R.id.floating_bar).requestFocus();
@@ -130,14 +128,17 @@ public abstract class AbstractPreviewActivity extends Activity {
     super.onStart();
     scheduleUIHide();
 
+    Settings settings = Settings.getInstance(this);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      Settings settings = Settings.getInstance(this);
       if (!settings.getHideStatusBar() || !settings.getHideNavBar()) {
         setupSystemUIListener();
       } else {
         removeSystemUIListener();
       }
     }
+
+    int flags = settings.getKeepScreenOn() ? FLAG_KEEP_SCREEN_ON : 0;
+    getWindow().setFlags(flags, FLAG_KEEP_SCREEN_ON);
   }
 
   @Override

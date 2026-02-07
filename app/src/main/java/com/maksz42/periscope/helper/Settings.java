@@ -44,6 +44,7 @@ public class Settings {
   public final String RtspPortKey;
   public final String RtspUserKey;
   public final String RtspPasswordKey;
+  public final String KeepScreenOn;
 
   /**
    * not thread-safe, expected to be called on the UI thread
@@ -87,6 +88,7 @@ public class Settings {
     RtspPortKey = res.getString(R.string.rtsp_port_key);
     RtspUserKey = res.getString(R.string.rtsp_user_key);
     RtspPasswordKey = res.getString(R.string.rtsp_password_key);
+    KeepScreenOn = res.getString(R.string.keep_screen_on_key);
   }
 
   private boolean getBoolean(String key) {
@@ -313,6 +315,15 @@ public class Settings {
 
   public Settings setRtspPassword(String value) {
     setString(RtspPasswordKey, value);
+    return this;
+  }
+
+  public boolean getKeepScreenOn() {
+    return getBoolean(KeepScreenOn);
+  }
+
+  public Settings setKeepScreenOn(boolean value) {
+    setBoolean(KeepScreenOn, value);
     return this;
   }
 }
