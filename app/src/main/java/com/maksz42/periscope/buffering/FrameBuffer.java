@@ -19,7 +19,6 @@ public abstract class FrameBuffer {
   public static final boolean SUPPORTS_WEBP = (SDK_INT >= KITKAT);
   static final boolean SUPPORTS_REUSING_BITMAP = (SDK_INT >= HONEYCOMB);
   private static final boolean HAS_NATIVE_STREAM_BUFFER = (SDK_INT >= KITKAT);
-  private static final boolean NEEDS_SIGSEGV_MITIGATION = (SDK_INT == KITKAT);
 
   protected final Lock lock = new ReentrantLock();
   private final BitmapFactory.Options bitmapFactoryOptions;
@@ -54,31 +53,25 @@ public abstract class FrameBuffer {
 
   public abstract Bitmap getFrame();
 
-  final protected Bitmap decodeStream(InputStream input, Bitmap reusableBitmap) throws IOException {
-    FastBIS fastBIS = NEEDS_SIGSEGV_MITIGATION
-        ? new CatchingFastBIS(input, streamBuffer)
-        : new FastBIS(input, streamBuffer);
-    return decodeStream(fastBIS, reusableBitmap);
-  }
-
-  private Bitmap decodeStream(FastBIS input, Bitmap reusableBitmap) throws IOException {
+  public Bitmap decodeStream(InputStream input, Bitmap reusableBitmap) throws IOException {
+    FastBIS bufferedInput = new FastBIS(input, streamBuffer);
     if (SUPPORTS_REUSING_BITMAP) {
       bitmapFactoryOptions.inBitmap = reusableBitmap;
       if (HAS_NATIVE_STREAM_BUFFER) {
         // mark() could be called unconditionally but it's synchronized, so not free
-        input.mark(streamBuffer.length);
+        bufferedInput.mark(streamBuffer.length);
       }
     }
     Bitmap bitmap = null;
     try {
-      bitmap = BitmapFactory.decodeStream(input, null, bitmapFactoryOptions);
+      bitmap = BitmapFactory.decodeStream(bufferedInput, null, bitmapFactoryOptions);
     } catch (IllegalArgumentException e) {
-      if (SUPPORTS_REUSING_BITMAP && input.tryReset()) {
+      if (SUPPORTS_REUSING_BITMAP && bufferedInput.tryReset()) {
         bitmapFactoryOptions.inBitmap = null;
-        bitmap = BitmapFactory.decodeStream(input, null, bitmapFactoryOptions);
+        bitmap = BitmapFactory.decodeStream(bufferedInput, null, bitmapFactoryOptions);
       }
     }
-    if (bitmap == null) {
+    if (bitmap == null || bufferedInput.exceptionThrown) {
       throw new IOException("Failed to decode image");
     }
     return bitmap;
