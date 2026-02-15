@@ -1,7 +1,9 @@
-- Audio over RTSP support (experimental)
-- Improved settings input validation
-
-For more information, see the release on GitHub.
+- Add option not to keep screen on
+- Ensure only TLS 1.2 and 1.3 are enabled
+- Fix TLS 1.3 on Android 6.0 - 7.1.2
+- Minor RTSP fixes and improvements
+- Reduce RAM usage on Android 2.x
+- Fix rare visual glitch
 
 ☕ Buy me a coffee ☕
 ko-fi.com/maksz42
