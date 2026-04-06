@@ -14,6 +14,7 @@ android {
         targetSdk = 34
         versionCode = 20
         versionName = "0.20"
+        resValue("string", "app_version_name", versionName!!)
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

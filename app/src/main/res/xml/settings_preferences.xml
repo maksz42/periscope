@@ -116,4 +116,9 @@
             android:dependency="@string/rtsp_enabled_key"
             />
     </PreferenceScreen>
+    <Preference
+        android:title="@string/version"
+        android:summary="@string/app_version_name"
+        android:enabled="false"
+        />
 </PreferenceScreen>

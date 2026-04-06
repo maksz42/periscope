@@ -40,4 +40,5 @@
     <string name="rtsp_experimental">RTSP (eksperymentalne)</string>
     <string name="rtsp_enabled">RTSP włączone</string>
     <string name="keep_screen_on">Nie wygaszaj ekranu</string>
+    <string name="version">Wersja</string>
 </resources>
