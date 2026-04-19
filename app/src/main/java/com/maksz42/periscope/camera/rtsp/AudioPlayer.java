@@ -8,43 +8,43 @@ import java.util.concurrent.locks.LockSupport;
 
 class AudioPlayer {
     private final static int CAPACITY = (1 << 12);
+
+    private final byte[] ring_buf = new byte[CAPACITY];
+    private final short[] decodeBuffer = new short[CAPACITY];
+    private final Thread audioThread = new Thread(this::playLoop);
+    private final AudioEncoding audioEncoding;
+    private final AudioTrack audioTrack;
+
     private volatile int head;
     private int headShadow;
     private volatile int tail;
     private int tailShadow;
-    private final byte[] ring_buf;
-    private final short[] decodeBuffer;
-    private final AudioEncoding audioEncoding;
-    private final AudioTrack audioTrack;
-    private final Thread audioThread = new Thread(this::playLoop);
 
     AudioPlayer(AudioEncoding audioEncoding, AudioTrack audioTrack) {
-        this.ring_buf = new byte[CAPACITY];
-        this.decodeBuffer = new short[CAPACITY];
         this.audioEncoding = audioEncoding;
         this.audioTrack = audioTrack;
         audioTrack.play();
         this.audioThread.start();
     }
 
-    private static int masked(int counter, int capacity) {
-        return counter & (capacity - 1);
+    private static int masked(int counter) {
+        return counter & (CAPACITY - 1);
     }
 
     private static int getCount(int head, int tail) {
         return head - tail;
     }
 
-    private static int getCountNoWrap(int capacity, int head, int tail) {
-        return Math.min(getCount(head, tail), capacity - masked(tail, capacity));
+    private static int getCountNoWrap(int head, int tail) {
+        return Math.min(getCount(head, tail), CAPACITY - masked(tail));
     }
 
-    private static int getFree(int capacity, int head, int tail) {
-        return capacity - getCount(head, tail);
+    private static int getFree(int head, int tail) {
+        return CAPACITY - getCount(head, tail);
     }
 
-    private static int getFreeNoWrap(int capacity, int head, int tail) {
-        return Math.min(getFree(capacity, head, tail), capacity - masked(head, capacity));
+    private static int getFreeNoWrap(int head, int tail) {
+        return Math.min(getFree(head, tail), CAPACITY - masked(head));
     }
 
     void write(byte[] data, int offset, int len) {
@@ -52,7 +52,7 @@ class AudioPlayer {
         int localTail = tail;
 
         int toWrite;
-        int free = getFree(ring_buf.length, localHead, localTail);
+        int free = getFree(localHead, localTail);
         if (len <= free) {
             toWrite = len;
         } else {
@@ -60,8 +60,8 @@ class AudioPlayer {
             // drop data that don't fit
             offset += len - toWrite;
         }
-        int toEnd = Math.min(toWrite, getFreeNoWrap(ring_buf.length, localHead, localTail));
-        System.arraycopy(data, offset, ring_buf, masked(localHead, ring_buf.length), toEnd);
+        int toEnd = Math.min(toWrite, getFreeNoWrap(localHead, localTail));
+        System.arraycopy(data, offset, ring_buf, masked(localHead), toEnd);
         int fromStart = toWrite - toEnd;
         System.arraycopy(data, offset + toEnd, ring_buf, 0, fromStart);
         localHead += toWrite;
@@ -85,13 +85,13 @@ class AudioPlayer {
         switch (audioEncoding) {
             case PCMA -> {
                 for (int i = 0; i < toRead; i++) {
-                    int idx = masked(i + localTail, ring_buf.length);
+                    int idx = masked(i + localTail);
                     decodeBuffer[i] = PCM.fromALaw(ring_buf[idx]);
                 }
             }
             case PCMU -> {
                 for (int i = 0; i < toRead; i++) {
-                    int idx = masked(i + localTail, ring_buf.length);
+                    int idx = masked(i + localTail);
                     decodeBuffer[i] = PCM.fromULaw(ring_buf[idx]);
                 }
             }
