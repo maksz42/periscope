@@ -9,7 +9,9 @@ import java.util.concurrent.locks.LockSupport;
 class AudioPlayer {
     private final static int CAPACITY = (1 << 12);
     private volatile int head;
+    private int headShadow;
     private volatile int tail;
+    private int tailShadow;
     private final byte[] ring_buf;
     private final short[] decodeBuffer;
     private final AudioEncoding audioEncoding;
@@ -46,7 +48,7 @@ class AudioPlayer {
     }
 
     void write(byte[] data, int offset, int len) {
-        int localHead = head;
+        int localHead = headShadow;
         int localTail = tail;
 
         int toWrite;
@@ -62,12 +64,14 @@ class AudioPlayer {
         System.arraycopy(data, offset, ring_buf, masked(localHead, ring_buf.length), toEnd);
         int fromStart = toWrite - toEnd;
         System.arraycopy(data, offset + toEnd, ring_buf, 0, fromStart);
-        head = localHead + toWrite;
+        localHead += toWrite;
+        head = localHead;
         LockSupport.unpark(audioThread);
+        headShadow = localHead;
     }
 
     private boolean consume() {
-        int localTail = tail;
+        int localTail = tailShadow;
         int localHead;
 
         while (true) {
@@ -92,8 +96,10 @@ class AudioPlayer {
                 }
             }
         }
-        tail = localTail + toRead;
+        localTail += toRead;
+        tail = localTail;
         audioTrack.write(decodeBuffer, 0, toRead);
+        tailShadow = localTail;
         return true;
     }
 
