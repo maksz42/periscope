@@ -7,7 +7,6 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.maksz42.periscope.BuildConfig;
-import com.maksz42.periscope.media.audio.PCM;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -18,7 +17,6 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -47,18 +45,14 @@ public class RtspClient {
   private volatile DataOutputStream out;
 
   private Thread readerThread;
-  private final Thread mediaThread;
   private final ScheduledExecutorService ioExecutor = Executors.newSingleThreadScheduledExecutor();
 
   private final ConcurrentLinkedQueue<OnResponseListener> responseQueue = new ConcurrentLinkedQueue<>();
-  private final ArrayBlockingQueue<short[]> mediaQueue = new ArrayBlockingQueue<>(8, false);
+  private volatile AudioPlayer audioPlayer;
 
-  private volatile AudioTrack audioTrack;
   private AudioEncoding encoding;
   private final String cameraName;
   private volatile String session;
-
-  private volatile boolean mute = false;
 
 
   public RtspClient(String host, int port, String user, String password, String cameraName) {
@@ -74,18 +68,6 @@ public class RtspClient {
     } else {
       this.basicAuthHeader = null;
     }
-
-    mediaThread = new Thread(() -> {
-      try {
-        while(true) {
-          short[] data = mediaQueue.take();
-          audioTrack.write(data, 0, data.length);
-        }
-      } catch (InterruptedException e) {
-        Log.d(TAG, "Exit media thread");
-      }
-    });
-    mediaThread.start();
   }
 
   private void connect() throws IOException {
@@ -169,20 +151,17 @@ public class RtspClient {
 
 
         int bufSize = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        if (audioTrack != null) {
-          audioTrack.release();
-        }
-        audioTrack = new AudioTrack(
+        AudioTrack audioTrack = new AudioTrack(
             AudioManager.STREAM_MUSIC,
             rate,
             AudioFormat.CHANNEL_OUT_MONO,
             AudioFormat.ENCODING_PCM_16BIT,
             bufSize,
             AudioTrack.MODE_STREAM);
-        if (!mute) {
-          mediaQueue.clear();
-          audioTrack.play();
+        if (audioPlayer != null) {
+          audioPlayer.shutdown();
         }
+        audioPlayer = new AudioPlayer(encoding, audioTrack);
 
         String req = buildSetupRequest();
         sendRequestAsync(req, setupListener);
@@ -207,24 +186,12 @@ public class RtspClient {
     }
   }
 
-  public boolean getMuted() {
-    return mute;
-  }
-
-  public void setMuted(boolean mute) {
-    this.mute = mute;
-    if (audioTrack == null)  return;
-    if (mute) {
-      audioTrack.pause();
-    } else {
-      mediaQueue.clear();
-      audioTrack.flush();
-      audioTrack.play();
-    }
-  }
-
   public void stop() {
-    mediaThread.interrupt();
+    AudioPlayer ap = audioPlayer;
+    if (ap != null) {
+      ap.shutdown();
+    }
+
     ioExecutor.execute(() -> {
       if (readerThread != null) {
         readerThread.interrupt();
@@ -232,9 +199,6 @@ public class RtspClient {
       try {
         if (sock != null) {
           sock.close();
-        }
-        if (audioTrack != null) {
-          audioTrack.release();
         }
       } catch (IOException e) {
         Log.e(TAG, "RTSP stop error", e);
@@ -314,57 +278,8 @@ public class RtspClient {
   }
 
   private void handleRtp(byte[] payload, int len) {
-//    ByteBuffer buffer = ByteBuffer.wrap(payload, 0, len);
-//    int b0 = buffer.get() & 0xff;
-//    boolean padding = ((b0 >> 5) & 1) == 1;
-//    boolean extension = ((b0 >> 4) & 1) == 1;
-//    int csrcCount = b0 & 0b1111;
-//
-//    int b1 = buffer.get() & 0xff;
-//    boolean marker = (b1 >> 7) == 1;
-//    int payloadType = b1 & 0b01111111;
-//
-//    int sequenceNumber = buffer.getShort() & 0xffff;
-//
-//    long timestamp = Integer.toUnsignedLong(buffer.getInt());
-//
-//    long ssrc = Integer.toUnsignedLong(buffer.getInt());
-//
-//    long[] csrc = new long[csrcCount];
-//    for (int i = 0; i < csrcCount; i++) {
-//      csrc[i] = Integer.toUnsignedLong(buffer.getInt());
-//    }
-//
-//    if (extension) {
-//      int extensionHeaderId = Short.toUnsignedInt(buffer.getShort());
-//      int extensionHeaderLen = Short.toUnsignedInt(buffer.getShort());
-//      long[] extensionnHeaderData = new long[extensionHeaderLen];
-//      for (int i = 0; i < extensionHeaderLen; i++) {
-//        extensionnHeaderData[i] = Integer.toUnsignedLong(buffer.getInt());
-//      }
-//    }
-//
-//    int rem = buffer.remaining();
-//    short[] pcm = new short[rem];
-//    for (int i = 0; i < rem; i++) {
-//      pcm[i] = PCM.fromAlaw(buffer.get());
-//    }
-
     final int HEADER_SIZE = 12;
-    short[] pcm = new short[len - HEADER_SIZE];
-    switch (encoding) {
-      case PCMA -> {
-        for (int i = 0; i < pcm.length; i++) {
-          pcm[i] = PCM.fromALaw(payload[i + HEADER_SIZE]);
-        }
-      }
-      case PCMU -> {
-        for (int i = 0; i < pcm.length; i++) {
-          pcm[i] = PCM.fromULaw(payload[i + HEADER_SIZE]);
-        }
-      }
-    }
-    mediaQueue.offer(pcm);
+    audioPlayer.write(payload, HEADER_SIZE, len - HEADER_SIZE);
   }
 
   private void sendRequestAsync(String request, OnResponseListener listener) {

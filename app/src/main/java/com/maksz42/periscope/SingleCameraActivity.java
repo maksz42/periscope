@@ -29,15 +29,19 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     super.onStart();
     Settings settings = Settings.getInstance(this);
 
+    String cameraName = getIntent().getStringExtra("camera_name");
     if (settings.getRtspEnabled() && muteButton == null) {
       muteButton = addFloatingButton(android.R.drawable.ic_lock_silent_mode_off, v -> {
-        if (rtspClient == null) return;
-        boolean muted = rtspClient.getMuted();
-        rtspClient.setMuted(!muted);
+        int drawableRes;
+        if (rtspClient == null) {
+          startAudio(settings, cameraName);
+          drawableRes = android.R.drawable.ic_lock_silent_mode_off;
+        } else {
+          stopAudio();
+          drawableRes = android.R.drawable.ic_lock_silent_mode;
+        }
         ImageButton btn = (ImageButton) v;
-        btn.setImageResource(
-            muted ? android.R.drawable.ic_lock_silent_mode_off : android.R.drawable.ic_lock_silent_mode
-        );
+        btn.setImageResource(drawableRes);
       });
     } else if (!settings.getRtspEnabled() && muteButton != null) {
       removeFloatingButton(muteButton);
@@ -48,7 +52,6 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     short timeout = settings.getTimeout();
     Media.ImageFormat imageFormat = settings.getImageFormat();
     CameraView.DisplayImplementation displayImplementation = settings.getDisplayImplementation();
-    String cameraName = getIntent().getStringExtra("camera_name");
     Media media = new Media(cameraName, imageFormat, 80);
     cameraView = new CameraView(
         this,
@@ -67,14 +70,25 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     checkForUpdates(2_000);
 
     if (settings.getRtspEnabled()) {
-      rtspClient = new RtspClient(
-          settings.getHost(),
-          settings.getRtspPort(),
-          settings.getRtspUser(),
-          settings.getRtspPassword(),
-          cameraName
-      );
-      rtspClient.start();
+      startAudio(settings, cameraName);
+    }
+  }
+
+  private void startAudio(Settings settings, String cameraName) {
+    rtspClient = new RtspClient(
+        settings.getHost(),
+        settings.getRtspPort(),
+        settings.getRtspUser(),
+        settings.getRtspPassword(),
+        cameraName
+    );
+    rtspClient.start();
+  }
+
+  private void stopAudio() {
+    if (rtspClient != null) {
+      rtspClient.stop();
+      rtspClient = null;
     }
   }
 
@@ -82,10 +96,7 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
   protected void onStop() {
     super.onStop();
     cameraView.stop();
-    if (rtspClient != null) {
-      rtspClient.stop();
-      rtspClient = null;
-    }
+    stopAudio();
   }
 
   @Override
