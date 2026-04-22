@@ -9,7 +9,7 @@ import java.util.concurrent.locks.LockSupport;
 class AudioPlayer {
     private final static int CAPACITY = (1 << 12);
 
-    private final byte[] ring_buf = new byte[CAPACITY];
+    private final byte[] ringBuf = new byte[CAPACITY];
     private final short[] decodeBuffer = new short[CAPACITY];
     private final Thread audioThread = new Thread(this::playLoop);
     private final AudioEncoding audioEncoding;
@@ -61,9 +61,9 @@ class AudioPlayer {
             offset += len - toWrite;
         }
         int toEnd = Math.min(toWrite, getFreeNoWrap(localHead, localTail));
-        System.arraycopy(data, offset, ring_buf, masked(localHead), toEnd);
+        System.arraycopy(data, offset, ringBuf, masked(localHead), toEnd);
         int fromStart = toWrite - toEnd;
-        System.arraycopy(data, offset + toEnd, ring_buf, 0, fromStart);
+        System.arraycopy(data, offset + toEnd, ringBuf, 0, fromStart);
         localHead += toWrite;
         head = localHead;
         LockSupport.unpark(audioThread);
@@ -86,13 +86,13 @@ class AudioPlayer {
             case PCMA -> {
                 for (int i = 0; i < toRead; i++) {
                     int idx = masked(i + localTail);
-                    decodeBuffer[i] = PCM.fromALaw(ring_buf[idx]);
+                    decodeBuffer[i] = PCM.fromALaw(ringBuf[idx]);
                 }
             }
             case PCMU -> {
                 for (int i = 0; i < toRead; i++) {
                     int idx = masked(i + localTail);
-                    decodeBuffer[i] = PCM.fromULaw(ring_buf[idx]);
+                    decodeBuffer[i] = PCM.fromULaw(ringBuf[idx]);
                 }
             }
         }
