@@ -7,6 +7,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.maksz42.periscope.BuildConfig;
+import com.maksz42.periscope.utils.IO;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -215,7 +216,7 @@ public class RtspClient {
       while (true) {
         byte first = in.readByte();
         if (first == '$') {
-          readInterleaved(data);
+          readInterleaved();
         } else {
           readResponse(data, first);
         }
@@ -227,16 +228,17 @@ public class RtspClient {
     }
   }
 
-  private void readInterleaved(byte[] data) throws IOException {
+  private void readInterleaved() throws IOException {
     int channel = in.readUnsignedByte();
     int len = in.readUnsignedShort();
-    in.readFully(data, 0, len);
-    handleInterleaved(channel, data, len);
+    handleInterleaved(channel, len);
   }
 
-  private void handleInterleaved(int channel, byte[] payload, int len) {
+  private void handleInterleaved(int channel, int len) throws IOException {
     if (channel == 0) {
-      handleRtp(payload, len);
+      handleRtp(len);
+    } else {
+      IO.skipNBytes(in, len);
     }
   }
 
@@ -277,9 +279,10 @@ public class RtspClient {
     listener.onResponse(status, headers, body);
   }
 
-  private void handleRtp(byte[] payload, int len) {
+  private void handleRtp(int len) throws IOException {
     final int HEADER_SIZE = 12;
-    audioPlayer.write(payload, HEADER_SIZE, len - HEADER_SIZE);
+    IO.skipNBytes(in, HEADER_SIZE);
+    audioPlayer.write(in, len - HEADER_SIZE);
   }
 
   private void sendRequestAsync(String request, OnResponseListener listener) {

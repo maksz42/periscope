@@ -3,7 +3,10 @@ package com.maksz42.periscope.camera.rtsp;
 import android.media.AudioTrack;
 
 import com.maksz42.periscope.media.audio.PCM;
+import com.maksz42.periscope.utils.IO;
 
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.concurrent.locks.LockSupport;
 
 class AudioPlayer {
@@ -47,7 +50,7 @@ class AudioPlayer {
         return Math.min(getFree(head, tail), CAPACITY - masked(head));
     }
 
-    void write(byte[] data, int offset, int len) {
+    void write(DataInputStream in, int len) throws IOException {
         int localHead = headShadow;
         int localTail = tail;
 
@@ -58,12 +61,12 @@ class AudioPlayer {
         } else {
             toWrite = free;
             // drop data that don't fit
-            offset += len - toWrite;
+            IO.skipNBytes(in, len - toWrite);
         }
         int toEnd = Math.min(toWrite, getFreeNoWrap(localHead, localTail));
-        System.arraycopy(data, offset, ringBuf, masked(localHead), toEnd);
+        in.readFully(ringBuf, masked(localHead), toEnd);
         int fromStart = toWrite - toEnd;
-        System.arraycopy(data, offset + toEnd, ringBuf, 0, fromStart);
+        in.readFully(ringBuf, 0, fromStart);
         localHead += toWrite;
         head = localHead;
         LockSupport.unpark(audioThread);
