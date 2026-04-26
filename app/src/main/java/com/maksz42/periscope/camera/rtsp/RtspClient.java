@@ -44,7 +44,7 @@ public class RtspClient {
   private final String host;
   private final int port;
 
-  private volatile OutputStream out;
+  private OutputStream out;
 
   private Thread readerThread;
   private final ScheduledExecutorService ioExecutor = Executors.newSingleThreadScheduledExecutor();
