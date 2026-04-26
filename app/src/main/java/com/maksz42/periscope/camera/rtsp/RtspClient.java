@@ -243,6 +243,7 @@ public class RtspClient {
   }
 
   private void readResponse(DataInputStream in, byte first) throws IOException {
+    // who cares about invalid responses ¯\_(ツ)_/¯
     ByteArrayOutputStream lineBuf = new ByteArrayOutputStream();
     lineBuf.write(first);
     boolean lf = false;
@@ -270,7 +271,9 @@ public class RtspClient {
     byte[] body = new byte[contentLen];
     in.readFully(body);
     String statusLine = headers.remove(0);
-    int status = Integer.parseInt(statusLine.split(" ")[1]);
+    int statusCodeStart = statusLine.indexOf(' ') + 1;
+    int statusCodeEnd = statusCodeStart + 3;
+    int status = Integer.parseInt(statusLine, statusCodeStart, statusCodeEnd, 10);
     handleResponse(status, headers, body);
   }
 
