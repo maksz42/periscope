@@ -12,8 +12,9 @@ import com.maksz42.periscope.utils.IO;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -42,8 +43,7 @@ public class RtspClient {
   private final String host;
   private final int port;
 
-  private volatile DataInputStream in;
-  private volatile DataOutputStream out;
+  private volatile OutputStream out;
 
   private Thread readerThread;
   private final ScheduledExecutorService ioExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -75,9 +75,9 @@ public class RtspClient {
     sock = new Socket();
     sock.connect(new InetSocketAddress(host, port), 5000);
     sock.setSoTimeout(5000);
-    in = new DataInputStream(new BufferedInputStream(sock.getInputStream()));
-    out = new DataOutputStream(new BufferedOutputStream(sock.getOutputStream()));
-    readerThread = new Thread(this::readLoop);
+    out = new BufferedOutputStream(sock.getOutputStream());
+    InputStream in = sock.getInputStream();
+    readerThread = new Thread(() -> readLoop(new DataInputStream(new BufferedInputStream(in))));
     readerThread.start();
   }
 
@@ -210,15 +210,15 @@ public class RtspClient {
     });
   }
 
-  private void readLoop() {
+  private void readLoop(DataInputStream in) {
     try {
       byte[] data = new byte[0xffff];
       while (true) {
         byte first = in.readByte();
         if (first == '$') {
-          readInterleaved();
+          readInterleaved(in);
         } else {
-          readResponse(data, first);
+          readResponse(in, data, first);
         }
       }
     } catch (IOException e) {
@@ -228,21 +228,21 @@ public class RtspClient {
     }
   }
 
-  private void readInterleaved() throws IOException {
+  private void readInterleaved(DataInputStream in) throws IOException {
     int channel = in.readUnsignedByte();
     int len = in.readUnsignedShort();
-    handleInterleaved(channel, len);
+    handleInterleaved(in, channel, len);
   }
 
-  private void handleInterleaved(int channel, int len) throws IOException {
+  private void handleInterleaved(DataInputStream in, int channel, int len) throws IOException {
     if (channel == 0) {
-      handleRtp(len);
+      handleRtp(in, len);
     } else {
       IO.skipNBytes(in, len);
     }
   }
 
-  private void readResponse(byte[] data, byte first) throws IOException {
+  private void readResponse(DataInputStream in, byte[] data, byte first) throws IOException {
     data[0] = first;
     boolean lf = false;
     int i = 1;
@@ -279,7 +279,7 @@ public class RtspClient {
     listener.onResponse(status, headers, body);
   }
 
-  private void handleRtp(int len) throws IOException {
+  private void handleRtp(DataInputStream in, int len) throws IOException {
     final int HEADER_SIZE = 12;
     IO.skipNBytes(in, HEADER_SIZE);
     audioPlayer.write(in, len - HEADER_SIZE);
