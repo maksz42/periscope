@@ -258,7 +258,7 @@ public class RtspClient {
         String header = lineBuf.toString();
         lineBuf.reset();
         if (header.startsWith("Content-Length")) {
-          contentLen = Integer.parseInt(header.substring(header.indexOf(':') + 1).trim());
+          contentLen = Integer.parseInt(header, header.indexOf(' ') + 1, header.length(), 10);
         } else {
           headers.add(header);
         }
