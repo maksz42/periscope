@@ -11,6 +11,7 @@ import com.maksz42.periscope.utils.IO;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -212,13 +213,12 @@ public class RtspClient {
 
   private void readLoop(DataInputStream in) {
     try {
-      byte[] data = new byte[0xffff];
       while (true) {
         byte first = in.readByte();
         if (first == '$') {
           readInterleaved(in);
         } else {
-          readResponse(in, data, first);
+          readResponse(in, first);
         }
       }
     } catch (IOException e) {
@@ -242,10 +242,10 @@ public class RtspClient {
     }
   }
 
-  private void readResponse(DataInputStream in, byte[] data, byte first) throws IOException {
-    data[0] = first;
+  private void readResponse(DataInputStream in, byte first) throws IOException {
+    ByteArrayOutputStream lineBuf = new ByteArrayOutputStream();
+    lineBuf.write(first);
     boolean lf = false;
-    int i = 1;
     List<String> headers = new ArrayList<>();
     int contentLen = 0;
     while (true) {
@@ -255,8 +255,8 @@ public class RtspClient {
           break;
         }
         lf = true;
-        String header = new String(data, 0, i);
-        i = 0;
+        String header = lineBuf.toString();
+        lineBuf.reset();
         if (header.startsWith("Content-Length")) {
           contentLen = Integer.parseInt(header.substring(header.indexOf(':') + 1).trim());
         } else {
@@ -264,7 +264,7 @@ public class RtspClient {
         }
       } else if (b != '\r') {
         lf = false;
-        data[i++] = b;
+        lineBuf.write(b);
       }
     }
     byte[] body = new byte[contentLen];
