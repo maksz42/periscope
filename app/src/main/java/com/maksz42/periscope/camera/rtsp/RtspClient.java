@@ -52,7 +52,6 @@ public class RtspClient {
   private final ConcurrentLinkedQueue<OnResponseListener> responseQueue = new ConcurrentLinkedQueue<>();
   private volatile AudioPlayer audioPlayer;
 
-  private AudioEncoding encoding;
   private final String cameraName;
   private volatile String session;
 
@@ -148,7 +147,7 @@ public class RtspClient {
         int formatStart = sdp.indexOf(' ', lineStart) + 1;
         String format = sdp.substring(formatStart, sdp.indexOf('\r', formatStart));
         String[] formatParts = format.split("/");
-        encoding = AudioEncoding.valueOf(formatParts[0]);
+        AudioEncoding encoding = AudioEncoding.valueOf(formatParts[0]);
         int rate = Integer.parseInt(formatParts[1]);
 
 
