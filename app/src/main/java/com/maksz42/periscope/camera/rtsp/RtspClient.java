@@ -21,9 +21,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class RtspClient {
@@ -38,22 +36,25 @@ public class RtspClient {
     public void onError(Exception e) { }
   };
 
+  private final String cameraName;
   private final byte[] basicAuthHeader;
-
-  private Socket sock;
+  private final ConcurrentLinkedQueue<OnResponseListener> responseQueue = new ConcurrentLinkedQueue<>();
   private final String host;
   private final int port;
 
+  private Socket sock;
   private OutputStream out;
 
-  private Thread readerThread;
-  private final ScheduledExecutorService ioExecutor = Executors.newSingleThreadScheduledExecutor();
-
-  private final ConcurrentLinkedQueue<OnResponseListener> responseQueue = new ConcurrentLinkedQueue<>();
   private volatile AudioPlayer audioPlayer;
 
-  private final String cameraName;
   private volatile String session;
+
+  private Thread readerThread;
+  private final ScheduledThreadPoolExecutor ioExecutor =
+      new ScheduledThreadPoolExecutor(
+          1,
+          (r, executor) -> Log.d(TAG, "Rejected execution, isShutdown: " + executor.isShutdown())
+      );
 
 
   public RtspClient(String host, int port, String user, String password, String cameraName) {
@@ -85,21 +86,17 @@ public class RtspClient {
     if (readerThread != null) {
       readerThread.interrupt();
     }
-    try {
-      ioExecutor.schedule(() -> {
-        try {
-          if (sock != null) {
-            sock.close();
-          }
-          start();
-        } catch (IOException e) {
-          Log.e(TAG, "Error closing socket");
-          restart();
+    ioExecutor.schedule(() -> {
+      try {
+        if (sock != null) {
+          sock.close();
         }
-      }, 500, TimeUnit.MILLISECONDS);
-    } catch (RejectedExecutionException e) {
-      logExecutionRejected(e);
-    }
+        start();
+      } catch (IOException e) {
+        Log.e(TAG, "Error closing socket");
+        restart();
+      }
+    }, 500, TimeUnit.MILLISECONDS);
   }
 
   public void start() {
@@ -118,14 +115,10 @@ public class RtspClient {
             sendRequestAsync(playReq, NO_LISTENER);
 
             final long delay = 45;
-            try {
-              ioExecutor.scheduleWithFixedDelay(() -> {
-                String optionsReq = buildOptionsRequest();
-                sendRequest(optionsReq, NO_LISTENER);
-              }, delay, delay, TimeUnit.SECONDS);
-            } catch (RejectedExecutionException e) {
-              logExecutionRejected(e);
-            }
+            ioExecutor.scheduleWithFixedDelay(() -> {
+              String optionsReq = buildOptionsRequest();
+              sendRequest(optionsReq, NO_LISTENER);
+            }, delay, delay, TimeUnit.SECONDS);
             break;
           }
         }
@@ -172,19 +165,15 @@ public class RtspClient {
       public void onError(Exception e) { }
     };
 
-    try {
-      ioExecutor.execute(() -> {
-        try {
-          connect();
-          String req = buildDescribeRequest();
-          sendRequest(req, describeListener);
-        } catch (IOException e) {
-          restart();
-        }
-      });
-    } catch (RejectedExecutionException e) {
-      logExecutionRejected(e);
-    }
+    ioExecutor.execute(() -> {
+      try {
+        connect();
+        String req = buildDescribeRequest();
+        sendRequest(req, describeListener);
+      } catch (IOException e) {
+        restart();
+      }
+    });
   }
 
   public void stop() {
@@ -305,10 +294,6 @@ public class RtspClient {
       responseQueue.remove(listener);
       listener.onError(e);
     }
-  }
-
-  private void logExecutionRejected(Throwable e) {
-    Log.d(TAG, "Rejected execution", e);
   }
 
   private String buildDescribeRequest() {
