@@ -47,8 +47,6 @@ public class RtspClient {
 
   private volatile AudioPlayer audioPlayer;
 
-  private volatile String session;
-
   private Thread readerThread;
   private final ScheduledThreadPoolExecutor ioExecutor =
       new ScheduledThreadPoolExecutor(
@@ -110,8 +108,8 @@ public class RtspClient {
         for (String header : headers) {
           String s = "Session: ";
           if (header.startsWith(s)) {
-            session = header.substring(s.length(), header.indexOf(';'));
-            String playReq = buildPlayRequest();
+            String session = header.substring(s.length(), header.indexOf(';'));
+            String playReq = buildPlayRequest(session);
             sendRequestAsync(playReq, NO_LISTENER);
 
             final long delay = 45;
@@ -309,14 +307,9 @@ public class RtspClient {
         + "Transport: RTP/AVP/TCP;unicast;interleaved=0-1\n";
   }
 
-  private String buildPlayRequest() {
+  private String buildPlayRequest(String session) {
     return "PLAY rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n"
         + "Session: " + session + '\n'
         + "Range: 0-\n";
-  }
-
-  private String buildTeardownRequest() {
-    return "TEARDOWN rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n"
-        + "Session: " + session + '\n';
   }
 }
