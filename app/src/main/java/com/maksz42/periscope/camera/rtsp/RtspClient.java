@@ -28,13 +28,7 @@ public class RtspClient {
   private static final String TAG = "RtspClient";
   private static final byte[] userAgentHeader =
       ("User-Agent:Periscope/" + BuildConfig.VERSION_NAME + '\n').getBytes();
-  private static final OnResponseListener NO_LISTENER = new OnResponseListener() {
-    @Override
-    public void onResponse(int status, List<String> headers, byte[] body) { }
-
-    @Override
-    public void onError(Exception e) { }
-  };
+  private static final OnResponseListener NO_LISTENER = (status, headers, body) -> { };
 
   private final String cameraName;
   private final byte[] basicAuthHeader;
@@ -98,79 +92,68 @@ public class RtspClient {
   }
 
   public void start() {
-    OnResponseListener setupListener = new OnResponseListener() {
-      @Override
-      public void onResponse(int status, List<String> headers, byte[] body) {
-        if (status != 200) {
-          restart();
-          return;
-        }
-        for (String header : headers) {
-          String s = "Session: ";
-          if (header.startsWith(s)) {
-            String session = header.substring(s.length(), header.indexOf(';'));
-            String playReq = buildPlayRequest(session);
-            sendRequestAsync(playReq, NO_LISTENER);
+    OnResponseListener setupListener = (status, headers, body) -> {
+      if (status != 200) {
+        restart();
+        return;
+      }
+      for (String header : headers) {
+        String s = "Session: ";
+        if (header.startsWith(s)) {
+          String session = header.substring(s.length(), header.indexOf(';'));
+          String playReq = buildPlayRequest(session);
+          sendRequestAsync(playReq, NO_LISTENER);
 
-            final long delay = 45;
-            ioExecutor.scheduleWithFixedDelay(() -> {
-              String optionsReq = buildOptionsRequest();
-              sendRequest(optionsReq, NO_LISTENER);
-            }, delay, delay, TimeUnit.SECONDS);
-            break;
-          }
+          final long delay = 45;
+          ioExecutor.scheduleWithFixedDelay(() -> {
+            String optionsReq = buildOptionsRequest();
+            sendRequest(optionsReq, NO_LISTENER);
+          }, delay, delay, TimeUnit.SECONDS);
+          break;
         }
       }
-
-      @Override
-      public void onError(Exception e) { }
     };
 
-    OnResponseListener describeListener = new OnResponseListener() {
-      @Override
-      public void onResponse(int status, List<String> headers, byte[] body) {
-        if (status != 200) {
-          restart();
-          return;
-        }
-        String sdp = new String(body);
-        int lineStart = sdp.indexOf("a=rtpmap:");
-        int formatStart = sdp.indexOf(' ', lineStart) + 1;
-        String format = sdp.substring(formatStart, sdp.indexOf('\r', formatStart));
-        String[] formatParts = format.split("/");
-        AudioEncoding encoding = AudioEncoding.valueOf(formatParts[0]);
-        int rate = Integer.parseInt(formatParts[1]);
-
-
-        int bufSize = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-        AudioTrack audioTrack = new AudioTrack(
-            AudioManager.STREAM_MUSIC,
-            rate,
-            AudioFormat.CHANNEL_OUT_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-            bufSize,
-            AudioTrack.MODE_STREAM);
-        if (audioPlayer != null) {
-          audioPlayer.shutdown();
-        }
-        audioPlayer = new AudioPlayer(encoding, audioTrack);
-
-        String req = buildSetupRequest();
-        sendRequestAsync(req, setupListener);
+    OnResponseListener describeListener = (status, headers, body) -> {
+      if (status != 200) {
+        restart();
+        return;
       }
+      String sdp = new String(body);
+      int lineStart = sdp.indexOf("a=rtpmap:");
+      int formatStart = sdp.indexOf(' ', lineStart) + 1;
+      String format = sdp.substring(formatStart, sdp.indexOf('\r', formatStart));
+      String[] formatParts = format.split("/");
+      AudioEncoding encoding = AudioEncoding.valueOf(formatParts[0]);
+      int rate = Integer.parseInt(formatParts[1]);
 
-      @Override
-      public void onError(Exception e) { }
+
+      int bufSize = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+      AudioTrack audioTrack = new AudioTrack(
+          AudioManager.STREAM_MUSIC,
+          rate,
+          AudioFormat.CHANNEL_OUT_MONO,
+          AudioFormat.ENCODING_PCM_16BIT,
+          bufSize,
+          AudioTrack.MODE_STREAM);
+      if (audioPlayer != null) {
+        audioPlayer.shutdown();
+      }
+      audioPlayer = new AudioPlayer(encoding, audioTrack);
+
+      String req = buildSetupRequest();
+      sendRequestAsync(req, setupListener);
     };
 
     ioExecutor.execute(() -> {
       try {
         connect();
-        String req = buildDescribeRequest();
-        sendRequest(req, describeListener);
       } catch (IOException e) {
         restart();
+        return;
       }
+      String req = buildDescribeRequest();
+      sendRequest(req, describeListener);
     });
   }
 
@@ -279,8 +262,8 @@ public class RtspClient {
   }
 
   private void sendRequest(String request, OnResponseListener listener) {
+    responseQueue.add(listener);
     try {
-      responseQueue.add(listener);
       out.write(request.getBytes());
       out.write(userAgentHeader);
       if (basicAuthHeader != null) {
@@ -290,7 +273,7 @@ public class RtspClient {
       out.flush();
     } catch (IOException e) {
       responseQueue.remove(listener);
-      listener.onError(e);
+      restart();
     }
   }
 
