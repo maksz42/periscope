@@ -1,6 +1,7 @@
 package com.maksz42.periscope.camera.rtsp;
 
 import android.media.AudioTrack;
+import android.os.Process;
 
 import com.maksz42.periscope.media.audio.PCM;
 import com.maksz42.periscope.utils.IO;
@@ -107,6 +108,7 @@ class AudioPlayer {
     }
 
     private void playLoop() {
+        Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
         while (consume());
         audioTrack.release();
     }
