@@ -32,7 +32,7 @@ public class RtspClient {
   private static final String TAG = "RtspClient";
   private static final byte[] userAgentHeader =
       ("User-Agent:Periscope/" + BuildConfig.VERSION_NAME + '\n').getBytes();
-  private static final OnResponseListener NO_LISTENER = (status, headers, body) -> { };
+  private static final OnResponseListener NO_LISTENER = (headers, body) -> { };
 
   private final String cameraName;
   private final byte[] basicAuthHeader;
@@ -100,11 +100,7 @@ public class RtspClient {
   }
 
   public void start() {
-    OnResponseListener setupListener = (status, headers, body) -> {
-      if (status != 200) {
-        cleanupAndRestart();
-        return;
-      }
+    OnResponseListener setupListener = (headers, body) -> {
       for (String header : headers) {
         String s = "Session: ";
         if (header.startsWith(s)) {
@@ -122,11 +118,7 @@ public class RtspClient {
       }
     };
 
-    OnResponseListener describeListener = (status, headers, body) -> {
-      if (status != 200) {
-        cleanupAndRestart();
-        return;
-      }
+    OnResponseListener describeListener = (headers, body) -> {
       String sdp = new String(body);
       int lineStart = sdp.indexOf("a=rtpmap:");
       int formatStart = sdp.indexOf(' ', lineStart) + 1;
@@ -285,12 +277,13 @@ public class RtspClient {
     int statusCodeStart = statusLine.indexOf(' ') + 1;
     int statusCodeEnd = statusCodeStart + 3;
     int status = Integer.parseInt(statusLine, statusCodeStart, statusCodeEnd, 10);
-    handleResponse(status, headers, body);
+    if (status != 200) throw new IOException();
+    handleResponse(headers, body);
   }
 
-  private void handleResponse(int status, List<String> headers, byte[] body) {
+  private void handleResponse(List<String> headers, byte[] body) {
     OnResponseListener listener = responseQueue.poll();
-    listener.onResponse(status, headers, body);
+    listener.onResponse(headers, body);
   }
 
   private void handleRtp(DataInputStream in, int len) throws IOException {
