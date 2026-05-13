@@ -5,6 +5,7 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.util.Base64;
 import android.util.Log;
+import android.util.Pair;
 
 import com.maksz42.periscope.BuildConfig;
 import com.maksz42.periscope.utils.IO;
@@ -21,8 +22,11 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RtspClient {
   private static final String TAG = "RtspClient";
@@ -32,21 +36,20 @@ public class RtspClient {
 
   private final String cameraName;
   private final byte[] basicAuthHeader;
-  private final ConcurrentLinkedQueue<OnResponseListener> responseQueue = new ConcurrentLinkedQueue<>();
   private final String host;
   private final int port;
-
-  private Socket sock;
-  private OutputStream out;
-
-  private volatile AudioPlayer audioPlayer;
-
-  private Thread readerThread;
+  private final LinkedBlockingQueue<Pair<String, OnResponseListener>> requestQueue = new LinkedBlockingQueue<>();
+  private final ConcurrentLinkedQueue<OnResponseListener> responseQueue = new ConcurrentLinkedQueue<>();
+  private final AtomicBoolean canRestart = new AtomicBoolean(true);
   private final ScheduledThreadPoolExecutor ioExecutor =
       new ScheduledThreadPoolExecutor(
           1,
           (r, executor) -> Log.d(TAG, "Rejected execution, isShutdown: " + executor.isShutdown())
       );
+  private ScheduledFuture<?> keepaliveFuture;
+  private Thread readerThread;
+  private Thread writerThread;
+  private AudioPlayer audioPlayer;
 
 
   public RtspClient(String host, int port, String user, String password, String cameraName) {
@@ -64,37 +67,42 @@ public class RtspClient {
     }
   }
 
-  private void connect() throws IOException {
-    sock = new Socket();
+  private Socket connect() throws IOException {
+    Socket sock = new Socket();
     sock.connect(new InetSocketAddress(host, port), 5000);
     sock.setSoTimeout(5000);
-    out = new BufferedOutputStream(sock.getOutputStream());
-    InputStream in = sock.getInputStream();
-    readerThread = new Thread(() -> readLoop(new DataInputStream(new BufferedInputStream(in))));
-    readerThread.start();
+    return sock;
   }
 
   private void restart() {
-    if (readerThread != null) {
-      readerThread.interrupt();
-    }
-    ioExecutor.schedule(() -> {
+    ioExecutor.schedule(this::start, 500, TimeUnit.MILLISECONDS);
+  }
+
+  private void cleanupAndRestart() {
+    if (!canRestart.compareAndSet(true, false)) return;
+
+    ioExecutor.execute(() -> {
+      writerThread.interrupt();
       try {
-        if (sock != null) {
-          sock.close();
-        }
-        start();
-      } catch (IOException e) {
-        Log.e(TAG, "Error closing socket");
-        restart();
+        writerThread.join();
+        readerThread.join();
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
       }
-    }, 500, TimeUnit.MILLISECONDS);
+      if (keepaliveFuture != null) {
+        keepaliveFuture.cancel(false);
+        keepaliveFuture = null;
+      }
+      requestQueue.clear();
+      responseQueue.clear();
+      restart();
+    });
   }
 
   public void start() {
     OnResponseListener setupListener = (status, headers, body) -> {
       if (status != 200) {
-        restart();
+        cleanupAndRestart();
         return;
       }
       for (String header : headers) {
@@ -105,9 +113,9 @@ public class RtspClient {
           sendRequestAsync(playReq, NO_LISTENER);
 
           final long delay = 45;
-          ioExecutor.scheduleWithFixedDelay(() -> {
+          keepaliveFuture = ioExecutor.scheduleWithFixedDelay(() -> {
             String optionsReq = buildOptionsRequest();
-            sendRequest(optionsReq, NO_LISTENER);
+            sendRequestAsync(optionsReq, NO_LISTENER);
           }, delay, delay, TimeUnit.SECONDS);
           break;
         }
@@ -116,7 +124,7 @@ public class RtspClient {
 
     OnResponseListener describeListener = (status, headers, body) -> {
       if (status != 200) {
-        restart();
+        cleanupAndRestart();
         return;
       }
       String sdp = new String(body);
@@ -146,42 +154,54 @@ public class RtspClient {
     };
 
     ioExecutor.execute(() -> {
+      Socket sock = null;
+      InputStream in;
+      OutputStream out;
       try {
-        connect();
+        sock = connect();
+        in = sock.getInputStream();
+        out = sock.getOutputStream();
       } catch (IOException e) {
+        if (sock != null) {
+          try {
+            sock.close();
+          } catch (IOException ignore) { }
+        }
         restart();
         return;
       }
-      String req = buildDescribeRequest();
-      sendRequest(req, describeListener);
+
+      canRestart.set(true);
+      readerThread = new Thread(() -> readLoop(new DataInputStream(new BufferedInputStream(in))));
+      writerThread = new Thread(() -> writeLoop(new BufferedOutputStream(out)));
+      readerThread.start();
+      writerThread.start();
+
+      String payload = buildDescribeRequest();
+      sendRequestAsync(payload, describeListener);
     });
   }
 
   public void stop() {
+    // Even though audioPlayer isn't volatile and is owned by readerThread
+    // there's no harm in trying to shutdown here. readerThread will ensure
+    // audioPlayer is shutdown before exiting.
     AudioPlayer ap = audioPlayer;
     if (ap != null) {
       ap.shutdown();
     }
 
     ioExecutor.execute(() -> {
-      if (readerThread != null) {
-        readerThread.interrupt();
+      canRestart.set(false);
+      if (writerThread != null) {
+        writerThread.interrupt();
       }
-      try {
-        if (sock != null) {
-          sock.close();
-        }
-      } catch (IOException e) {
-        Log.e(TAG, "RTSP stop error", e);
-        throw new RuntimeException(e);
-      } finally {
-        ioExecutor.shutdownNow();
-      }
+      ioExecutor.shutdownNow();
     });
   }
 
   private void readLoop(DataInputStream in) {
-    try {
+    try (in) {
       while (true) {
         byte first = in.readByte();
         if (first == '$') {
@@ -191,10 +211,32 @@ public class RtspClient {
         }
       }
     } catch (IOException e) {
-      if (!Thread.interrupted()) {
-        restart();
+      cleanupAndRestart();
+    } finally {
+      if (audioPlayer != null) {
+        audioPlayer.shutdown();
       }
     }
+  }
+
+  private void writeLoop(OutputStream out) {
+    try (out) {
+      while (true) {
+        Pair<String, OnResponseListener> req = requestQueue.take();
+        String payload = req.first;
+        OnResponseListener listener = req.second;
+        responseQueue.add(listener);
+        out.write(payload.getBytes());
+        out.write(userAgentHeader);
+        if (basicAuthHeader != null) {
+          out.write(basicAuthHeader);
+        }
+        out.write('\n');
+        out.flush();
+      }
+    } catch (IOException ignored) {
+      cleanupAndRestart();
+    } catch (InterruptedException ignored) { }
   }
 
   private void readInterleaved(DataInputStream in) throws IOException {
@@ -257,24 +299,8 @@ public class RtspClient {
     audioPlayer.write(in, len - HEADER_SIZE);
   }
 
-  private void sendRequestAsync(String request, OnResponseListener listener) {
-    ioExecutor.execute(() -> sendRequest(request, listener));
-  }
-
-  private void sendRequest(String request, OnResponseListener listener) {
-    responseQueue.add(listener);
-    try {
-      out.write(request.getBytes());
-      out.write(userAgentHeader);
-      if (basicAuthHeader != null) {
-        out.write(basicAuthHeader);
-      }
-      out.write('\n');
-      out.flush();
-    } catch (IOException e) {
-      responseQueue.remove(listener);
-      restart();
-    }
+  private void sendRequestAsync(String payload, OnResponseListener listener) {
+    requestQueue.offer(new Pair<>(payload, listener));
   }
 
   private String buildDescribeRequest() {
