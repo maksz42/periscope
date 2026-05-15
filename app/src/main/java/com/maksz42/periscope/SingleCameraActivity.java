@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.widget.ImageButton;
 
 import com.maksz42.periscope.camera.rtsp.RtspClient;
+import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.Media;
 import com.maksz42.periscope.helper.CameraPlayerHolder;
 import com.maksz42.periscope.helper.Settings;
@@ -80,7 +81,8 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
         settings.getRtspPort(),
         settings.getRtspUser(),
         settings.getRtspPassword(),
-        cameraName
+        cameraName,
+        settings.getProtocol() == Client.Protocol.HTTPS
     );
     rtspClient.start();
   }

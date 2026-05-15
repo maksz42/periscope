@@ -9,6 +9,7 @@ import android.util.Pair;
 
 import com.maksz42.periscope.BuildConfig;
 import com.maksz42.periscope.utils.IO;
+import com.maksz42.periscope.utils.Net;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -28,6 +29,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
+
 public class RtspClient {
   private static final String TAG = "RtspClient";
   private static final byte[] userAgentHeader =
@@ -38,6 +42,7 @@ public class RtspClient {
   private final byte[] basicAuthHeader;
   private final String host;
   private final int port;
+  private final boolean overTls;
   private final LinkedBlockingQueue<Pair<String, OnResponseListener>> requestQueue = new LinkedBlockingQueue<>();
   private final ConcurrentLinkedQueue<OnResponseListener> responseQueue = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean canRestart = new AtomicBoolean(true);
@@ -52,9 +57,10 @@ public class RtspClient {
   private AudioPlayer audioPlayer;
 
 
-  public RtspClient(String host, int port, String user, String password, String cameraName) {
+  public RtspClient(String host, int port, String user, String password, String cameraName, boolean overTls) {
     this.host = host;
     this.port = port;
+    this.overTls = overTls;
     this.cameraName = cameraName;
     if (user != null && !user.isBlank()) {
       byte[] key = "Authorization:Basic ".getBytes();
@@ -71,6 +77,14 @@ public class RtspClient {
     Socket sock = new Socket();
     sock.connect(new InetSocketAddress(host, port), 5000);
     sock.setSoTimeout(5000);
+    if (overTls) {
+      SSLSocket sslSocket = (SSLSocket) Net.getDefaultTlsSocketFactory().createSocket(sock, host, port, true);
+      SSLParameters params = sslSocket.getSSLParameters();
+      params.setEndpointIdentificationAlgorithm("HTTPS");
+      sslSocket.setSSLParameters(params);
+      sslSocket.startHandshake();
+      sock = sslSocket;
+    }
     return sock;
   }
 

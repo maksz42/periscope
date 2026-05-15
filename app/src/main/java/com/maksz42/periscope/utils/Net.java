@@ -31,6 +31,7 @@ import javax.net.ssl.X509TrustManager;
 public final class Net {
   private static boolean tls13AlreadyEnabled = false;
   private static HostnameVerifier defaultHostnameVerifier;
+  private static TLSSocketFactory defaultTlsSocketFactory;
 
 
   private Net() { }
@@ -80,6 +81,10 @@ public final class Net {
     keyStore.setCertificateEntry(alias, ca);
   }
 
+
+  public static TLSSocketFactory getDefaultTlsSocketFactory() {
+    return defaultTlsSocketFactory;
+  }
 
   public static URLConnection openConnectionWithTimeout(URL url) throws IOException {
     return openConnectionWithTimeout(url, 5000, 5000);
@@ -173,6 +178,7 @@ public final class Net {
       }
       TLSSocketFactory tlsSocketFactory = new TLSSocketFactory(null, trustManagers, null);
       HttpsURLConnection.setDefaultSSLSocketFactory(tlsSocketFactory);
+      defaultTlsSocketFactory = tlsSocketFactory;
     } catch (GeneralSecurityException e) {
       Log.w("TLS", "Failed to configure SSLSocketFactory", e);
     } catch (IOException e) {
