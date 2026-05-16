@@ -29,7 +29,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 public final class Net {
-  private static boolean tls13AlreadyEnabled = false;
+  private static boolean conscryptInstalled;
   private static HostnameVerifier defaultHostnameVerifier;
   private static TLSSocketFactory defaultTlsSocketFactory;
 
@@ -114,7 +114,7 @@ public final class Net {
         || Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
       return false;
     }
-    if (tls13AlreadyEnabled) {
+    if (conscryptInstalled) {
       return false;
     }
     String abi = Misc.getPrimaryAbi();
@@ -132,7 +132,7 @@ public final class Net {
         providerBuilder.provideTrustManager(true);
       }
       Security.insertProviderAt(providerBuilder.build(), 1);
-      tls13AlreadyEnabled = true;
+      conscryptInstalled = true;
     }
 
     TrustManager[] trustManagers;
