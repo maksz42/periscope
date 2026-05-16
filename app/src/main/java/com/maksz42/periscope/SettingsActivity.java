@@ -34,6 +34,8 @@ import java.net.MalformedURLException;
 // this is awful
 public class SettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
   private final Settings settings = Settings.getInstance(this);
+  private boolean initialHttpsState;
+  private boolean initialNoCertState;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -43,11 +45,12 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     getPreferenceManager().setSharedPreferencesMode(MODE_PRIVATE);
     addPreferencesFromResource(R.xml.settings_preferences);
 
-    boolean httpsEnabled = settings.getProtocol() == Client.Protocol.HTTPS;
+    initialHttpsState = (settings.getProtocol() == Client.Protocol.HTTPS);
+    initialNoCertState = settings.getDisableCertVerification();
     Preference noCertPreference = findPreference(settings.DisableCertVerificationKey);
-    noCertPreference.setEnabled(httpsEnabled);
+    noCertPreference.setEnabled(initialHttpsState);
     CheckBoxPreference rtspTls = (CheckBoxPreference) findPreference(getString(R.string.rtsp_tls_indicator_key));
-    rtspTls.setChecked(httpsEnabled);
+    rtspTls.setChecked(initialHttpsState);
     Preference protocolPreference = findPreference(settings.ProtocolKey);
     protocolPreference.setOnPreferenceChangeListener((preference, newValue) -> {
       boolean en = Client.Protocol.valueOf((String) newValue) == Client.Protocol.HTTPS;
@@ -255,7 +258,11 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     EditTextPreference password = (EditTextPreference) findPreference("password");
     Client.setCredentials(user.getText(), password.getText());
 
-    Net.configureSSLSocketFactory(this, settings.getDisableCertVerification());
+    if (settings.getProtocol() == Client.Protocol.HTTPS
+        && (!initialHttpsState || initialNoCertState != settings.getDisableCertVerification()))
+    {
+      Net.configureSSLSocketFactory(this, settings.getDisableCertVerification());
+    }
     super.onBackPressed();
   }
 }
