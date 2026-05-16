@@ -22,4 +22,5 @@
     <string name="rtsp_port_key" translatable="false">rtsp_port</string>
     <string name="rtsp_user_key" translatable="false">rtsp_user</string>
     <string name="rtsp_password_key" translatable="false">rtsp_password</string>
+    <string name="rtsp_tls_indicator_key" translatable="false">rtsp_tls_indicator</string>
 </resources>

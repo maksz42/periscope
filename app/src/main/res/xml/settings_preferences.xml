@@ -104,6 +104,12 @@
             android:inputType="number"
             android:dependency="@string/rtsp_enabled_key"
             />
+        <CheckBoxPreference
+            android:title="@string/tls"
+            android:key="@string/rtsp_tls_indicator_key"
+            android:enabled="false"
+            android:persistent="false"
+            />
         <EditTextPreference
             android:title="@string/user"
             android:key="@string/rtsp_user_key"

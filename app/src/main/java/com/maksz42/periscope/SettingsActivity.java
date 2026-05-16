@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -42,11 +43,16 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     getPreferenceManager().setSharedPreferencesMode(MODE_PRIVATE);
     addPreferencesFromResource(R.xml.settings_preferences);
 
+    boolean httpsEnabled = settings.getProtocol() == Client.Protocol.HTTPS;
     Preference noCertPreference = findPreference(settings.DisableCertVerificationKey);
-    noCertPreference.setEnabled(settings.getProtocol() == Client.Protocol.HTTPS);
+    noCertPreference.setEnabled(httpsEnabled);
+    CheckBoxPreference rtspTls = (CheckBoxPreference) findPreference(getString(R.string.rtsp_tls_indicator_key));
+    rtspTls.setChecked(httpsEnabled);
     Preference protocolPreference = findPreference(settings.ProtocolKey);
     protocolPreference.setOnPreferenceChangeListener((preference, newValue) -> {
-      noCertPreference.setEnabled(Client.Protocol.valueOf((String) newValue) == Client.Protocol.HTTPS);
+      boolean en = Client.Protocol.valueOf((String) newValue) == Client.Protocol.HTTPS;
+      noCertPreference.setEnabled(en);
+      rtspTls.setChecked(en);
       return true;
     });
 
