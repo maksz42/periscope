@@ -9,7 +9,6 @@ import android.util.Pair;
 
 import com.maksz42.periscope.BuildConfig;
 import com.maksz42.periscope.utils.IO;
-import com.maksz42.periscope.utils.Net;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -82,7 +81,7 @@ public class RtspClient {
       sock.setSoTimeout(5000);
       if (!overTls) return sock;
 
-      sslSocket = (SSLSocket) Net.getDefaultTlsSocketFactory().createSocket(sock, host, port, true);
+      sslSocket = (SSLSocket) HttpsURLConnection.getDefaultSSLSocketFactory().createSocket(sock, host, port, true);
     } catch (IOException e) {
       sock.close();
       throw e;
