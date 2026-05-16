@@ -29,7 +29,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.net.ssl.SSLParameters;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocket;
 
 public class RtspClient {
@@ -79,10 +80,9 @@ public class RtspClient {
     sock.setSoTimeout(5000);
     if (overTls) {
       SSLSocket sslSocket = (SSLSocket) Net.getDefaultTlsSocketFactory().createSocket(sock, host, port, true);
-      SSLParameters params = sslSocket.getSSLParameters();
-      params.setEndpointIdentificationAlgorithm("HTTPS");
-      sslSocket.setSSLParameters(params);
       sslSocket.startHandshake();
+      HostnameVerifier hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
+      if (!hostnameVerifier.verify(host, sslSocket.getSession())) throw new IOException("Bad cert");
       sock = sslSocket;
     }
     return sock;
