@@ -76,16 +76,27 @@ public class RtspClient {
 
   private Socket connect() throws IOException {
     Socket sock = new Socket();
-    sock.connect(new InetSocketAddress(host, port), 5000);
-    sock.setSoTimeout(5000);
-    if (overTls) {
-      SSLSocket sslSocket = (SSLSocket) Net.getDefaultTlsSocketFactory().createSocket(sock, host, port, true);
+    SSLSocket sslSocket;
+    try {
+      sock.connect(new InetSocketAddress(host, port), 5000);
+      sock.setSoTimeout(5000);
+      if (!overTls) return sock;
+
+      sslSocket = (SSLSocket) Net.getDefaultTlsSocketFactory().createSocket(sock, host, port, true);
+    } catch (IOException e) {
+      sock.close();
+      throw e;
+    }
+
+    try {
       sslSocket.startHandshake();
       HostnameVerifier hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
       if (!hostnameVerifier.verify(host, sslSocket.getSession())) throw new IOException("Bad cert");
-      sock = sslSocket;
+    } catch (IOException e) {
+      sslSocket.close();
+      throw e;
     }
-    return sock;
+    return sslSocket;
   }
 
   private void restart() {
