@@ -38,11 +38,10 @@ public class UpdateManager {
           PackageInstaller.EXTRA_STATUS,
           PackageInstaller.STATUS_FAILURE
       );
+      Log.d(TAG, "InstallReceiver status: " + status);
       if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
         Intent confirmIntent = intent.getParcelableExtra(Intent.EXTRA_INTENT);
         context.startActivity(confirmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-      } else if (status >= PackageInstaller.STATUS_FAILURE) {
-        Log.d(TAG, "Error installing update. Status: " + status);
       }
     }
   }
