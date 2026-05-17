@@ -90,7 +90,7 @@ public class RtspClient {
     try {
       sslSocket.startHandshake();
       HostnameVerifier hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
-      if (!hostnameVerifier.verify(host, sslSocket.getSession())) throw new IOException("Bad cert");
+      if (!hostnameVerifier.verify(host, sslSocket.getSession())) throw new IOException("Hostname verification failed");
     } catch (IOException e) {
       sslSocket.close();
       throw e;
@@ -178,6 +178,7 @@ public class RtspClient {
         in = sock.getInputStream();
         out = sock.getOutputStream();
       } catch (IOException e) {
+        Log.e(TAG, "Failed to connect", e);
         if (sock != null) {
           try {
             sock.close();
@@ -227,6 +228,7 @@ public class RtspClient {
         }
       }
     } catch (IOException e) {
+      Log.d(TAG, "readLoop", e);
       cleanupAndRestart();
     } finally {
       if (audioPlayer != null) {
@@ -250,7 +252,8 @@ public class RtspClient {
         out.write('\n');
         out.flush();
       }
-    } catch (IOException ignored) {
+    } catch (IOException e) {
+      Log.d(TAG, "writeLoop", e);
       cleanupAndRestart();
     } catch (InterruptedException ignored) { }
   }
