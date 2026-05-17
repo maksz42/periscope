@@ -6,6 +6,8 @@ android {
     namespace = "com.maksz42.periscope"
     compileSdk = 36
 
+    enableKotlin = false
+
     defaultConfig {
         applicationId = "com.maksz42.periscope"
         minSdk = 8
@@ -21,6 +23,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        resValues = true
     }
 
     buildTypes {
