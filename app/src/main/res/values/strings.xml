@@ -42,7 +42,7 @@
     <string name="hide_nav_bar">Hide navigation bar</string>
     <string name="downloading_update">Downloading the update…</string>
     <string name="hide">Hide</string>
-    <string name="rtsp_experimental">RTSP (experimental)</string>
+    <string name="rtsp_experimental">RTSP (audio only) (experimental)</string>
     <string name="rtsp_enabled">RTSP enabled</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="version">Version</string>
