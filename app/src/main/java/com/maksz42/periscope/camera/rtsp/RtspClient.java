@@ -304,7 +304,7 @@ public class RtspClient {
     int statusCodeStart = statusLine.indexOf(' ') + 1;
     int statusCodeEnd = statusCodeStart + 3;
     int status = Integer.parseInt(statusLine, statusCodeStart, statusCodeEnd, 10);
-    if (status != 200) throw new IOException();
+    if (status != 200) throw new IOException("Response status code: " + status);
     handleResponse(headers, body);
   }
 
