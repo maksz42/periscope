@@ -1,6 +1,7 @@
 package com.maksz42.periscope.tls;
 
 import android.os.Build;
+import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
@@ -23,20 +24,33 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 
 class TLSSocket extends SSLSocket {
+  private final String TAG = "TLSSocket";
+
   private final SSLSocket delegate;
   private String[] spoofedEnabledProtocols;
 
-  static Socket createTLSSocket(Socket socket) {
+  static Socket createTLSSocket(Socket socket) throws IOException {
     if (socket instanceof SSLSocket sslSocket) {
       return new TLSSocket(sslSocket);
     }
     return socket;
   }
 
-  private TLSSocket(SSLSocket sslSocket) {
+  private TLSSocket(SSLSocket sslSocket) throws IOException {
+    try {
+      sslSocket.setEnabledProtocols(new String[]{"TLSv1.2", "TLSv1.3"});
+    } catch (IllegalArgumentException ignored) {
+      Log.e(TAG, "Failed to enable TLSv1.2/TLSv1.3");
+      try {
+        sslSocket.setEnabledProtocols(new String[]{"TLSv1.2"});
+      } catch (IllegalArgumentException e) {
+        Log.e(TAG, "Failed to enable TLSv1.2");
+        throw (IOException) new IOException("Failed to enable TLS").initCause(e);
+      }
+    }
+
     this.delegate = sslSocket;
     this.spoofedEnabledProtocols = sslSocket.getEnabledProtocols();
-    sslSocket.setEnabledProtocols(new String[] { "TLSv1.2", "TLSv1.3" });
   }
 
 
