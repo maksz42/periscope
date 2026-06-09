@@ -3,7 +3,6 @@ package com.maksz42.periscope.camera.rtsp;
 import android.media.AudioTrack;
 import android.os.Process;
 
-import com.maksz42.periscope.media.audio.PCM;
 import com.maksz42.periscope.utils.IO;
 
 import java.io.DataInputStream;
@@ -16,7 +15,7 @@ class AudioPlayer {
     private final byte[] ringBuf = new byte[CAPACITY];
     private final short[] decodeBuffer = new short[CAPACITY];
     private final Thread audioThread = new Thread(this::playLoop);
-    private final AudioEncoding audioEncoding;
+    private final short[] lawToPcmTable;
     private final AudioTrack audioTrack;
 
     private volatile int head;
@@ -25,7 +24,10 @@ class AudioPlayer {
     private int tailShadow;
 
     AudioPlayer(AudioEncoding audioEncoding, AudioTrack audioTrack) {
-        this.audioEncoding = audioEncoding;
+        this.lawToPcmTable = switch (audioEncoding) {
+          case PCMA -> PCM.alawToPcmTable;
+          case PCMU -> PCM.ulawToPcmTable;
+        };
         this.audioTrack = audioTrack;
         audioTrack.play();
         this.audioThread.start();
@@ -86,19 +88,9 @@ class AudioPlayer {
         }
 
         int toRead = getCount(localHead, localTail);
-        switch (audioEncoding) {
-            case PCMA -> {
-                for (int i = 0; i < toRead; i++) {
-                    int idx = masked(i + localTail);
-                    decodeBuffer[i] = PCM.fromALaw(ringBuf[idx]);
-                }
-            }
-            case PCMU -> {
-                for (int i = 0; i < toRead; i++) {
-                    int idx = masked(i + localTail);
-                    decodeBuffer[i] = PCM.fromULaw(ringBuf[idx]);
-                }
-            }
+        for (int i = 0; i < toRead; i++) {
+            int idx = masked(i + localTail);
+            decodeBuffer[i] = lawToPcmTable[ringBuf[idx] & 0xff];
         }
         localTail += toRead;
         tail = localTail;
