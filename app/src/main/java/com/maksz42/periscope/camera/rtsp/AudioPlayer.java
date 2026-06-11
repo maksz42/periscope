@@ -87,10 +87,15 @@ class AudioPlayer {
             LockSupport.park();
         }
 
+        int toEnd = getCountNoWrap(localHead, localTail);
+        int tailPos = masked(localTail);
+        for (int i = 0; i < toEnd; i++) {
+            decodeBuffer[i] = lawToPcmTable[ringBuf[tailPos + i] & 0xff];
+        }
         int toRead = getCount(localHead, localTail);
-        for (int i = 0; i < toRead; i++) {
-            int idx = masked(i + localTail);
-            decodeBuffer[i] = lawToPcmTable[ringBuf[idx] & 0xff];
+        int fromStart = toRead - toEnd;
+        for (int i = 0; i < fromStart; i++) {
+            decodeBuffer[toEnd + i] = lawToPcmTable[ringBuf[i] & 0xff];
         }
         localTail += toRead;
         tail = localTail;
