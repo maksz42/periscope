@@ -1,5 +1,7 @@
 package com.maksz42.periscope.frigate;
 
+import android.util.Pair;
+
 import com.maksz42.periscope.utils.IO;
 
 import org.json.JSONException;
@@ -13,7 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class Config {
-  public List<String> getCameras() throws IOException, InterruptedException {
+  private JSONObject getConfig() throws IOException, InterruptedException {
     String response;
     try (
         Client.CloseableConnection cc =
@@ -22,12 +24,15 @@ public class Config {
     ) {
       response = IO.readAllText(is);
     }
-    JSONObject config;
     try {
-      config = new JSONObject(response);
+      return new JSONObject(response);
     } catch (JSONException e) {
       throw new InvalidResponseException(e);
     }
+  }
+
+  public List<String> getCameras() throws IOException, InterruptedException {
+    JSONObject config = getConfig();
 
     List<String> cameraNames = new ArrayList<>();
     JSONObject cameras = config.optJSONObject("cameras");
@@ -45,5 +50,17 @@ public class Config {
 
     Collections.sort(cameraNames, String::compareToIgnoreCase);
     return cameraNames;
+  }
+
+  public Pair<String, String> getRtspCredentials() throws IOException, InterruptedException {
+    JSONObject config = getConfig();
+    try {
+      JSONObject rtspCredentialsJson = config.getJSONObject("go2rtc").getJSONObject("rtsp");
+      String username = rtspCredentialsJson.getString("username");
+      String password = rtspCredentialsJson.getString("password");
+      return new Pair<>(username, password);
+    } catch (JSONException e) {
+      throw new InvalidResponseException(e);
+    }
   }
 }

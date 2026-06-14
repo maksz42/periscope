@@ -121,6 +121,11 @@
             android:inputType="textPassword"
             android:dependency="@string/rtsp_enabled_key"
             />
+        <Preference
+            android:title="@string/rtsp_fetch_credentials"
+            android:key="@string/rtsp_fetch_credentials_key"
+            android:persistent="false"
+            />
     </PreferenceScreen>
     <Preference
         android:title="@string/version"

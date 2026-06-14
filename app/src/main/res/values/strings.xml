@@ -47,4 +47,8 @@
     <string name="keep_screen_on">Keep screen on</string>
     <string name="version">Version</string>
     <string name="tls">TLS</string>
+    <string name="rtsp_fetch_credentials">Fetch RTSP credentials</string>
+    <string name="rtsp_fetch_credentials_error_generic">Error while fetching RTSP credentials.</string>
+    <string name="rtsp_fetch_credentials_error_env">Can\'t fetch RTSP credentials if set through environment variables.</string>
+    <string name="rtsp_fetch_credentials_success">RTSP credentials fetched successfully.</string>
 </resources>

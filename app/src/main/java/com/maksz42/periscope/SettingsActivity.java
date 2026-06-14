@@ -13,6 +13,8 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
+import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -24,15 +26,20 @@ import androidx.annotation.RequiresApi;
 
 import com.maksz42.periscope.buffering.FrameBuffer;
 import com.maksz42.periscope.frigate.Client;
+import com.maksz42.periscope.frigate.Config;
+import com.maksz42.periscope.frigate.InvalidResponseException;
 import com.maksz42.periscope.helper.Settings;
 import com.maksz42.periscope.utils.Misc;
 import com.maksz42.periscope.utils.Net;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 
 // TODO make non-preference-based settings activity
 // this is awful
 public class SettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+  private static final String TAG = "SettingsActivity";
+
   private final Settings settings = Settings.getInstance(this);
   private boolean initialHttpsState;
   private boolean initialNoCertState;
@@ -98,6 +105,42 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     findPreference(settings.HostKey).setOnPreferenceChangeListener(
         (preference, newValue) -> validateHost((String) newValue)
     );
+
+    findPreference(getString(R.string.rtsp_fetch_credentials_key)).setOnPreferenceClickListener(p -> {
+      if (!commitConfig()) return true;
+      new Thread(() -> {
+        try {
+          Pair<String, String> creds = new Config().getRtspCredentials();
+          if (creds.first.equalsIgnoreCase("{FRIGATE_GO2RTC_RTSP_USERNAME}")
+              || creds.second.equalsIgnoreCase("{FRIGATE_GO2RTC_RTSP_PASSWORD}")
+          ) {
+            runOnUiThread(() -> new AlertDialog.Builder(SettingsActivity.this)
+                .setTitle(R.string.rtsp_fetch_credentials_error_env)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+            );
+          } else {
+            runOnUiThread(() -> {
+              ((EditTextPreference) findPreference(settings.RtspUserKey)).setText(creds.first);
+              ((EditTextPreference) findPreference(settings.RtspPasswordKey)).setText(creds.second);
+              new AlertDialog.Builder(SettingsActivity.this)
+                  .setTitle(R.string.rtsp_fetch_credentials_success)
+                  .setPositiveButton(android.R.string.ok, null)
+                  .show();
+            });
+          }
+        } catch (IOException | InterruptedException | InvalidResponseException e) {
+          runOnUiThread(() ->
+              new AlertDialog.Builder(SettingsActivity.this)
+              .setTitle(R.string.rtsp_fetch_credentials_error_generic)
+              .setPositiveButton(android.R.string.ok, null)
+              .show()
+          );
+          Log.e(TAG, "Error while fetching RTSP credentials", e);
+        }
+      }).start();
+      return true;
+    });
 
     getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.custom_settings_title_bar);
     TextView title = findViewById(R.id.title);
@@ -235,14 +278,13 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     }
   }
 
-  @Override
-  public void onBackPressed() {
+  private boolean commitConfig() {
     EditTextPreference hostPreference = (EditTextPreference) findPreference(settings.HostKey);
     String host = hostPreference.getText();
-    if (!validateHost(host)) return;
+    if (!validateHost(host)) return false;
     EditTextPreference portPreference = (EditTextPreference) findPreference(settings.PortKey);
     int port = validatePort(portPreference.getText());
-    if (port < 0) return;
+    if (port < 0) return false;
     ListPreference protocolPreference = (ListPreference) findPreference(settings.ProtocolKey);
     Client.Protocol protocol = Client.Protocol.valueOf(protocolPreference.getValue());
     try {
@@ -252,7 +294,7 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
           .setTitle(R.string.invalid_url)
           .setPositiveButton(R.string.change_url, null)
           .show();
-      return;
+      return false;
     }
     EditTextPreference user = (EditTextPreference) findPreference("user");
     EditTextPreference password = (EditTextPreference) findPreference("password");
@@ -263,6 +305,12 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     {
       Net.configureSSLSocketFactory(this, settings.getDisableCertVerification());
     }
+    return true;
+  }
+
+  @Override
+  public void onBackPressed() {
+    if (!commitConfig()) return;
     super.onBackPressed();
   }
 }

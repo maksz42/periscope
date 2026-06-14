@@ -41,4 +41,8 @@
     <string name="rtsp_enabled">RTSP włączone</string>
     <string name="keep_screen_on">Nie wygaszaj ekranu</string>
     <string name="version">Wersja</string>
+    <string name="rtsp_fetch_credentials">Pobierz poświadczenia RTSP</string>
+    <string name="rtsp_fetch_credentials_error_generic">Błąd podczas pobierania poświadczeń RTSP.</string>
+    <string name="rtsp_fetch_credentials_error_env">Nie można pobrać poświadczeń RTSP jeżeli są ustawione za pomocą zmiennych środowiskowych.</string>
+    <string name="rtsp_fetch_credentials_success">Poświadczenia RTSP pobrano pomyślnie.</string>
 </resources>
