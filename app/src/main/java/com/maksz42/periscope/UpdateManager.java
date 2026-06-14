@@ -30,6 +30,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
 
 public class UpdateManager {
+  private static final String TAG = "UpdateManager";
+  private static final String APK_NAME = "periscope.apk.gz";
+  private static final String UPDATE_URL = "http://periscope.freeddns.org/latest/";
+
+  private final WeakReference<Context> ContextRef;
+
+
   public static class InstallReceiver extends BroadcastReceiver {
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -45,13 +52,6 @@ public class UpdateManager {
       }
     }
   }
-
-  private final static String TAG = "UpdateManager";
-  private final static String APK_NAME = "periscope.apk.gz";
-  private final static String UPDATE_URL = "http://periscope.freeddns.org/latest/";
-
-  private final WeakReference<Context> ContextRef;
-
 
   public interface OnUpdateAvailableListener {
     void onUpdate(UpdateManager updateManager, String version, String changelog);

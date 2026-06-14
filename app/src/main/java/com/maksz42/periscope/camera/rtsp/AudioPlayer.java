@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.concurrent.locks.LockSupport;
 
 class AudioPlayer {
-    private final static int CAPACITY = (1 << 12);
+    private static final int CAPACITY = (1 << 12);
 
     private final byte[] ringBuf = new byte[CAPACITY];
     private final short[] decodeBuffer = new short[CAPACITY];

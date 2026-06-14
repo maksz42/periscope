@@ -24,7 +24,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
 
 class TLSSocket extends SSLSocket {
-  private final String TAG = "TLSSocket";
+  private static final String TAG = "TLSSocket";
 
   private final SSLSocket delegate;
   private String[] spoofedEnabledProtocols;
