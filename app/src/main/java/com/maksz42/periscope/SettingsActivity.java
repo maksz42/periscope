@@ -29,6 +29,7 @@ import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.Config;
 import com.maksz42.periscope.frigate.InvalidResponseException;
 import com.maksz42.periscope.helper.Settings;
+import com.maksz42.periscope.utils.DialogUtils;
 import com.maksz42.periscope.utils.Misc;
 import com.maksz42.periscope.utils.Net;
 
@@ -114,27 +115,34 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
           if (creds.first.equalsIgnoreCase("{FRIGATE_GO2RTC_RTSP_USERNAME}")
               || creds.second.equalsIgnoreCase("{FRIGATE_GO2RTC_RTSP_PASSWORD}")
           ) {
-            runOnUiThread(() -> new AlertDialog.Builder(SettingsActivity.this)
-                .setTitle(R.string.rtsp_fetch_credentials_error_env)
-                .setPositiveButton(android.R.string.ok, null)
-                .show()
+            runOnUiThread(() ->
+                DialogUtils.civilShow(
+                    new AlertDialog.Builder(SettingsActivity.this)
+                        .setTitle(R.string.rtsp_fetch_credentials_error_env)
+                        .setPositiveButton(android.R.string.ok, null),
+                    SettingsActivity.this
+                )
             );
           } else {
             runOnUiThread(() -> {
               ((EditTextPreference) findPreference(settings.RtspUserKey)).setText(creds.first);
               ((EditTextPreference) findPreference(settings.RtspPasswordKey)).setText(creds.second);
-              new AlertDialog.Builder(SettingsActivity.this)
-                  .setTitle(R.string.rtsp_fetch_credentials_success)
-                  .setPositiveButton(android.R.string.ok, null)
-                  .show();
+              DialogUtils.civilShow(
+                  new AlertDialog.Builder(SettingsActivity.this)
+                      .setTitle(R.string.rtsp_fetch_credentials_success)
+                      .setPositiveButton(android.R.string.ok, null),
+                  SettingsActivity.this
+              );
             });
           }
         } catch (IOException | InterruptedException | InvalidResponseException e) {
           runOnUiThread(() ->
-              new AlertDialog.Builder(SettingsActivity.this)
-              .setTitle(R.string.rtsp_fetch_credentials_error_generic)
-              .setPositiveButton(android.R.string.ok, null)
-              .show()
+              DialogUtils.civilShow(
+                  new AlertDialog.Builder(SettingsActivity.this)
+                      .setTitle(R.string.rtsp_fetch_credentials_error_generic)
+                      .setPositiveButton(android.R.string.ok, null),
+                  SettingsActivity.this
+              )
           );
           Log.e(TAG, "Error while fetching RTSP credentials", e);
         }

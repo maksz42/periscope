@@ -42,6 +42,7 @@ import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
 import com.maksz42.periscope.helper.Settings;
 import com.maksz42.periscope.ui.CameraView;
+import com.maksz42.periscope.utils.DialogUtils;
 
 import java.lang.ref.WeakReference;
 import java.security.cert.CertificateException;
@@ -355,15 +356,11 @@ public abstract class AbstractPreviewActivity extends Activity {
         alertDialog = null;
       }
     });
-    alertDialog = dialog;
-    try {
-      dialog.show();
-    } catch (WindowManager.BadTokenException e) {
-      Log.e(TAG, "Dialog show failed", e);
-      return null;
+    if (DialogUtils.civilShow(dialog, this)) {
+      alertDialog = dialog;
+      return dialog::dismiss;
     }
-
-    return dialog::dismiss;
+    return null;
   }
 
   protected boolean shouldIgnoreFirstKey(int keyCode) {
