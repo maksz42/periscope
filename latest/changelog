@@ -1,5 +1,6 @@
-- RTSP-over-TLS support
-- Big RTSP and audio improvements under the hood
+- Add semi-automatic RTSP credentials fetching
+- Audio decoding performance improvements
+- Fix rare crashes when showing dialogs
 
 ☕ Buy me a coffee ☕
 ko-fi.com/maksz42
