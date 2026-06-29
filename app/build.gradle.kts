@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace = "com.maksz42.periscope"
-    compileSdk = 36
+    compileSdk = 37
 
     enableKotlin = false
 
