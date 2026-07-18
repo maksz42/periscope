@@ -94,7 +94,7 @@ androidComponents {
             outputs.file(alignedApk)
 
             executable(zipalign)
-            args("-f", "4")
+            args("-z", "-f", "4")
 
             argumentProviders.add(
                 CommandLineArgumentProvider {
