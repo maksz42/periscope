@@ -28,7 +28,7 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
   @Override
   protected void onStart() {
     super.onStart();
-    Settings settings = Settings.getInstance(this);
+    Settings settings = Settings.getInstance();
 
     String cameraName = getIntent().getStringExtra("camera_name");
     if (settings.getRtspEnabled() && muteButton == null) {

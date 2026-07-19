@@ -11,12 +11,18 @@ import java.net.MalformedURLException;
 
 public class Periscope extends Application {
   public static final boolean HWUI = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB);
+  private static Periscope instance;
 
+  public static Periscope getInstance() {
+    return instance;
+  }
 
   @Override
   public void onCreate() {
     super.onCreate();
-    Settings settings = Settings.getInstance(this);
+    instance = this;
+
+    Settings settings = Settings.getInstance();
     Client.Protocol protocol = settings.getProtocol();
     String host = settings.getHost();
     int port = settings.getPort();

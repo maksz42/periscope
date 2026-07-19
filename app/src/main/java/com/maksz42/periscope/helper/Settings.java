@@ -8,6 +8,7 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.preference.PreferenceManager;
 
+import com.maksz42.periscope.Periscope;
 import com.maksz42.periscope.R;
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.Media;
@@ -18,8 +19,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class Settings {
-  private static Settings Instance;
-
   public final String PREF_FILE_NAME = "settings";
   private final SharedPreferences prefs;
   private final SharedPreferences.Editor editor;
@@ -46,17 +45,17 @@ public class Settings {
   public final String RtspPasswordKey;
   public final String KeepScreenOn;
 
-  /**
-   * not thread-safe, expected to be called on the UI thread
-   */
-  public static Settings getInstance(Context context) {
-    if (Instance == null) {
-      Instance = new Settings(context.getApplicationContext());
-    }
-    return Instance;
+
+  private static class Holder {
+    private static final Settings INSTANCE = new Settings();
   }
 
-  private Settings(Context context) {
+  public static Settings getInstance() {
+    return Holder.INSTANCE;
+  }
+
+  private Settings() {
+    Context context = Periscope.getInstance();
     PreferenceManager.setDefaultValues(
         context,
         PREF_FILE_NAME,

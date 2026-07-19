@@ -129,7 +129,7 @@ public abstract class AbstractPreviewActivity extends Activity {
     super.onStart();
     scheduleUIHide();
 
-    Settings settings = Settings.getInstance(this);
+    Settings settings = Settings.getInstance();
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
       if (!settings.getHideStatusBar() || !settings.getHideNavBar()) {
         setupSystemUIListener();
@@ -208,7 +208,7 @@ public abstract class AbstractPreviewActivity extends Activity {
 
   @SuppressLint("InlinedApi")
   private void setSystemUIVisible(boolean visible) {
-    Settings settings = Settings.getInstance(this);
+    Settings settings = Settings.getInstance();
     boolean hideStatusBar = settings.getHideStatusBar();
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
       int flags = 0;
@@ -440,7 +440,7 @@ public abstract class AbstractPreviewActivity extends Activity {
 
   protected void checkForUpdates(int delay) {
     // TODO do this in AlarmManager or something
-    Settings settings = Settings.getInstance(this);
+    Settings settings = Settings.getInstance();
     if (!settings.getAutoCheckForUpdates()) return;
     Runnable updateCheckAction = new Runnable() {
       @Override
@@ -458,12 +458,12 @@ public abstract class AbstractPreviewActivity extends Activity {
                 .setNeutralButton(R.string.later, (dialog, which) -> {
                   final long dayMillis = 1000 * 60 * 60 * 24;
                   handler.postDelayed(this, dayMillis);
-                  Settings.getInstance(AbstractPreviewActivity.this)
+                  Settings.getInstance()
                       .setNextUpdateCheckTime(System.currentTimeMillis() + dayMillis)
                       .apply();
                 })
                 .setNegativeButton(R.string.ignore, (dialog, which) ->
-                    Settings.getInstance(AbstractPreviewActivity.this)
+                    Settings.getInstance()
                         .setAutoCheckForUpdates(false)
                         .apply()
                 )

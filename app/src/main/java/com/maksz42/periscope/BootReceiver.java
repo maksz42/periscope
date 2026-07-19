@@ -30,7 +30,7 @@ public class BootReceiver extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    if (!Settings.getInstance(context).getAutostart()) return;
+    if (!Settings.getInstance().getAutostart()) return;
     Intent i = new Intent(context, MatrixActivity.class);
     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     context.startActivity(i);

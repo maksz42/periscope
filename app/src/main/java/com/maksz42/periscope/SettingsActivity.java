@@ -41,7 +41,7 @@ import java.net.MalformedURLException;
 public class SettingsActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
   private static final String TAG = "SettingsActivity";
 
-  private final Settings settings = Settings.getInstance(this);
+  private final Settings settings = Settings.getInstance();
   private boolean initialHttpsState;
   private boolean initialNoCertState;
 

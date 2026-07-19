@@ -33,7 +33,7 @@ public class CamerasOrderActivity extends Activity {
     requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
     super.onCreate(savedInstanceState);
     cameraArrayAdapter = new CameraArrayAdapter(this, cameraItems);
-    List<String> loadedCameras = Settings.getInstance(this).getSelectedCameras();
+    List<String> loadedCameras = Settings.getInstance().getSelectedCameras();
     if (loadedCameras != null) {
       addCameraItems(loadedCameras, true);
     }
@@ -103,7 +103,7 @@ public class CamerasOrderActivity extends Activity {
         selectedCameras.add(cameraItem.name);
       }
     }
-    Settings.getInstance(this).setSelectedCameras(selectedCameras).apply();
+    Settings.getInstance().setSelectedCameras(selectedCameras).apply();
   }
 
   @Override

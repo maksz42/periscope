@@ -63,7 +63,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
       String name = haltedCameraView.getMedia().getName();
       CameraPlayer player = CameraPlayerHolder.getAndClear(name);
       haltedCameraView.attachPlayer(player);
-      haltedCameraView.start(0, Settings.getInstance(this).getInterval());
+      haltedCameraView.start(0, Settings.getInstance().getInterval());
       haltedCameraView = null;
     }
   }
@@ -71,7 +71,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
   @Override
   protected void onStart() {
     super.onStart();
-    List<String> selectedCameras = Settings.getInstance(this).getSelectedCameras();
+    List<String> selectedCameras = Settings.getInstance().getSelectedCameras();
     if (selectedCameras == null) {
       refreshing = true;
       new Thread(() -> {
@@ -258,7 +258,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
 
   private void initCameraViews(List<String> cameras) {
     List<CameraView> cameraViews = new ArrayList<>(cameras.size());
-    Settings settings = Settings.getInstance(this);
+    Settings settings = Settings.getInstance();
     boolean ignoreAspectRatio = settings.getIgnoreAspectRatio();
     short timeout = settings.getTimeout();
     Media.ImageFormat imageFormat = settings.getImageFormat();
@@ -305,7 +305,7 @@ public class MatrixActivity extends AbstractPreviewActivity {
 
   private void startPreview() {
     showWallpaperMsg(null);
-    long interval = Settings.getInstance(this).getInterval();
+    long interval = Settings.getInstance().getInterval();
     int numberOfCameras = cameraViews.size();
     long timeShift = interval / numberOfCameras;
     for (int i = 0; i < numberOfCameras; i++) {
