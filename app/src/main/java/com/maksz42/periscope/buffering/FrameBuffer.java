@@ -22,7 +22,7 @@ public abstract class FrameBuffer {
 
   protected final Lock lock = new ReentrantLock();
   private final BitmapFactory.Options bitmapFactoryOptions;
-  private final byte[] streamBuffer = new byte[16 * 1024];
+  private final FastBIS bufferedInput = new FastBIS();
 
 
   {
@@ -54,12 +54,12 @@ public abstract class FrameBuffer {
   public abstract Bitmap getFrame();
 
   public Bitmap decodeStream(InputStream input, Bitmap reusableBitmap) throws IOException {
-    FastBIS bufferedInput = new FastBIS(input, streamBuffer);
+    bufferedInput.begin(input);
     if (SUPPORTS_REUSING_BITMAP) {
       bitmapFactoryOptions.inBitmap = reusableBitmap;
       if (HAS_NATIVE_STREAM_BUFFER) {
         // mark() could be called unconditionally but it's synchronized, so not free
-        bufferedInput.mark(streamBuffer.length);
+        bufferedInput.mark(0);
       }
     }
     Bitmap bitmap = null;

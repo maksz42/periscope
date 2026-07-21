@@ -9,19 +9,31 @@ import java.io.InputStream;
 class FastBIS extends BufferedInputStream {
   private static final String TAG = "FastBIS";
 
-  private final int minimumMark;
-  public boolean exceptionThrown = false;
+  private static final InputStream EMPTY_INPUT = new InputStream() {
+    @Override
+    public int read() {
+      return -1;
+    }
+  };
 
-  FastBIS(InputStream in, byte[] buf) {
-    // hack
-    super(in, 1);
-    this.minimumMark = buf.length;
-    this.buf = buf;
+  boolean exceptionThrown;
+
+  FastBIS() {
+    super(EMPTY_INPUT, 16 * 1024);
+  }
+
+  void begin(InputStream input) {
+    in = input;
+    count = 0;
+    pos = 0;
+    markpos = -1;
+    marklimit = 0;
+    exceptionThrown = false;
   }
 
   @Override
   public void mark(int readlimit) {
-    super.mark(Math.max(readlimit, minimumMark));
+    super.mark(Math.max(readlimit, buf.length));
   }
 
   @Override
