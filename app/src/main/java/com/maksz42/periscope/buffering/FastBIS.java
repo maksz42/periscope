@@ -10,17 +10,10 @@ import java.io.InputStream;
 class FastBIS extends UnsynchronizedBufferedInputStream {
   private static final String TAG = "FastBIS";
 
-  private static final InputStream EMPTY_INPUT = new InputStream() {
-    @Override
-    public int read() {
-      return -1;
-    }
-  };
-
   boolean exceptionThrown;
 
   FastBIS() {
-    super(EMPTY_INPUT, 16 * 1024);
+    super(null, 16 * 1024);
   }
 
   void begin(InputStream input) {
