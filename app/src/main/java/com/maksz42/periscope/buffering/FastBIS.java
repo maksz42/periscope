@@ -2,11 +2,12 @@ package com.maksz42.periscope.buffering;
 
 import android.util.Log;
 
-import java.io.BufferedInputStream;
+import com.maksz42.periscope.utils.UnsynchronizedBufferedInputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
 
-class FastBIS extends BufferedInputStream {
+class FastBIS extends UnsynchronizedBufferedInputStream {
   private static final String TAG = "FastBIS";
 
   private static final InputStream EMPTY_INPUT = new InputStream() {

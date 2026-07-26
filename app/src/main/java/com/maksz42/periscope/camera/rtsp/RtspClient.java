@@ -9,8 +9,8 @@ import android.util.Pair;
 
 import com.maksz42.periscope.BuildConfig;
 import com.maksz42.periscope.utils.IO;
+import com.maksz42.periscope.utils.UnsynchronizedBufferedInputStream;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -189,7 +189,7 @@ public class RtspClient {
       }
 
       canRestart.set(true);
-      readerThread = new Thread(() -> readLoop(new DataInputStream(new BufferedInputStream(in))));
+      readerThread = new Thread(() -> readLoop(new DataInputStream(new UnsynchronizedBufferedInputStream(in))));
       writerThread = new Thread(() -> writeLoop(new BufferedOutputStream(out)));
       readerThread.start();
       writerThread.start();
