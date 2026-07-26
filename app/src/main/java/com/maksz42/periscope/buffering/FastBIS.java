@@ -20,15 +20,13 @@ class FastBIS extends UnsynchronizedBufferedInputStream {
     in = input;
     count = 0;
     pos = 0;
-    markpos = -1;
-    marklimit = 0;
+    markpos = 0;
+    marklimit = buf.length;
     exceptionThrown = false;
   }
 
   @Override
-  public void mark(int readlimit) {
-    super.mark(Math.max(readlimit, buf.length));
-  }
+  public void mark(int readlimit) { }
 
   @Override
   public int read(byte[] b, int off, int len) {
@@ -47,12 +45,9 @@ class FastBIS extends UnsynchronizedBufferedInputStream {
     }
   }
 
-  public boolean tryReset() {
-    try {
-      super.reset();
-      return true;
-    } catch (IOException e) {
-      return false;
-    }
+  boolean tryReset() {
+    if (buf == null || markpos == -1) return false;
+    pos = markpos;
+    return true;
   }
 }

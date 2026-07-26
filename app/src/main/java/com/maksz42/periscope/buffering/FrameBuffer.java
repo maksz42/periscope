@@ -18,7 +18,6 @@ public abstract class FrameBuffer {
   // for api >= KITKAT
   public static final boolean SUPPORTS_WEBP = (SDK_INT >= KITKAT);
   static final boolean SUPPORTS_REUSING_BITMAP = (SDK_INT >= HONEYCOMB);
-  private static final boolean HAS_NATIVE_STREAM_BUFFER = (SDK_INT >= KITKAT);
 
   protected final Lock lock = new ReentrantLock();
   private final BitmapFactory.Options bitmapFactoryOptions;
@@ -57,16 +56,12 @@ public abstract class FrameBuffer {
     bufferedInput.begin(input);
     if (SUPPORTS_REUSING_BITMAP) {
       bitmapFactoryOptions.inBitmap = reusableBitmap;
-      if (HAS_NATIVE_STREAM_BUFFER) {
-        // mark() could be called unconditionally but it's synchronized, so not free
-        bufferedInput.mark(0);
-      }
     }
     Bitmap bitmap = null;
     try {
       bitmap = BitmapFactory.decodeStream(bufferedInput, null, bitmapFactoryOptions);
     } catch (IllegalArgumentException e) {
-      if (SUPPORTS_REUSING_BITMAP && bufferedInput.tryReset()) {
+      if (SUPPORTS_REUSING_BITMAP && bitmapFactoryOptions.inBitmap != null && bufferedInput.tryReset()) {
         bitmapFactoryOptions.inBitmap = null;
         bitmap = BitmapFactory.decodeStream(bufferedInput, null, bitmapFactoryOptions);
       }
