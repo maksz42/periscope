@@ -338,7 +338,6 @@ public class RtspClient {
 
   private String buildPlayRequest(String session) {
     return "PLAY rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n"
-        + "Session: " + session + '\n'
-        + "Range: 0-\n";
+        + "Session: " + session + '\n';
   }
 }
