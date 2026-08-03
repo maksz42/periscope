@@ -333,11 +333,11 @@ public class RtspClient {
 
   private String buildSetupRequest() {
     return "SETUP rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma/trackID=0 RTSP/1.0\n"
-        + "Transport: RTP/AVP/TCP;unicast;interleaved=0-1\n";
+        + "Transport:RTP/AVP/TCP;unicast;interleaved=0-1\n";
   }
 
   private String buildPlayRequest(String session) {
     return "PLAY rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n"
-        + "Session: " + session + '\n';
+        + "Session:" + session + '\n';
   }
 }
