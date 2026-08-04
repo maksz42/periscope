@@ -64,10 +64,11 @@ public class RtspClient {
     this.cameraName = cameraName;
     if (user != null && !user.isBlank()) {
       byte[] key = "Authorization:Basic ".getBytes();
-      byte[] auth = Base64.encode((user + ':' + password).getBytes(), 0);
-      this.basicAuthHeader = new byte[key.length + auth.length];
+      byte[] auth = Base64.encode((user + ':' + password).getBytes(), Base64.NO_WRAP);
+      this.basicAuthHeader = new byte[key.length + auth.length + 1];
       System.arraycopy(key, 0, this.basicAuthHeader, 0, key.length);
       System.arraycopy(auth, 0, this.basicAuthHeader, key.length, auth.length);
+      this.basicAuthHeader[this.basicAuthHeader.length - 1] = '\n';
     } else {
       this.basicAuthHeader = null;
     }
