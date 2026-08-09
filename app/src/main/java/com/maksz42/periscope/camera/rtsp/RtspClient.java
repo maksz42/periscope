@@ -126,21 +126,14 @@ public class RtspClient {
 
   public void start() {
     OnResponseListener setupListener = (headers, body) -> {
-      for (String header : headers) {
-        String s = "Session: ";
-        if (header.startsWith(s)) {
-          String session = header.substring(s.length(), header.indexOf(';'));
-          String playReq = buildPlayRequest(session);
-          sendRequestAsync(playReq, NO_LISTENER);
+      String playReq = buildPlayRequest();
+      sendRequestAsync(playReq, NO_LISTENER);
 
-          final long delay = 45;
-          keepaliveFuture = ioExecutor.scheduleWithFixedDelay(() -> {
-            String optionsReq = buildOptionsRequest();
-            sendRequestAsync(optionsReq, NO_LISTENER);
-          }, delay, delay, TimeUnit.SECONDS);
-          break;
-        }
-      }
+      final long delay = 45;
+      keepaliveFuture = ioExecutor.scheduleWithFixedDelay(() -> {
+        String optionsReq = buildOptionsRequest();
+        sendRequestAsync(optionsReq, NO_LISTENER);
+      }, delay, delay, TimeUnit.SECONDS);
     };
 
     OnResponseListener describeListener = (headers, body) -> {
@@ -337,8 +330,7 @@ public class RtspClient {
         + "Transport:RTP/AVP/TCP;unicast;interleaved=0-1\n";
   }
 
-  private String buildPlayRequest(String session) {
-    return "PLAY rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n"
-        + "Session:" + session + '\n';
+  private String buildPlayRequest() {
+    return "PLAY rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n";
   }
 }
