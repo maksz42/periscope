@@ -129,7 +129,7 @@ public class RtspClient {
       String playReq = buildPlayRequest();
       sendRequestAsync(playReq, NO_LISTENER);
 
-      final long delay = 45;
+      final long delay = 50;
       keepaliveFuture = ioExecutor.scheduleWithFixedDelay(() -> {
         String optionsReq = buildOptionsRequest();
         sendRequestAsync(optionsReq, NO_LISTENER);
