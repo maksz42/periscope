@@ -171,7 +171,7 @@ public class RtspClient {
           readResponse(in, first);
         }
       }
-    } catch (IOException e) {
+    } catch (IOException | RuntimeException e) {
       Log.d(TAG, "readLoop", e);
       requestQueue.clear();
       requestQueue.offer(RESTART);
