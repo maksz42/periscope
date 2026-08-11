@@ -34,14 +34,17 @@ public class RtspClient {
   private static final byte[] userAgentHeader =
       ("User-Agent:Periscope/" + BuildConfig.VERSION_NAME + '\n').getBytes();
   private static final OnResponseListener NO_LISTENER = (headers, body) -> { };
-  private static final Pair<String, OnResponseListener> RESTART = new Pair<>(null, null);
+  private static final Pair<byte[], OnResponseListener> RESTART = new Pair<>(null, null);
 
-  private final String cameraName;
+  private final byte[] describeRequest;
+  private final byte[] optionsRequest;
+  private final byte[] setupRequest;
+  private final byte[] playRequest;
   private final byte[] basicAuthHeader;
   private final String host;
   private final int port;
   private final boolean overTls;
-  private final LinkedBlockingQueue<Pair<String, OnResponseListener>> requestQueue = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<Pair<byte[], OnResponseListener>> requestQueue = new LinkedBlockingQueue<>();
   private final ConcurrentLinkedQueue<OnResponseListener> responseQueue = new ConcurrentLinkedQueue<>();
   private final Thread IOWriterThread = new Thread(this::IOLoop);
   private Thread readerThread;
@@ -52,7 +55,10 @@ public class RtspClient {
     this.host = host;
     this.port = port;
     this.overTls = overTls;
-    this.cameraName = cameraName;
+    this.describeRequest = buildDescribeRequest(cameraName);
+    this.optionsRequest = buildOptionsRequest(cameraName);
+    this.setupRequest = buildSetupRequest(cameraName);
+    this.playRequest = buildPlayRequest(cameraName);
     if (user != null && !user.isBlank()) {
       byte[] key = "Authorization:Basic ".getBytes();
       byte[] auth = Base64.encode((user + ':' + password).getBytes(), Base64.NO_WRAP);
@@ -95,10 +101,7 @@ public class RtspClient {
   }
 
   private OutputStream startPlaying() throws IOException {
-    OnResponseListener setupListener = (headers, body) -> {
-      String playReq = buildPlayRequest();
-      sendRequestAsync(playReq, NO_LISTENER);
-    };
+    OnResponseListener setupListener = (headers, body) -> sendRequestAsync(playRequest, NO_LISTENER);
 
     OnResponseListener describeListener = (headers, body) -> {
       String sdp = new String(body);
@@ -123,8 +126,7 @@ public class RtspClient {
       }
       audioPlayer = new AudioPlayer(encoding, audioTrack);
 
-      String req = buildSetupRequest();
-      sendRequestAsync(req, setupListener);
+      sendRequestAsync(setupRequest, setupListener);
     };
 
     Socket sock = connect();
@@ -144,7 +146,7 @@ public class RtspClient {
     readerThread = new Thread(() -> readLoop(new DataInputStream(new UnsynchronizedBufferedInputStream(in))));
     readerThread.start();
 
-    sendRequestAsync(buildDescribeRequest(), describeListener);
+    sendRequestAsync(describeRequest, describeListener);
 
     return new BufferedOutputStream(out);
   }
@@ -214,13 +216,13 @@ public class RtspClient {
   private void writeLoop(OutputStream out) throws IOException, InterruptedException {
     try (out) {
       while (true) {
-        String payload;
+        byte[] payload;
         OnResponseListener listener;
-        Pair<String, OnResponseListener> req = requestQueue.poll(50, TimeUnit.SECONDS);
+        Pair<byte[], OnResponseListener> req = requestQueue.poll(50, TimeUnit.SECONDS);
         if (req == RESTART) {
           return;
         } else if (req == null) {
-          payload = buildOptionsRequest();
+          payload = optionsRequest;
           listener = NO_LISTENER;
         } else {
           payload = req.first;
@@ -228,7 +230,7 @@ public class RtspClient {
         }
 
         responseQueue.add(listener);
-        out.write(payload.getBytes());
+        out.write(payload);
         out.write(userAgentHeader);
         if (basicAuthHeader != null) {
           out.write(basicAuthHeader);
@@ -300,24 +302,24 @@ public class RtspClient {
     audioPlayer.write(in, len - HEADER_SIZE);
   }
 
-  private void sendRequestAsync(String payload, OnResponseListener listener) {
+  private void sendRequestAsync(byte[] payload, OnResponseListener listener) {
     requestQueue.offer(new Pair<>(payload, listener));
   }
 
-  private String buildDescribeRequest() {
-    return "DESCRIBE rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n";
+  private byte[] buildDescribeRequest(String cameraName) {
+    return ("DESCRIBE rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n").getBytes();
   }
 
-  private String buildOptionsRequest() {
-    return "OPTIONS rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n";
+  private byte[] buildOptionsRequest(String cameraName) {
+    return ("OPTIONS rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n").getBytes();
   }
 
-  private String buildSetupRequest() {
-    return "SETUP rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma/trackID=0 RTSP/1.0\n"
-        + "Transport:RTP/AVP/TCP;unicast;interleaved=0-1\n";
+  private byte[] buildSetupRequest(String cameraName) {
+    return ("SETUP rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma/trackID=0 RTSP/1.0\n"
+        + "Transport:RTP/AVP/TCP;unicast;interleaved=0-1\n").getBytes();
   }
 
-  private String buildPlayRequest() {
-    return "PLAY rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n";
+  private byte[] buildPlayRequest(String cameraName) {
+    return ("PLAY rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n").getBytes();
   }
 }
