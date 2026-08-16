@@ -11,7 +11,6 @@ import com.maksz42.periscope.BuildConfig;
 import com.maksz42.periscope.utils.IO;
 import com.maksz42.periscope.utils.UnsynchronizedBufferedInputStream;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -40,7 +39,6 @@ public class RtspClient {
   private final byte[] optionsRequest;
   private final byte[] setupRequest;
   private final byte[] playRequest;
-  private final byte[] basicAuthHeader;
   private final String host;
   private final int port;
   private final boolean overTls;
@@ -55,20 +53,21 @@ public class RtspClient {
     this.host = host;
     this.port = port;
     this.overTls = overTls;
-    this.describeRequest = buildDescribeRequest(cameraName);
-    this.optionsRequest = buildOptionsRequest(cameraName);
-    this.setupRequest = buildSetupRequest(cameraName);
-    this.playRequest = buildPlayRequest(cameraName);
+
+    byte[] basicAuthHeader = null;
     if (user != null && !user.isBlank()) {
       byte[] key = "Authorization:Basic ".getBytes();
       byte[] auth = Base64.encode((user + ':' + password).getBytes(), Base64.NO_WRAP);
-      this.basicAuthHeader = new byte[key.length + auth.length + 1];
-      System.arraycopy(key, 0, this.basicAuthHeader, 0, key.length);
-      System.arraycopy(auth, 0, this.basicAuthHeader, key.length, auth.length);
-      this.basicAuthHeader[this.basicAuthHeader.length - 1] = '\n';
-    } else {
-      this.basicAuthHeader = null;
+      basicAuthHeader = new byte[key.length + auth.length + 1];
+      System.arraycopy(key, 0, basicAuthHeader, 0, key.length);
+      System.arraycopy(auth, 0, basicAuthHeader, key.length, auth.length);
+      basicAuthHeader[basicAuthHeader.length - 1] = '\n';
     }
+
+    this.describeRequest = buildRequestPayload(buildDescribeHead(cameraName), basicAuthHeader);
+    this.optionsRequest = buildRequestPayload(buildOptionsHead(cameraName), basicAuthHeader);
+    this.setupRequest = buildRequestPayload(buildSetupHead(cameraName), basicAuthHeader);
+    this.playRequest = buildRequestPayload(buildPlayHead(cameraName), basicAuthHeader);
   }
 
   private Socket connect() throws IOException {
@@ -148,7 +147,7 @@ public class RtspClient {
 
     sendRequestAsync(describeRequest, describeListener);
 
-    return new BufferedOutputStream(out);
+    return out;
   }
 
   public void stop() {
@@ -231,12 +230,6 @@ public class RtspClient {
 
         responseQueue.add(listener);
         out.write(payload);
-        out.write(userAgentHeader);
-        if (basicAuthHeader != null) {
-          out.write(basicAuthHeader);
-        }
-        out.write('\n');
-        out.flush();
       }
     }
   }
@@ -306,20 +299,42 @@ public class RtspClient {
     requestQueue.offer(new Pair<>(payload, listener));
   }
 
-  private byte[] buildDescribeRequest(String cameraName) {
-    return ("DESCRIBE rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n").getBytes();
+  private String buildDescribeHead(String cameraName) {
+    return "DESCRIBE rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n";
   }
 
-  private byte[] buildOptionsRequest(String cameraName) {
-    return ("OPTIONS rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n").getBytes();
+  private String buildOptionsHead(String cameraName) {
+    return "OPTIONS rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n";
   }
 
-  private byte[] buildSetupRequest(String cameraName) {
-    return ("SETUP rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma/trackID=0 RTSP/1.0\n"
-        + "Transport:RTP/AVP/TCP;unicast;interleaved=0-1\n").getBytes();
+  private String buildSetupHead(String cameraName) {
+    return "SETUP rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma/trackID=0 RTSP/1.0\n"
+        + "Transport:RTP/AVP/TCP;unicast;interleaved=0-1\n";
   }
 
-  private byte[] buildPlayRequest(String cameraName) {
-    return ("PLAY rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n").getBytes();
+  private String buildPlayHead(String cameraName) {
+    return "PLAY rtsp://" + host + ':' + port + '/' + cameraName + "?audio=pcmu,pcma RTSP/1.0\n";
+  }
+
+  private byte[] buildRequestPayload(String head, byte[] basicAuthHeader) {
+    int payloadLen = head.length() + userAgentHeader.length + 1;
+    if (basicAuthHeader != null) {
+      payloadLen += basicAuthHeader.length;
+    }
+
+    byte[] payload = new byte[payloadLen];
+    head.getBytes(0, head.length(), payload, 0);
+    int offset = head.length();
+
+    System.arraycopy(userAgentHeader, 0, payload, offset, userAgentHeader.length);
+    offset += userAgentHeader.length;
+
+    if (basicAuthHeader != null) {
+      System.arraycopy(basicAuthHeader, 0, payload, offset, basicAuthHeader.length);
+      offset += basicAuthHeader.length;
+    }
+
+    payload[offset] = '\n';
+    return payload;
   }
 }
