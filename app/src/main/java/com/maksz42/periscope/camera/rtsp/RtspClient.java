@@ -18,8 +18,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +30,7 @@ public class RtspClient {
   private static final String TAG = "RtspClient";
   private static final byte[] userAgentHeader =
       ("User-Agent:Periscope/" + BuildConfig.VERSION_NAME + '\n').getBytes();
-  private static final OnResponseListener NO_LISTENER = (headers, body) -> { };
+  private static final OnResponseListener NO_LISTENER = (body) -> { };
   private static final Pair<byte[], OnResponseListener> RESTART = new Pair<>(null, null);
 
   private final byte[] describeRequest;
@@ -100,9 +98,9 @@ public class RtspClient {
   }
 
   private OutputStream startPlaying() throws IOException {
-    OnResponseListener setupListener = (headers, body) -> sendRequestAsync(playRequest, NO_LISTENER);
+    OnResponseListener setupListener = (body) -> sendRequestAsync(playRequest, NO_LISTENER);
 
-    OnResponseListener describeListener = (headers, body) -> {
+    OnResponseListener describeListener = (body) -> {
       String sdp = new String(body);
       int lineStart = sdp.indexOf("a=rtpmap:");
       int formatStart = sdp.indexOf(' ', lineStart) + 1;
@@ -253,7 +251,7 @@ public class RtspClient {
     ByteArrayOutputStream lineBuf = new ByteArrayOutputStream();
     lineBuf.write(first);
     boolean lf = false;
-    List<String> headers = new ArrayList<>();
+    String statusLine = null;
     int contentLen = 0;
     while (true) {
       byte b = in.readByte();
@@ -266,8 +264,8 @@ public class RtspClient {
         lineBuf.reset();
         if (header.startsWith("Content-Length")) {
           contentLen = Integer.parseInt(header, header.indexOf(' ') + 1, header.length(), 10);
-        } else {
-          headers.add(header);
+        } else if (statusLine == null) {
+          statusLine = header;
         }
       } else if (b != '\r') {
         lf = false;
@@ -276,17 +274,16 @@ public class RtspClient {
     }
     byte[] body = new byte[contentLen];
     in.readFully(body);
-    String statusLine = headers.remove(0);
     int statusCodeStart = statusLine.indexOf(' ') + 1;
     int statusCodeEnd = statusCodeStart + 3;
     int status = Integer.parseInt(statusLine, statusCodeStart, statusCodeEnd, 10);
     if (status != 200) throw new IOException("Response status code: " + status);
-    handleResponse(headers, body);
+    handleResponse(body);
   }
 
-  private void handleResponse(List<String> headers, byte[] body) {
+  private void handleResponse(byte[] body) {
     OnResponseListener listener = responseQueue.poll();
-    listener.onResponse(headers, body);
+    listener.onResponse(body);
   }
 
   private void handleRtp(DataInputStream in, int len) throws IOException {
