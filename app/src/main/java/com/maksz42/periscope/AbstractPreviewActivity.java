@@ -38,6 +38,7 @@ import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 
+import com.maksz42.periscope.camera.rtsp.RtspClient;
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.InvalidCredentialsException;
 import com.maksz42.periscope.helper.Settings;
@@ -122,6 +123,26 @@ public abstract class AbstractPreviewActivity extends Activity {
     return android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O
         ? rootPreview.hasExplicitFocusable()
         : rootPreview.hasFocusable();
+  }
+
+  protected void startAudio(CameraView cameraView) {
+    if (cameraView.getPlayer().hasAudio()) return;
+    Settings settings = Settings.getInstance();
+    RtspClient rtspClient = new RtspClient(
+        settings.getHost(),
+        settings.getRtspPort(),
+        settings.getRtspUser(),
+        settings.getRtspPassword(),
+        cameraView.getMedia().getName(),
+        settings.getProtocol() == Client.Protocol.HTTPS
+    );
+    cameraView.getPlayer().startAudio(rtspClient);
+  }
+
+  protected void stopAudio(CameraView cameraView) {
+    if (cameraView.getPlayer() != null) {
+      cameraView.getPlayer().stopAudio();
+    }
   }
 
   @Override

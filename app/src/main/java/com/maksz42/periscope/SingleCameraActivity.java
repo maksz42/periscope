@@ -4,8 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageButton;
 
-import com.maksz42.periscope.camera.rtsp.RtspClient;
-import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.Media;
 import com.maksz42.periscope.helper.CameraPlayerHolder;
 import com.maksz42.periscope.helper.Settings;
@@ -13,7 +11,6 @@ import com.maksz42.periscope.ui.CameraView;
 
 public class SingleCameraActivity extends AbstractPreviewActivity {
   private CameraView cameraView;
-  private RtspClient rtspClient;
   private ImageButton muteButton;
 
   @Override
@@ -28,27 +25,9 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
   @Override
   protected void onStart() {
     super.onStart();
-    Settings settings = Settings.getInstance();
 
     String cameraName = getIntent().getStringExtra("camera_name");
-    if (settings.getRtspEnabled() && muteButton == null) {
-      muteButton = addFloatingButton(android.R.drawable.ic_lock_silent_mode_off, v -> {
-        int drawableRes;
-        if (rtspClient == null) {
-          startAudio(settings, cameraName);
-          drawableRes = android.R.drawable.ic_lock_silent_mode_off;
-        } else {
-          stopAudio();
-          drawableRes = android.R.drawable.ic_lock_silent_mode;
-        }
-        ImageButton btn = (ImageButton) v;
-        btn.setImageResource(drawableRes);
-      });
-    } else if (!settings.getRtspEnabled() && muteButton != null) {
-      removeFloatingButton(muteButton);
-      muteButton = null;
-    }
-
+    Settings settings = Settings.getInstance();
     boolean ignoreAspectRatio = settings.getIgnoreAspectRatio();
     short timeout = settings.getTimeout();
     Media.ImageFormat imageFormat = settings.getImageFormat();
@@ -68,37 +47,34 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     setPreview(cameraView);
     cameraView.start(0, 100);
 
-    checkForUpdates(2_000);
-
     if (settings.getRtspEnabled()) {
-      startAudio(settings, cameraName);
+      startAudio(cameraView);
+      if (muteButton == null) {
+        muteButton = addFloatingButton(android.R.drawable.ic_lock_silent_mode_off, v -> {
+          int drawableRes;
+          if (!cameraView.getPlayer().hasAudio()) {
+            startAudio(cameraView);
+            drawableRes = android.R.drawable.ic_lock_silent_mode_off;
+          } else {
+            stopAudio(cameraView);
+            drawableRes = android.R.drawable.ic_lock_silent_mode;
+          }
+          ImageButton btn = (ImageButton) v;
+          btn.setImageResource(drawableRes);
+        });
+      }
+    } else if (muteButton != null) {
+      removeFloatingButton(muteButton);
+      muteButton = null;
     }
-  }
 
-  private void startAudio(Settings settings, String cameraName) {
-    rtspClient = new RtspClient(
-        settings.getHost(),
-        settings.getRtspPort(),
-        settings.getRtspUser(),
-        settings.getRtspPassword(),
-        cameraName,
-        settings.getProtocol() == Client.Protocol.HTTPS
-    );
-    rtspClient.start();
-  }
-
-  private void stopAudio() {
-    if (rtspClient != null) {
-      rtspClient.stop();
-      rtspClient = null;
-    }
+    checkForUpdates(2_000);
   }
 
   @Override
   protected void onStop() {
     super.onStop();
     cameraView.stop();
-    stopAudio();
   }
 
   @Override

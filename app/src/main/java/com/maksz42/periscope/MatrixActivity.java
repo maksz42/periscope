@@ -305,12 +305,22 @@ public class MatrixActivity extends AbstractPreviewActivity {
 
   private void startPreview() {
     showWallpaperMsg(null);
-    long interval = Settings.getInstance().getInterval();
+    Settings settings = Settings.getInstance();
+    boolean rtspEnabled = settings.getRtspEnabled();
+    List<String> audioCameras = (rtspEnabled) ? settings.getAudioCameras() : null;
+    long interval = settings.getInterval();
     int numberOfCameras = cameraViews.size();
     long timeShift = interval / numberOfCameras;
     for (int i = 0; i < numberOfCameras; i++) {
       CameraView cameraView = cameraViews.get(i);
       cameraView.start(timeShift * i, interval);
+      if (rtspEnabled) {
+        if (audioCameras.contains(cameraView.getMedia().getName())) {
+          startAudio(cameraView);
+        } else {
+          stopAudio(cameraView);
+        }
+      }
     }
   }
 

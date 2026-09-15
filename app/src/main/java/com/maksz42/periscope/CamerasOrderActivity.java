@@ -32,23 +32,22 @@ public class CamerasOrderActivity extends Activity {
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
     super.onCreate(savedInstanceState);
-    cameraArrayAdapter = new CameraArrayAdapter(this, cameraItems);
-    List<String> loadedCameras = Settings.getInstance().getSelectedCameras();
+    Settings settings = Settings.getInstance();
+    cameraArrayAdapter = new CameraArrayAdapter(this, cameraItems, settings.getRtspEnabled());
+    List<String> loadedCameras = settings.getSelectedCameras();
     if (loadedCameras != null) {
       addCameraItems(loadedCameras, true);
     }
     ListView listView = new ListView(this);
+    listView.setOnItemLongClickListener((parent, view, position, id) -> view.findViewById(R.id.btn_audio).performClick());
+    listView.setOnItemClickListener((parent, view, position, id) -> view.findViewById(R.id.camera_enabled).performClick());
     listView.setOnKeyListener((v, keyCode, event) -> {
       if (event.getAction() != KeyEvent.ACTION_DOWN) {
         return false;
       }
       ListView lv = (ListView) v;
       View selectedView = lv.getSelectedView();
-      if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER
-          || keyCode == KeyEvent.KEYCODE_ENTER
-          || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER) {
-        selectedView.findViewById(R.id.camera_enabled).performClick();
-      } else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+      if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
         lv.setSelection(lv.getSelectedItemPosition() - 1);
         selectedView.findViewById(R.id.btn_up).performClick();
       } else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
@@ -86,9 +85,10 @@ public class CamerasOrderActivity extends Activity {
   }
 
   private void addCameraItems(List<String> cameraNames, boolean enabled) {
+    List<String> audioCameras = Settings.getInstance().getAudioCameras();
     for (String cameraName : cameraNames) {
       if (usedCameraNames.add(cameraName)) {
-        cameraItems.add(new CameraItem(cameraName, enabled));
+        cameraItems.add(new CameraItem(cameraName, enabled, audioCameras.contains(cameraName)));
       }
     }
     cameraArrayAdapter.notifyDataSetChanged();
@@ -97,13 +97,20 @@ public class CamerasOrderActivity extends Activity {
   @Override
   public void onBackPressed() {
     super.onBackPressed();
-    List<String> selectedCameras = new ArrayList<>();
+    List<String> selectedCameras = new ArrayList<>(cameraItems.size());
+    List<String> audioCameras = new ArrayList<>(cameraItems.size());
     for (CameraItem cameraItem : cameraItems) {
       if (cameraItem.enabled) {
         selectedCameras.add(cameraItem.name);
       }
+      if (cameraItem.audioEnabled) {
+        audioCameras.add(cameraItem.name);
+      }
     }
-    Settings.getInstance().setSelectedCameras(selectedCameras).apply();
+    Settings.getInstance()
+        .setSelectedCameras(selectedCameras)
+        .setAudioCameras(audioCameras)
+        .apply();
   }
 
   @Override

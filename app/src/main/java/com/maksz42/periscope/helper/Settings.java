@@ -33,6 +33,7 @@ public class Settings {
   public final String UserKey;
   public final String PasswordKey;
   public final String SelectedCamerasKey;
+  public final String AudioCamerasKey;
   public final String AutoCheckForUpdatesKey;
   public final String DisableCertVerificationKey;
   public final String NextUpdateCheckTimeKey;
@@ -77,6 +78,7 @@ public class Settings {
     UserKey = res.getString(R.string.user_key);
     PasswordKey = res.getString(R.string.password_key);
     SelectedCamerasKey = res.getString(R.string.selected_cameras_key);
+    AudioCamerasKey = res.getString(R.string.audio_cameras_key);
     AutoCheckForUpdatesKey = res.getString(R.string.auto_check_for_updates_key);
     DisableCertVerificationKey = res.getString(R.string.disable_cert_verification_key);
     NextUpdateCheckTimeKey = res.getString(R.string.next_update_check_time_key);
@@ -243,6 +245,19 @@ public class Settings {
       return Collections.emptyList();
     }
     return Arrays.asList(selectedCameras.split(","));
+  }
+
+  public Settings setAudioCameras(List<String> cameraNames) {
+    setString(AudioCamerasKey, String.join(",", cameraNames));
+    return this;
+  }
+
+  public List<String> getAudioCameras() {
+    String cameraNames = getString(AudioCamerasKey);
+    if (cameraNames == null || cameraNames.length() == 0) { // isEmpty()
+      return Collections.emptyList();
+    }
+    return Arrays.asList(cameraNames.split(","));
   }
 
   public long getNextUpdateCheckTime() {

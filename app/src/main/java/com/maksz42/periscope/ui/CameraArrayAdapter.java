@@ -21,10 +21,12 @@ public class CameraArrayAdapter extends ArrayAdapter<CameraItem> {
   public static class CameraItem {
     public final String name;
     public boolean enabled;
+    public boolean audioEnabled;
 
-    public CameraItem(String name, boolean enabled) {
+    public CameraItem(String name, boolean enabled, boolean audioEnabled) {
       this.name = name;
       this.enabled = enabled;
+      this.audioEnabled = audioEnabled;
     }
 
     @NonNull
@@ -36,15 +38,25 @@ public class CameraArrayAdapter extends ArrayAdapter<CameraItem> {
 
 
   private final List<CameraItem> items;
+  private final boolean audioEnabled;
 
-  public CameraArrayAdapter(@NonNull Context context, @NonNull List<CameraItem> items) {
+  public CameraArrayAdapter(@NonNull Context context, @NonNull List<CameraItem> items, boolean audioEnabled) {
     super(context, R.layout.camera_order_item, R.id.camera_name, items);
     this.items = items;
+    this.audioEnabled = audioEnabled;
   }
 
   private void swapItems(int i, int j) {
     Collections.swap(items, i, j);
     notifyDataSetChanged();
+  }
+
+  private void setAudioImg(ImageButton btn, CameraItem cameraItem) {
+    if (cameraItem.audioEnabled) {
+      btn.setImageResource(android.R.drawable.ic_lock_silent_mode_off);
+    } else {
+      btn.setImageResource(android.R.drawable.ic_lock_silent_mode);
+    }
   }
 
   @NonNull
@@ -58,6 +70,16 @@ public class CameraArrayAdapter extends ArrayAdapter<CameraItem> {
     // new listener must be set before setChecked()
     checkBox.setOnCheckedChangeListener((v, isChecked) -> cameraItem.enabled = isChecked);
     checkBox.setChecked(cameraItem.enabled);
+
+    ImageButton audioBtn = row.findViewById(R.id.btn_audio);
+    if (audioEnabled) {
+      audioBtn.setOnClickListener(v -> {
+        cameraItem.audioEnabled = !cameraItem.audioEnabled;
+        setAudioImg((ImageButton) v, cameraItem);
+      });
+      setAudioImg(audioBtn, cameraItem);
+      audioBtn.setVisibility(View.VISIBLE);
+    }
 
     ImageButton btnUp = row.findViewById(R.id.btn_up);
     btnUp.setEnabled(position != 0);

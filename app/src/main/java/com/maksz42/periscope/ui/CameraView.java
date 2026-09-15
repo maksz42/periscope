@@ -181,6 +181,10 @@ public class CameraView extends FrameLayout {
     return player;
   }
 
+  public CameraPlayer getPlayer() {
+    return cameraPlayer;
+  }
+
   private void setLoading(boolean loading) {
     loader.setVisibility(loading ? VISIBLE : GONE);
   }

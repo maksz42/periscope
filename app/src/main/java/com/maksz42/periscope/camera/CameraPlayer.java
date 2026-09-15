@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.maksz42.periscope.buffering.FrameBuffer;
+import com.maksz42.periscope.camera.rtsp.RtspClient;
 import com.maksz42.periscope.frigate.Media;
 import com.maksz42.periscope.utils.LoggingRunnable;
 
@@ -36,6 +37,7 @@ public class CameraPlayer {
   private volatile OnNewFrameListener onNewFrameListener;
   private OnErrorListener onErrorListener;
   private Future<?> scheduledTask;
+  private RtspClient rtspClient;
 
   {
     scheduledExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
@@ -93,6 +95,27 @@ public class CameraPlayer {
     );
   }
 
+  public boolean hasAudio() {
+    return rtspClient != null;
+  }
+
+  public void startAudio(RtspClient rtspClient)
+  {
+    if (this.rtspClient != null) {
+      this.rtspClient.stop();
+    }
+    this.rtspClient = rtspClient;
+    rtspClient.start();
+  }
+
+  public void stopAudio()
+  {
+    if (rtspClient != null) {
+      rtspClient.stop();
+      rtspClient = null;
+    }
+  }
+
   public void removeListeners() {
     onNewFrameListener = null;
     onErrorListener = null;
@@ -106,6 +129,7 @@ public class CameraPlayer {
   public void shutdown() {
     removeListeners();
     scheduledExecutor.shutdown();
+    stopAudio();
   }
 
   public boolean isShutdown() {
