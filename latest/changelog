@@ -1,6 +1,7 @@
-- Add semi-automatic RTSP credentials fetching
-- Audio decoding performance improvements
-- Fix rare crashes when showing dialogs
+- Multi-camera audio support
+- RTSP improvements
+- Performance improvements
+- Smaller APK thanks to Zopfli compression
 
-☕ Buy me a coffee ☕
+Saved you a new tablet? Buy me a coffee! ☕
 ko-fi.com/maksz42
