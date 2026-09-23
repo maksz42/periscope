@@ -5,7 +5,6 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.util.Base64;
 import android.util.Log;
-import android.util.Pair;
 
 import com.maksz42.periscope.BuildConfig;
 import com.maksz42.periscope.utils.IO;
@@ -14,13 +13,9 @@ import com.maksz42.periscope.utils.UnsynchronizedBufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -30,8 +25,6 @@ public class RtspClient {
   private static final String TAG = "RtspClient";
   private static final byte[] userAgentHeader =
       ("User-Agent:Periscope/" + BuildConfig.VERSION_NAME + '\n').getBytes();
-  private static final OnResponseListener NO_LISTENER = (body) -> { };
-  private static final Pair<byte[], OnResponseListener> RESTART = new Pair<>(null, null);
 
   private final byte[] describeRequest;
   private final byte[] optionsRequest;
@@ -40,11 +33,8 @@ public class RtspClient {
   private final String host;
   private final int port;
   private final boolean overTls;
-  private final LinkedBlockingQueue<Pair<byte[], OnResponseListener>> requestQueue = new LinkedBlockingQueue<>();
-  private final ConcurrentLinkedQueue<OnResponseListener> responseQueue = new ConcurrentLinkedQueue<>();
-  private final Thread IOWriterThread = new Thread(this::IOLoop);
-  private Thread readerThread;
-  private AudioPlayer audioPlayer;
+  private final Thread IOThread = new Thread(this::IOLoop);
+  private volatile Socket plainSock;
 
 
   public RtspClient(String host, int port, String user, String password, String cameraName, boolean overTls) {
@@ -68,8 +58,16 @@ public class RtspClient {
     this.playRequest = buildRequestPayload(buildPlayHead(cameraName), basicAuthHeader);
   }
 
-  private Socket connect() throws IOException {
+  private Socket connect() throws IOException, InterruptedException {
     Socket sock = new Socket();
+    plainSock = sock;
+    if (Thread.interrupted()) {
+      try {
+        sock.close();
+      } catch (IOException ignore) { }
+      throw new InterruptedException();
+    }
+
     SSLSocket sslSocket;
     try {
       sock.connect(new InetSocketAddress(host, port), 5000);
@@ -94,86 +92,77 @@ public class RtspClient {
   }
 
   public void start() {
-    IOWriterThread.start();
-  }
-
-  private OutputStream startPlaying() throws IOException {
-    OnResponseListener setupListener = (body) -> sendRequestAsync(playRequest, NO_LISTENER);
-
-    OnResponseListener describeListener = (body) -> {
-      String sdp = new String(body);
-      int lineStart = sdp.indexOf("a=rtpmap:");
-      int formatStart = sdp.indexOf(' ', lineStart) + 1;
-      String format = sdp.substring(formatStart, sdp.indexOf('\r', formatStart));
-      String[] formatParts = format.split("/");
-      AudioEncoding encoding = AudioEncoding.valueOf(formatParts[0]);
-      int rate = Integer.parseInt(formatParts[1]);
-
-
-      int bufSize = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-      AudioTrack audioTrack = new AudioTrack(
-          AudioManager.STREAM_MUSIC,
-          rate,
-          AudioFormat.CHANNEL_OUT_MONO,
-          AudioFormat.ENCODING_PCM_16BIT,
-          bufSize,
-          AudioTrack.MODE_STREAM);
-      if (audioPlayer != null) {
-        audioPlayer.shutdown();
-      }
-      audioPlayer = new AudioPlayer(encoding, audioTrack);
-
-      sendRequestAsync(setupRequest, setupListener);
-    };
-
-    Socket sock = connect();
-    InputStream in;
-    OutputStream out;
-    try {
-      in = sock.getInputStream();
-      out = sock.getOutputStream();
-    } catch (IOException e) {
-      Log.e(TAG, "Failed to connect", e);
-        try {
-          sock.close();
-        } catch (IOException ignore) { }
-      throw e;
-    }
-
-    readerThread = new Thread(() -> readLoop(new DataInputStream(new UnsynchronizedBufferedInputStream(in))));
-    readerThread.start();
-
-    sendRequestAsync(describeRequest, describeListener);
-
-    return out;
+    IOThread.start();
   }
 
   public void stop() {
-    // Even though audioPlayer isn't volatile and is owned by readerThread
-    // there's no harm in trying to shutdown here. readerThread will ensure
-    // audioPlayer is shutdown before exiting.
-    AudioPlayer ap = audioPlayer;
-    if (ap != null) {
-      ap.shutdown();
+    IOThread.interrupt();
+    Socket sock = plainSock;
+    if (sock != null) {
+      try {
+        sock.close();
+      } catch (IOException ignored) { }
     }
-
-    IOWriterThread.interrupt();
   }
 
-  private void readLoop(DataInputStream in) {
-    try (in) {
+  private byte[] sendRequest(DataInputStream in, OutputStream out, byte[] request) throws IOException {
+    out.write(request);
+    return readResponse(in, (byte) 0);
+  }
+
+  private void IOLoop() {
+    AudioPlayer audioPlayer = null;
+    try {
       while (true) {
-        byte first = in.readByte();
-        if (first == '$') {
-          readInterleaved(in);
-        } else {
-          readResponse(in, first);
+        try (Socket sock = connect()) {
+          DataInputStream in = new DataInputStream(new UnsynchronizedBufferedInputStream(sock.getInputStream()));
+          OutputStream out = sock.getOutputStream();
+
+          byte[] body = sendRequest(in, out, describeRequest);
+          String sdp = new String(body);
+          int lineStart = sdp.indexOf("a=rtpmap:");
+          int formatStart = sdp.indexOf(' ', lineStart) + 1;
+          String format = sdp.substring(formatStart, sdp.indexOf('\r', formatStart));
+          String[] formatParts = format.split("/");
+          AudioEncoding encoding = AudioEncoding.valueOf(formatParts[0]);
+          int rate = Integer.parseInt(formatParts[1]);
+
+          int bufSize = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+          AudioTrack audioTrack = new AudioTrack(
+              AudioManager.STREAM_MUSIC,
+              rate,
+              AudioFormat.CHANNEL_OUT_MONO,
+              AudioFormat.ENCODING_PCM_16BIT,
+              bufSize,
+              AudioTrack.MODE_STREAM);
+          if (audioPlayer != null) {
+            audioPlayer.shutdown();
+          }
+          audioPlayer = new AudioPlayer(encoding, audioTrack);
+
+          sendRequest(in, out, setupRequest);
+          long lastRequestTime = System.nanoTime();
+          sendRequest(in, out, playRequest);
+
+          while (true) {
+            long now;
+            do {
+              readEmbedded(in, audioPlayer);
+              now = System.nanoTime();
+            } while (now - lastRequestTime < 50_000_000_000L);
+
+            lastRequestTime = now;
+            out.write(optionsRequest);
+            while (readEmbeddedOrSkipResponse(in, audioPlayer));
+          }
+        } catch (IOException | RuntimeException e) {
+          if (Thread.interrupted()) return;
+          Log.w(TAG, e);
         }
+        Thread.sleep(500);
       }
-    } catch (IOException | RuntimeException e) {
-      Log.d(TAG, "readLoop", e);
-      requestQueue.clear();
-      requestQueue.offer(RESTART);
+    } catch (InterruptedException ignore) {
+      // exit loop
     } finally {
       if (audioPlayer != null) {
         audioPlayer.shutdown();
@@ -181,75 +170,48 @@ public class RtspClient {
     }
   }
 
-  private void IOLoop() {
-    try {
-      while (true) {
-        handleConnection();
-        Thread.sleep(500);
-      }
-    } catch (InterruptedException ignore) { }
-  }
-
-  private void handleConnection() throws InterruptedException {
-    OutputStream out;
-    try {
-      out = startPlaying();
-    } catch (IOException e) {
-      Log.d(TAG, "startPlaying", e);
-      return;
-    }
-
-    try {
-      writeLoop(out);
-    } catch (IOException e) {
-      Log.d(TAG, "writeLoop", e);
-    }
-
-    readerThread.join();
-    requestQueue.clear();
-    responseQueue.clear();
-  }
-
-  private void writeLoop(OutputStream out) throws IOException, InterruptedException {
-    try (out) {
-      while (true) {
-        byte[] payload;
-        OnResponseListener listener;
-        Pair<byte[], OnResponseListener> req = requestQueue.poll(50, TimeUnit.SECONDS);
-        if (req == RESTART) {
-          return;
-        } else if (req == null) {
-          payload = optionsRequest;
-          listener = NO_LISTENER;
-        } else {
-          payload = req.first;
-          listener = req.second;
-        }
-
-        responseQueue.add(listener);
-        out.write(payload);
-      }
+  private boolean readEmbeddedOrSkipResponse(DataInputStream in, AudioPlayer audioPlayer) throws IOException {
+    byte first = in.readByte();
+    if (first == '$') {
+      handleEmbedded(in, audioPlayer);
+      return true;
+    } else {
+      skipResponse(in, first);
+      return false;
     }
   }
 
-  private void readInterleaved(DataInputStream in) throws IOException {
+  private void readEmbedded(DataInputStream in, AudioPlayer audioPlayer) throws IOException {
+    in.readByte(); // '$' expected
+    handleEmbedded(in, audioPlayer);
+  }
+
+  private void handleEmbedded(DataInputStream in, AudioPlayer audioPlayer) throws IOException {
     int channel = in.readUnsignedByte();
     int len = in.readUnsignedShort();
-    handleInterleaved(in, channel, len);
+    demultiplexRtpChannel(in, channel, len, audioPlayer);
   }
 
-  private void handleInterleaved(DataInputStream in, int channel, int len) throws IOException {
+  private void demultiplexRtpChannel(DataInputStream in, int channel, int len, AudioPlayer audioPlayer) throws IOException {
     if (channel == 0) {
-      handleRtp(in, len);
+      handleRtp(in, len, audioPlayer);
     } else {
       IO.skipNBytes(in, len);
     }
   }
 
-  private void readResponse(DataInputStream in, byte first) throws IOException {
+  private void handleRtp(DataInputStream in, int len, AudioPlayer audioPlayer) throws IOException {
+    final int HEADER_SIZE = 12;
+    IO.skipNBytes(in, HEADER_SIZE);
+    audioPlayer.write(in, len - HEADER_SIZE);
+  }
+
+  private int parseResponse(DataInputStream in, byte first) throws IOException {
     // who cares about invalid responses ¯\_(ツ)_/¯
     ByteArrayOutputStream lineBuf = new ByteArrayOutputStream();
-    lineBuf.write(first);
+    if (first != 0) {
+      lineBuf.write(first);
+    }
     boolean lf = false;
     String statusLine = null;
     int contentLen = 0;
@@ -272,28 +234,23 @@ public class RtspClient {
         lineBuf.write(b);
       }
     }
-    byte[] body = new byte[contentLen];
-    in.readFully(body);
     int statusCodeStart = statusLine.indexOf(' ') + 1;
     int statusCodeEnd = statusCodeStart + 3;
     int status = Integer.parseInt(statusLine, statusCodeStart, statusCodeEnd, 10);
     if (status != 200) throw new IOException("Response status code: " + status);
-    handleResponse(body);
+    return contentLen;
   }
 
-  private void handleResponse(byte[] body) {
-    OnResponseListener listener = responseQueue.poll();
-    listener.onResponse(body);
+  private byte[] readResponse(DataInputStream in, byte first) throws IOException {
+    int contentLen = parseResponse(in, first);
+    byte[] body = new byte[contentLen];
+    in.readFully(body);
+    return body;
   }
 
-  private void handleRtp(DataInputStream in, int len) throws IOException {
-    final int HEADER_SIZE = 12;
-    IO.skipNBytes(in, HEADER_SIZE);
-    audioPlayer.write(in, len - HEADER_SIZE);
-  }
-
-  private void sendRequestAsync(byte[] payload, OnResponseListener listener) {
-    requestQueue.offer(new Pair<>(payload, listener));
+  private void skipResponse(DataInputStream in, byte first) throws IOException {
+    int contentLen = parseResponse(in, first);
+    IO.skipNBytes(in, contentLen);
   }
 
   private String buildDescribeHead(String cameraName) {
