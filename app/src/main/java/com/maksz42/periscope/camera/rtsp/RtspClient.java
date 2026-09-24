@@ -105,9 +105,14 @@ public class RtspClient {
     }
   }
 
-  private byte[] sendRequest(DataInputStream in, OutputStream out, byte[] request) throws IOException {
+  private byte[] sendRequestReadResponse(DataInputStream in, OutputStream out, byte[] request) throws IOException {
     out.write(request);
     return readResponse(in, (byte) 0);
+  }
+
+  private void sendRequestSkipResponse(DataInputStream in, OutputStream out, byte[] request) throws IOException {
+    out.write(request);
+    skipResponse(in, (byte) 0);
   }
 
   private void IOLoop() {
@@ -118,7 +123,7 @@ public class RtspClient {
           DataInputStream in = new DataInputStream(new UnsynchronizedBufferedInputStream(sock.getInputStream()));
           OutputStream out = sock.getOutputStream();
 
-          byte[] body = sendRequest(in, out, describeRequest);
+          byte[] body = sendRequestReadResponse(in, out, describeRequest);
           String sdp = new String(body);
           int lineStart = sdp.indexOf("a=rtpmap:");
           int formatStart = sdp.indexOf(' ', lineStart) + 1;
@@ -140,9 +145,9 @@ public class RtspClient {
           }
           audioPlayer = new AudioPlayer(encoding, audioTrack);
 
-          sendRequest(in, out, setupRequest);
+          sendRequestSkipResponse(in, out, setupRequest);
           long lastRequestTime = System.nanoTime();
-          sendRequest(in, out, playRequest);
+          sendRequestSkipResponse(in, out, playRequest);
 
           while (true) {
             long now;
