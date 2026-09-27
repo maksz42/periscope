@@ -22,6 +22,11 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocket;
 
 public class RtspClient {
+  private static enum State {
+    BUFFERING,
+    PLAYING,
+  }
+
   private static final String TAG = "RtspClient";
   private static final byte[] userAgentHeader =
       ("User-Agent:Periscope/" + BuildConfig.VERSION_NAME + '\n').getBytes();
@@ -35,6 +40,7 @@ public class RtspClient {
   private final boolean overTls;
   private final Thread IOThread = new Thread(this::IOLoop);
   private volatile Socket plainSock;
+  private State state = State.BUFFERING;
 
 
   public RtspClient(String host, int port, String user, String password, String cameraName, boolean overTls) {
@@ -152,13 +158,13 @@ public class RtspClient {
           while (true) {
             long now;
             do {
-              readEmbedded(in, audioPlayer);
+              handleInterleaved(in, audioPlayer);
               now = System.nanoTime();
             } while (now - lastRequestTime < 50_000_000_000L);
 
             lastRequestTime = now;
             out.write(optionsRequest);
-            while (readEmbeddedOrSkipResponse(in, audioPlayer));
+            while (handleInterleaved(in, audioPlayer));
           }
         } catch (IOException | RuntimeException e) {
           if (Thread.interrupted()) return;
@@ -175,40 +181,85 @@ public class RtspClient {
     }
   }
 
-  private boolean readEmbeddedOrSkipResponse(DataInputStream in, AudioPlayer audioPlayer) throws IOException {
-    byte first = in.readByte();
-    if (first == '$') {
-      handleEmbedded(in, audioPlayer);
-      return true;
+  private void consumeOrRebuffer(AudioPlayer audioPlayer) {
+    if (audioPlayer.getCount() == 0) {
+      state = State.BUFFERING;
     } else {
-      skipResponse(in, first);
-      return false;
+      audioPlayer.consume();
     }
   }
 
-  private void readEmbedded(DataInputStream in, AudioPlayer audioPlayer) throws IOException {
-    in.readByte(); // '$' expected
-    handleEmbedded(in, audioPlayer);
-  }
-
-  private void handleEmbedded(DataInputStream in, AudioPlayer audioPlayer) throws IOException {
-    int channel = in.readUnsignedByte();
-    int len = in.readUnsignedShort();
-    demultiplexRtpChannel(in, channel, len, audioPlayer);
-  }
-
-  private void demultiplexRtpChannel(DataInputStream in, int channel, int len, AudioPlayer audioPlayer) throws IOException {
-    if (channel == 0) {
-      handleRtp(in, len, audioPlayer);
-    } else {
-      IO.skipNBytes(in, len);
-    }
-  }
-
-  private void handleRtp(DataInputStream in, int len, AudioPlayer audioPlayer) throws IOException {
+  private boolean handleInterleaved(DataInputStream in, AudioPlayer audioPlayer) throws IOException {
     final int HEADER_SIZE = 12;
-    IO.skipNBytes(in, HEADER_SIZE);
-    audioPlayer.write(in, len - HEADER_SIZE);
+    switch (state) {
+      case BUFFERING -> {
+        byte magic = in.readByte();
+        if (magic != '$') {
+          skipResponse(in, magic);
+          return false;
+        }
+
+        int channel = in.readUnsignedByte();
+        int rtpLen = in.readUnsignedShort();
+        if (channel != 0) {
+          IO.skipNBytes(in, rtpLen);
+          return true;
+        }
+
+        IO.skipNBytes(in, HEADER_SIZE);
+
+        int audioDataLen = rtpLen - HEADER_SIZE;
+
+        audioPlayer.feed(in, audioDataLen);
+        if (audioPlayer.getCount() * 2 > AudioPlayer.CAPACITY) {
+          state = State.PLAYING;
+          audioPlayer.consume();
+        }
+      }
+
+      case PLAYING -> {
+        int available = in.available();
+        int box = 1 + 1 + 2 + HEADER_SIZE; // magic + channel + len + header
+
+        if (box <= available) {
+          byte magic = in.readByte();
+          if (magic != '$') {
+            consumeOrRebuffer(audioPlayer);
+            skipResponse(in, magic);
+            return false;
+          }
+
+          int channel = in.readUnsignedByte();
+          int rtpLen = in.readUnsignedShort();
+          available -= (1 + 1 + 2);
+          if (channel != 0) {
+            if (rtpLen > available) {
+              consumeOrRebuffer(audioPlayer);
+            }
+            IO.skipNBytes(in, rtpLen);
+            return true;
+          }
+
+          IO.skipNBytes(in, HEADER_SIZE);
+          available -= HEADER_SIZE;
+          int audioDataLen = rtpLen - HEADER_SIZE;
+
+          if (audioDataLen <= available) {
+            int count = audioPlayer.getCount();
+            audioPlayer.feed(in, audioDataLen);
+            if (count + audioDataLen > AudioPlayer.CAPACITY) {
+              audioPlayer.halfFlush();
+            }
+          } else {
+            consumeOrRebuffer(audioPlayer);
+            audioPlayer.feed(in, audioDataLen);
+          }
+        } else {
+          consumeOrRebuffer(audioPlayer);
+        }
+      }
+    }
+    return true;
   }
 
   private int parseResponse(DataInputStream in, byte first) throws IOException {
