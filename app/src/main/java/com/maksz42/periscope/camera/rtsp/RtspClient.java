@@ -164,7 +164,6 @@ public class RtspClient {
 
             lastRequestTime = now;
             out.write(optionsRequest);
-            while (handleInterleaved(in, audioPlayer));
           }
         } catch (IOException | RuntimeException e) {
           if (Thread.interrupted()) return;
@@ -189,21 +188,21 @@ public class RtspClient {
     }
   }
 
-  private boolean handleInterleaved(DataInputStream in, AudioPlayer audioPlayer) throws IOException {
+  private void handleInterleaved(DataInputStream in, AudioPlayer audioPlayer) throws IOException {
     final int HEADER_SIZE = 12;
     switch (state) {
       case BUFFERING -> {
         byte magic = in.readByte();
         if (magic != '$') {
           skipResponse(in, magic);
-          return false;
+          return;
         }
 
         int channel = in.readUnsignedByte();
         int rtpLen = in.readUnsignedShort();
         if (channel != 0) {
           IO.skipNBytes(in, rtpLen);
-          return true;
+          return;
         }
 
         IO.skipNBytes(in, HEADER_SIZE);
@@ -226,7 +225,7 @@ public class RtspClient {
           if (magic != '$') {
             consumeOrRebuffer(audioPlayer);
             skipResponse(in, magic);
-            return false;
+            return;
           }
 
           int channel = in.readUnsignedByte();
@@ -237,7 +236,7 @@ public class RtspClient {
               consumeOrRebuffer(audioPlayer);
             }
             IO.skipNBytes(in, rtpLen);
-            return true;
+            return;
           }
 
           IO.skipNBytes(in, HEADER_SIZE);
@@ -259,7 +258,6 @@ public class RtspClient {
         }
       }
     }
-    return true;
   }
 
   private int parseResponse(DataInputStream in, byte first) throws IOException {
