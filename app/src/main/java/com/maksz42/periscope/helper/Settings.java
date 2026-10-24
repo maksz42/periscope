@@ -23,6 +23,7 @@ public class Settings {
   private final SharedPreferences prefs;
   private final SharedPreferences.Editor editor;
   public final String IgnoreAspectRatioKey;
+  public final String EqualTilesKey;
   public final String HostKey;
   public final String PortKey;
   public final String IntervalKey;
@@ -68,6 +69,7 @@ public class Settings {
     editor = prefs.edit();
     Resources res = context.getResources();
     IgnoreAspectRatioKey = res.getString(R.string.ignore_aspect_ratio_key);
+    EqualTilesKey = res.getString(R.string.equal_tiles_key);
     HostKey = res.getString(R.string.host_key);
     PortKey = res.getString(R.string.port_key);
     IntervalKey = res.getString(R.string.interval_key);
@@ -131,6 +133,11 @@ public class Settings {
   public Settings setIgnoreAspectRatio(boolean enable) {
     setBoolean(IgnoreAspectRatioKey, enable);
     return this;
+  }
+
+  /** Every camera the same size in a near-square grid, spare tiles left black. */
+  public boolean getEqualTiles() {
+    return getBoolean(EqualTilesKey);
   }
 
   public String getHost() {
