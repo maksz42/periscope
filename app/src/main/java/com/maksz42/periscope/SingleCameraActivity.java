@@ -60,12 +60,12 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
       if (muteButton == null) {
         muteButton = addFloatingButton(initDrawableId, v -> {
           int drawableRes;
-          if (!cameraView.getPlayer().hasAudio()) {
-            startAudio(cameraView);
-            drawableRes = android.R.drawable.ic_lock_silent_mode_off;
-          } else {
+          if (cameraView.getPlayer().hasAudio()) {
             stopAudio(cameraView);
             drawableRes = android.R.drawable.ic_lock_silent_mode;
+          } else {
+            startAudio(cameraView);
+            drawableRes = android.R.drawable.ic_lock_silent_mode_off;
           }
           ImageButton btn = (ImageButton) v;
           btn.setImageResource(drawableRes);
