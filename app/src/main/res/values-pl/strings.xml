@@ -39,6 +39,8 @@
     <string name="hide">Ukryj</string>
     <string name="rtsp_experimental">RTSP (tylko dźwięk) (eksperymentalne)</string>
     <string name="rtsp_enabled">RTSP włączone</string>
+    <string name="audio_enabled_by_default">Włącz dźwięk domyślnie</string>
+    <string name="audio_enabled_by_default_info">W widoku jednej kamery</string>
     <string name="keep_screen_on">Nie wygaszaj ekranu</string>
     <string name="version">Wersja</string>
     <string name="rtsp_fetch_credentials">Pobierz poświadczenia RTSP</string>

@@ -40,6 +40,7 @@ public class Settings {
   public final String AutostartKey;
   public final String HideStatusBarKey;
   public final String HideNavBarKey;
+  public final String AudioEnabledByDefaultKey;
   public final String RtspEnabledKey;
   public final String RtspPortKey;
   public final String RtspUserKey;
@@ -85,6 +86,7 @@ public class Settings {
     AutostartKey = res.getString(R.string.autostart_key);
     HideStatusBarKey = res.getString(R.string.hide_status_bar_key);
     HideNavBarKey = res.getString(R.string.hide_nav_bar_key);
+    AudioEnabledByDefaultKey = res.getString(R.string.audio_enabled_by_default_key);
     RtspEnabledKey = res.getString(R.string.rtsp_enabled_key);
     RtspPortKey = res.getString(R.string.rtsp_port_key);
     RtspUserKey = res.getString(R.string.rtsp_user_key);
@@ -293,6 +295,15 @@ public class Settings {
 
   public Settings setHideNavBar(boolean value) {
     setBoolean(HideNavBarKey, value);
+    return this;
+  }
+
+  public boolean getAudioEnabledByDefault() {
+    return getBoolean(AudioEnabledByDefaultKey);
+  }
+
+  public Settings setAudioEnabledByDefault(boolean value) {
+    setBoolean(AudioEnabledByDefaultKey, value);
     return this;
   }
 
