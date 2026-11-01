@@ -45,6 +45,7 @@
     <string name="rtsp_experimental">RTSP (audio only) (experimental)</string>
     <string name="rtsp_enabled">RTSP enabled</string>
     <string name="audio_enabled_by_default">Enable audio by default</string>
+    <string name="audio_enabled_by_default_info">In the single camera view</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="version">Version</string>
     <string name="tls">TLS</string>

@@ -99,6 +99,7 @@
             />
         <CheckBoxPreference
             android:title="@string/audio_enabled_by_default"
+            android:summary="@string/audio_enabled_by_default_info"
             android:key="@string/audio_enabled_by_default_key"
             android:defaultValue="true"
             android:dependency="@string/rtsp_enabled_key"
