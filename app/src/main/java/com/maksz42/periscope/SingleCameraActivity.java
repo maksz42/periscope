@@ -49,15 +49,16 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
 
     if (settings.getRtspEnabled()) {
       boolean audioEnabled = settings.getAudioEnabledByDefault();
+      int initDrawableId;
       if (audioEnabled) {
         startAudio(cameraView);
+        initDrawableId = android.R.drawable.ic_lock_silent_mode_off;
       } else {
         stopAudio(cameraView);
+        initDrawableId = android.R.drawable.ic_lock_silent_mode;
       }
       if (muteButton == null) {
-        muteButton = addFloatingButton(audioEnabled
-            ? android.R.drawable.ic_lock_silent_mode_off
-            : android.R.drawable.ic_lock_silent_mode, v -> {
+        muteButton = addFloatingButton(initDrawableId, v -> {
           int drawableRes;
           if (!cameraView.getPlayer().hasAudio()) {
             startAudio(cameraView);
@@ -69,6 +70,8 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
           ImageButton btn = (ImageButton) v;
           btn.setImageResource(drawableRes);
         });
+      } else {
+        muteButton.setImageResource(initDrawableId);
       }
     } else if (muteButton != null) {
       removeFloatingButton(muteButton);
