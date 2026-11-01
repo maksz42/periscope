@@ -302,6 +302,11 @@ public class Settings {
     return getBoolean(AudioEnabledByDefaultKey);
   }
 
+  public Settings setAudioEnabledByDefault(boolean value) {
+    setBoolean(AudioEnabledByDefaultKey, value);
+    return this;
+  }
+
   public boolean getRtspEnabled() {
     return getBoolean(RtspEnabledKey);
   }
