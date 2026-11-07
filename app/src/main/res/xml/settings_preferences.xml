@@ -134,6 +134,55 @@
             android:persistent="false"
             />
     </PreferenceScreen>
+    <PreferenceScreen
+        android:title="@string/overlay_settings"
+        android:summary="@string/overlay_settings_summary"
+        android:key="@string/overlay_screen_key"
+        >
+        <Preference
+            android:title="@string/overlay_status"
+            android:key="@string/overlay_status_key"
+            android:persistent="false"
+            />
+        <Preference
+            android:title="@string/overlay_trigger"
+            android:key="@string/overlay_trigger_key_key"
+            android:persistent="false"
+            />
+        <Preference
+            android:title="@string/overlay_cameras"
+            android:key="@string/overlay_cameras_key"
+            android:persistent="false"
+            />
+        <ListPreference
+            android:title="@string/overlay_gesture"
+            android:key="@string/overlay_gesture_key"
+            android:entries="@array/overlay_gesture_entries"
+            android:entryValues="@array/overlay_gesture_values"
+            android:defaultValue="HOLD"
+            />
+        <ListPreference
+            android:title="@string/overlay_corner"
+            android:key="@string/overlay_corner_key"
+            android:entries="@array/overlay_corner_entries"
+            android:entryValues="@array/overlay_corner_values"
+            android:defaultValue="TOP_RIGHT"
+            />
+        <ListPreference
+            android:title="@string/overlay_size"
+            android:key="@string/overlay_size_key"
+            android:entries="@array/overlay_size_entries"
+            android:entryValues="@array/overlay_size_values"
+            android:defaultValue="LARGE"
+            />
+        <ListPreference
+            android:title="@string/overlay_transparency"
+            android:key="@string/overlay_transparency_key"
+            android:entries="@array/overlay_transparency_entries"
+            android:entryValues="@array/overlay_transparency_values"
+            android:defaultValue="LOW"
+            />
+    </PreferenceScreen>
     <Preference
         android:title="@string/version"
         android:summary="@string/app_version_name"

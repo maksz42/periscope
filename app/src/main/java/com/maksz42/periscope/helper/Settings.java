@@ -12,6 +12,8 @@ import com.maksz42.periscope.Periscope;
 import com.maksz42.periscope.R;
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.Media;
+import com.maksz42.periscope.overlay.KeyGate;
+import com.maksz42.periscope.overlay.OverlayPlacement;
 import com.maksz42.periscope.ui.CameraView;
 
 import java.util.Arrays;
@@ -46,6 +48,12 @@ public class Settings {
   public final String RtspUserKey;
   public final String RtspPasswordKey;
   public final String KeepScreenOn;
+  public final String OverlayTriggerKeyKey;
+  public final String OverlayGestureKey;
+  public final String OverlayCornerKey;
+  public final String OverlaySizeKey;
+  public final String OverlayTransparencyKey;
+  public final String OverlayCamerasKey;
 
 
   private static class Holder {
@@ -92,6 +100,12 @@ public class Settings {
     RtspUserKey = res.getString(R.string.rtsp_user_key);
     RtspPasswordKey = res.getString(R.string.rtsp_password_key);
     KeepScreenOn = res.getString(R.string.keep_screen_on_key);
+    OverlayTriggerKeyKey = res.getString(R.string.overlay_trigger_key_key);
+    OverlayGestureKey = res.getString(R.string.overlay_gesture_key);
+    OverlayCornerKey = res.getString(R.string.overlay_corner_key);
+    OverlaySizeKey = res.getString(R.string.overlay_size_key);
+    OverlayTransparencyKey = res.getString(R.string.overlay_transparency_key);
+    OverlayCamerasKey = res.getString(R.string.overlay_cameras_key);
   }
 
   private boolean getBoolean(String key) {
@@ -240,7 +254,21 @@ public class Settings {
   }
 
   public List<String> getSelectedCameras() {
-    String selectedCameras = getString(SelectedCamerasKey);
+    return getCameraList(SelectedCamerasKey);
+  }
+
+  /** The cameras the "Watch over TV" list offers, or null to follow the grid. */
+  public List<String> getOverlayCameras() {
+    return getCameraList(OverlayCamerasKey);
+  }
+
+  public Settings setOverlayCameras(List<String> cameraNames) {
+    setString(OverlayCamerasKey, String.join(",", cameraNames));
+    return this;
+  }
+
+  private List<String> getCameraList(String key) {
+    String selectedCameras = getString(key);
     if (selectedCameras == null) {
       return null;
     } else if (selectedCameras.length() == 0) { // isEmpty()
@@ -350,5 +378,36 @@ public class Settings {
   public Settings setKeepScreenOn(boolean value) {
     setBoolean(KeepScreenOn, value);
     return this;
+  }
+
+  /** The remote button held to open the camera list over TV; Info unless chosen. */
+  public int getOverlayTriggerKey() {
+    return prefs.getInt(OverlayTriggerKeyKey, KeyGate.DEFAULT_HOLD_KEY);
+  }
+
+  public Settings setOverlayTriggerKey(int keyCode) {
+    editor.putInt(OverlayTriggerKeyKey, keyCode);
+    return this;
+  }
+
+  public KeyGate.Gesture getOverlayGesture() {
+    return KeyGate.Gesture.parse(getString(OverlayGestureKey));
+  }
+
+  public Settings setOverlayGesture(KeyGate.Gesture value) {
+    setString(OverlayGestureKey, value.name());
+    return this;
+  }
+
+  public OverlayPlacement.Corner getOverlayCorner() {
+    return OverlayPlacement.Corner.parse(getString(OverlayCornerKey));
+  }
+
+  public OverlayPlacement.Size getOverlaySize() {
+    return OverlayPlacement.Size.parse(getString(OverlaySizeKey));
+  }
+
+  public OverlayPlacement.Transparency getOverlayTransparency() {
+    return OverlayPlacement.Transparency.parse(getString(OverlayTransparencyKey));
   }
 }

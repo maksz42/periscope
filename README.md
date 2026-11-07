@@ -60,6 +60,16 @@ Specifies how long to wait for a response from Frigate before displaying the loa
 ### What is autostart?
 Periscope can start automatically after booting up the device. This is especially useful if you disable the lock screen in the developer settings. Android >= 10 requires additional permissions. Autostart probably won't work on Android >= 13, and it's better to disable it then.
 
+### How do I watch a camera over a show on Android TV?
+In Periscope's settings, open **Watch over TV** and choose **Status**: it opens the TV's accessibility settings, where you turn on **Periscope: watch a camera over TV** (Android 5.1 and later). Then, while anything is playing, an app or an HDMI input, hold **Info** on the remote: a camera list appears, and the camera you pick floats in a corner over the show. Hold **Info** again to change or close it.
+
+- No Info button, or rather tap twice? Pick another under **Remote button**, and set **Open with** to a hold or a double press. Buttons that would also act on the show (arrows, OK, Back, Home, power, volume, play/pause) can't be chosen.
+- While a camera is showing, the list opens on **Close camera**, so closing it takes the button and OK.
+- The corner, size (up to most of the screen) and transparency are in the same settings. The list follows your camera selection and order, unless you pick its own cameras under **Cameras in the list**, for example to keep a private camera out of it.
+- To look closer, open the list while a camera floats and choose **Full screen** (one up from **Close camera**); with nothing floating, **Open Periscope** opens the grid. Back returns to what was playing.
+- The service only reacts to that button, and to Up, Down, OK and Back while the list is open; it doesn't read the screen.
+- If the accessibility setting is greyed out ("restricted setting"), open Periscope's app info, choose **Allow restricted settings** from the menu, and try again.
+- Some TVs (e.g. TCL) also require allowing autostart for Periscope before the service can run.
 
 ## TODO
 - Adaptive resolution

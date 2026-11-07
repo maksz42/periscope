@@ -98,6 +98,12 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
 
   @Override
   public void onBackPressed() {
+    // Opened from the camera list over another app: Back returns to that app, not to Home or
+    // the grid, so there is no player to hand over.
+    if (getIntent().getBooleanExtra(MatrixActivity.EXTRA_BACK_LEAVES, false)) {
+      moveTaskToBack(true);
+      return;
+    }
     cachePlayer();
     super.onBackPressed();
   }

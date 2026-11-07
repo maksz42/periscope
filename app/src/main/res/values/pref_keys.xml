@@ -26,4 +26,12 @@
     <string name="rtsp_password_key" translatable="false">rtsp_password</string>
     <string name="rtsp_tls_indicator_key" translatable="false">rtsp_tls_indicator</string>
     <string name="rtsp_fetch_credentials_key" translatable="false">rtsp_auto_credentials</string>
+    <string name="overlay_screen_key" translatable="false">overlay_screen</string>
+    <string name="overlay_status_key" translatable="false">overlay_status</string>
+    <string name="overlay_trigger_key_key" translatable="false">overlay_trigger_key</string>
+    <string name="overlay_gesture_key" translatable="false">overlay_gesture</string>
+    <string name="overlay_corner_key" translatable="false">overlay_corner</string>
+    <string name="overlay_size_key" translatable="false">overlay_size</string>
+    <string name="overlay_transparency_key" translatable="false">overlay_transparency</string>
+    <string name="overlay_cameras_key" translatable="false">overlay_cameras</string>
 </resources>

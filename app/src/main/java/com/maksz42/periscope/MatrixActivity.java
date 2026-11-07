@@ -367,6 +367,14 @@ public class MatrixActivity extends AbstractPreviewActivity {
     return super.onKeyDown(keyCode, event);
   }
 
+  /**
+   * Boolean extra (here and in {@link SingleCameraActivity}): opened from the camera list over
+   * another app, so Back returns to that app. Otherwise Back does nothing and the grid stays up.
+   */
+  public static final String EXTRA_BACK_LEAVES = "back_leaves";
+
   @Override
-  public void onBackPressed() { }
+  public void onBackPressed() {
+    if (getIntent().getBooleanExtra(EXTRA_BACK_LEAVES, false)) moveTaskToBack(true);
+  }
 }

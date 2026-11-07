@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accessibility overlays need Android 5.1; below that the service is not offered at all. -->
+    <bool name="overlay_supported">false</bool>
+</resources>
