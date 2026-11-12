@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="ignore_aspect_ratio_key" translatable="false">ignore_aspect_ratio</string>
+    <string name="equal_tiles_key" translatable="false">equal_tiles</string>
     <string name="host_key" translatable="false">host</string>
     <string name="port_key" translatable="false">port</string>
     <string name="interval_key" translatable="false">interval</string>

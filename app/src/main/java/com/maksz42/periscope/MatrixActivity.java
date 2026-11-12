@@ -21,6 +21,7 @@ import com.maksz42.periscope.frigate.InvalidResponseException;
 import com.maksz42.periscope.frigate.Media;
 import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.helper.CameraPlayerHolder;
+import com.maksz42.periscope.helper.GridShape;
 import com.maksz42.periscope.helper.Settings;
 import com.maksz42.periscope.ui.BlackLinearLayout;
 import com.maksz42.periscope.ui.CameraView;
@@ -181,6 +182,17 @@ public class MatrixActivity extends AbstractPreviewActivity {
     LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(MATCH_PARENT, 0);
     rowParams.weight = 1;
     int orientation = getResources().getConfiguration().orientation;
+    boolean landscape = orientation == Configuration.ORIENTATION_LANDSCAPE;
+    GridShape shape = GridShape.of(totalCams, landscape);
+    if (Settings.getInstance().getEqualTiles() && shape.hasGaps(totalCams)) {
+      equalTiles(shape, matrixLayout, colParams, rowParams);
+      if (landscape) {
+        configureFocusLandscape(matrixLayout);
+      } else {
+        configureFocusPortrait(matrixLayout);
+      }
+      return;
+    }
     if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
       if (rows != 1) {
         rowMatrix(totalCams, columns, matrixLayout, colParams, rowParams);
@@ -226,6 +238,34 @@ public class MatrixActivity extends AbstractPreviewActivity {
       int end = start + offset;
       View column = createWrapper(start, end, columns, LinearLayout.VERTICAL, rowParams);
       matrixLayout.addView(column, colParams);
+    }
+  }
+
+  /**
+   * Rows of equal tiles, cameras first, then black tiles that take no focus. Every row is a
+   * wrapper, so the focus setup treats it like any other.
+   */
+  private void equalTiles(
+      GridShape shape,
+      LinearLayout matrixLayout,
+      LinearLayout.LayoutParams colParams,
+      LinearLayout.LayoutParams rowParams
+  ) {
+    matrixLayout.setOrientation(LinearLayout.VERTICAL);
+    int next = 0;
+    for (int r = 0; r < shape.rows; r++) {
+      LinearLayout row = new LinearLayout(this);
+      row.setOrientation(LinearLayout.HORIZONTAL);
+      for (int c = 0; c < shape.columns; c++) {
+        if (next < cameraViews.size()) {
+          row.addView(cameraViews.get(next++), colParams);
+        } else {
+          View empty = new View(this);
+          empty.setFocusable(false);
+          row.addView(empty, colParams);
+        }
+      }
+      matrixLayout.addView(row, rowParams);
     }
   }
 

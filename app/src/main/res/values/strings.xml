@@ -3,6 +3,8 @@
     <string name="settings_activity_label">Settings</string>
     <string name="cameras_order_activity_label">Cameras order</string>
     <string name="ignore_aspect_ratio_pref">Ignore aspect ratio</string>
+    <string name="equal_tiles_pref">Equal tiles</string>
+    <string name="equal_tiles_summary">Every camera the same size; spare tiles stay black (3 cameras make 2 × 2)</string>
     <string name="interval_preference_dialog_msg">Minimum %dms</string>
     <string name="timeout_preference_dialog_msg">Maximum %dms</string>
     <string name="invalid_host">Invalid host</string>

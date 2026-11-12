@@ -3,6 +3,8 @@
     <string name="settings_activity_label">Ustawienia</string>
     <string name="cameras_order_activity_label">Kolejność kamer</string>
     <string name="ignore_aspect_ratio_pref">Ignoruj proporcje</string>
+    <string name="equal_tiles_pref">Równe kafelki</string>
+    <string name="equal_tiles_summary">Każda kamera tej samej wielkości; wolne kafelki pozostają czarne (3 kamery to 2 × 2)</string>
     <string name="invalid_host">Nieprawidłowy host</string>
     <string name="invalid_port">Nieprawidłowy port</string>
     <string name="invalid_url">Nieprawidłowy URL</string>
