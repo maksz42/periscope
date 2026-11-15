@@ -1,5 +1,7 @@
 package com.maksz42.periscope.camera.rtsp;
 
+import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioTrack;
 
 import com.maksz42.periscope.utils.IO;
@@ -8,26 +10,40 @@ import java.io.DataInputStream;
 import java.io.IOException;
 
 class AudioPlayer {
-    static final int CAPACITY = (1 << 13);
-
-    private final short[] decodeBuffer = new short[CAPACITY];
+    private final short[] decodeBuffer;
     private final short[] lawToPcmTable;
     private final AudioTrack audioTrack;
 
     private int head;
     private int tail;
 
-    AudioPlayer(AudioEncoding audioEncoding, AudioTrack audioTrack) {
+    AudioPlayer(AudioEncoding audioEncoding, int rate) {
         this.lawToPcmTable = switch (audioEncoding) {
           case PCMA -> PCM.alawToPcmTable;
           case PCMU -> PCM.ulawToPcmTable;
         };
-        this.audioTrack = audioTrack;
+
+        int bufSize = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        this.audioTrack = new AudioTrack(
+            AudioManager.STREAM_MUSIC,
+            rate,
+            AudioFormat.CHANNEL_OUT_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
+            bufSize,
+            AudioTrack.MODE_STREAM);
         audioTrack.play();
+
+        int halfSecSamples = (rate + 1) >> 1;
+        int halfSecCeilBufSize = Integer.highestOneBit(halfSecSamples - 1) << 1;
+        decodeBuffer = new short[halfSecCeilBufSize];
     }
 
-    private static int masked(int counter) {
-        return counter & (CAPACITY - 1);
+    int getCapacity() {
+        return decodeBuffer.length;
+    }
+
+    private int masked(int counter) {
+        return counter & (decodeBuffer.length - 1);
     }
 
     int getCount() {
@@ -35,23 +51,23 @@ class AudioPlayer {
     }
 
     private int getCountNoWrap() {
-        return Math.min(getCount(), CAPACITY - masked(tail));
+        return Math.min(getCount(), decodeBuffer.length - masked(tail));
     }
 
     private int getFree() {
-        return CAPACITY - getCount();
+        return decodeBuffer.length - getCount();
     }
 
     private int getFreeNoWrap() {
-        return Math.min(getFree(), CAPACITY - masked(head));
+        return Math.min(getFree(), decodeBuffer.length - masked(head));
     }
 
     void halfFlush() {
-        tail += Math.max(getCount() - (CAPACITY / 2), 0);
+        tail += Math.max(getCount() - (decodeBuffer.length / 2), 0);
     }
 
     void feed(DataInputStream in, int len) throws IOException {
-        int toWrite = Math.min(len, CAPACITY);
+        int toWrite = Math.min(len, decodeBuffer.length);
         int toDiscard = Math.max(toWrite - getFree(), 0);
         int toSkip = len - toWrite;
         IO.skipNBytes(in, toSkip);

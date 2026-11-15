@@ -138,18 +138,10 @@ public class RtspClient {
           AudioEncoding encoding = AudioEncoding.valueOf(formatParts[0]);
           int rate = Integer.parseInt(formatParts[1]);
 
-          int bufSize = AudioTrack.getMinBufferSize(rate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT);
-          AudioTrack audioTrack = new AudioTrack(
-              AudioManager.STREAM_MUSIC,
-              rate,
-              AudioFormat.CHANNEL_OUT_MONO,
-              AudioFormat.ENCODING_PCM_16BIT,
-              bufSize,
-              AudioTrack.MODE_STREAM);
           if (audioPlayer != null) {
             audioPlayer.shutdown();
           }
-          audioPlayer = new AudioPlayer(encoding, audioTrack);
+          audioPlayer = new AudioPlayer(encoding, rate);
 
           sendRequestSkipResponse(in, out, setupRequest);
           long lastRequestTime = System.nanoTime();
@@ -210,7 +202,7 @@ public class RtspClient {
         int audioDataLen = rtpLen - HEADER_SIZE;
 
         audioPlayer.feed(in, audioDataLen);
-        if (audioPlayer.getCount() * 2 > AudioPlayer.CAPACITY) {
+        if (audioPlayer.getCount() * 2 > audioPlayer.getCapacity()) {
           state = State.PLAYING;
           audioPlayer.consume();
         }
@@ -246,7 +238,7 @@ public class RtspClient {
           if (audioDataLen <= available) {
             int count = audioPlayer.getCount();
             audioPlayer.feed(in, audioDataLen);
-            if (count + audioDataLen > AudioPlayer.CAPACITY) {
+            if (count + audioDataLen > audioPlayer.getCapacity()) {
               audioPlayer.halfFlush();
             }
           } else {
