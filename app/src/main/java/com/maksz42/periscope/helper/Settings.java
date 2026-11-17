@@ -23,6 +23,7 @@ public class Settings {
   private final SharedPreferences prefs;
   private final SharedPreferences.Editor editor;
   public final String IgnoreAspectRatioKey;
+  public final String SwipeCameraKey;
   public final String HostKey;
   public final String PortKey;
   public final String IntervalKey;
@@ -69,6 +70,7 @@ public class Settings {
     editor = prefs.edit();
     Resources res = context.getResources();
     IgnoreAspectRatioKey = res.getString(R.string.ignore_aspect_ratio_key);
+    SwipeCameraKey = res.getString(R.string.swipe_camera_key);
     HostKey = res.getString(R.string.host_key);
     PortKey = res.getString(R.string.port_key);
     IntervalKey = res.getString(R.string.interval_key);
@@ -132,6 +134,15 @@ public class Settings {
 
   public Settings setIgnoreAspectRatio(boolean enable) {
     setBoolean(IgnoreAspectRatioKey, enable);
+    return this;
+  }
+
+  public boolean getSwipeCamera() {
+    return getBoolean(SwipeCameraKey);
+  }
+
+  public Settings setSwipeCamera(boolean enable) {
+    setBoolean(SwipeCameraKey, enable);
     return this;
   }
 

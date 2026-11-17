@@ -38,6 +38,7 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
+    if (!Settings.getInstance().getSwipeCamera()) return false;
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN -> {
         swipeDownX = event.getX();

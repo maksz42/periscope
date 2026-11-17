@@ -3,6 +3,7 @@
     <string name="settings_activity_label">Ustawienia</string>
     <string name="cameras_order_activity_label">Kolejność kamer</string>
     <string name="ignore_aspect_ratio_pref">Ignoruj proporcje</string>
+    <string name="swipe_camera">Przesuń, aby zmienić kamerę</string>
     <string name="invalid_host">Nieprawidłowy host</string>
     <string name="invalid_port">Nieprawidłowy port</string>
     <string name="invalid_url">Nieprawidłowy URL</string>
@@ -40,7 +41,7 @@
     <string name="rtsp_experimental">RTSP (tylko dźwięk) (eksperymentalne)</string>
     <string name="rtsp_enabled">RTSP włączone</string>
     <string name="audio_enabled_by_default">Włącz dźwięk domyślnie</string>
-    <string name="audio_enabled_by_default_info">W widoku jednej kamery</string>
+    <string name="single_camera_info">W widoku jednej kamery</string>
     <string name="keep_screen_on">Nie wygaszaj ekranu</string>
     <string name="version">Wersja</string>
     <string name="rtsp_fetch_credentials">Pobierz poświadczenia RTSP</string>

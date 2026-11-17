@@ -3,6 +3,7 @@
     <string name="settings_activity_label">Settings</string>
     <string name="cameras_order_activity_label">Cameras order</string>
     <string name="ignore_aspect_ratio_pref">Ignore aspect ratio</string>
+    <string name="swipe_camera">Swipe to switch camera</string>
     <string name="interval_preference_dialog_msg">Minimum %dms</string>
     <string name="timeout_preference_dialog_msg">Maximum %dms</string>
     <string name="invalid_host">Invalid host</string>
@@ -45,7 +46,7 @@
     <string name="rtsp_experimental">RTSP (audio only) (experimental)</string>
     <string name="rtsp_enabled">RTSP enabled</string>
     <string name="audio_enabled_by_default">Enable audio by default</string>
-    <string name="audio_enabled_by_default_info">In the single camera view</string>
+    <string name="single_camera_info">In the single camera view</string>
     <string name="keep_screen_on">Keep screen on</string>
     <string name="version">Version</string>
     <string name="tls">TLS</string>
