@@ -184,9 +184,11 @@ public abstract class AbstractPreviewActivity extends Activity {
   @Override
   public boolean dispatchTouchEvent(MotionEvent ev) {
     scheduleUIHide();
+    // This makes motion event stream a little inconsistent. Seems to work fine though.
     if (findViewById(R.id.floating_bar).getVisibility() == VISIBLE) {
       return super.dispatchTouchEvent(ev);
     }
+    onTouchEvent(ev);
     setUIVisible(true);
     return true;
   }

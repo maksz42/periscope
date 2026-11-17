@@ -2,6 +2,7 @@ package com.maksz42.periscope;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.widget.ImageButton;
 
 import com.maksz42.periscope.frigate.Media;
@@ -9,9 +10,14 @@ import com.maksz42.periscope.helper.CameraPlayerHolder;
 import com.maksz42.periscope.helper.Settings;
 import com.maksz42.periscope.ui.CameraView;
 
+import java.util.List;
+
 public class SingleCameraActivity extends AbstractPreviewActivity {
   private CameraView cameraView;
   private ImageButton muteButton;
+  private float swipeDownX;
+  private float swipeDownY;
+  private int swipeActivityWidth;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -22,11 +28,47 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     });
   }
 
-  @Override
-  protected void onStart() {
-    super.onStart();
+  private String getAdjacentCamera(int direction) {
+    String cameraName = cameraView.getMedia().getName();
+    List<String> cameras = Settings.getInstance().getSelectedCameras();
+    int idx = cameras.indexOf(cameraName);
+    if (idx < 0) return null;
+    return cameras.get((idx + direction + cameras.size()) % cameras.size());
+  }
 
-    String cameraName = getIntent().getStringExtra("camera_name");
+  @Override
+  public boolean onTouchEvent(MotionEvent event) {
+    switch (event.getAction()) {
+      case MotionEvent.ACTION_DOWN -> {
+        swipeDownX = event.getX();
+        swipeDownY = event.getY();
+        swipeActivityWidth = getWindow().getDecorView().getWidth();
+      }
+      case MotionEvent.ACTION_UP -> {
+        int width = swipeActivityWidth;
+        swipeActivityWidth = 0;
+        if (width == 0) break;
+        float dx = event.getX() - swipeDownX;
+        float dy = event.getY() - swipeDownY;
+
+        if (Math.abs(dy) > Math.abs(dx)) break;
+        if (Math.abs(dx) < (width >> 2)) break;
+
+        String adjacentCamera = getAdjacentCamera((dx > 0) ? -1 : 1);
+        if (adjacentCamera == null) break;
+        boolean audio = cameraView.getPlayer().hasAudio();
+        cameraView.stop();
+        startCamera(adjacentCamera);
+        if (audio) {
+          startAudio(cameraView);
+        }
+      }
+      case MotionEvent.ACTION_CANCEL -> swipeActivityWidth = 0;
+    }
+    return true;
+  }
+
+  private void startCamera(String cameraName) {
     Settings settings = Settings.getInstance();
     boolean ignoreAspectRatio = settings.getIgnoreAspectRatio();
     short timeout = settings.getTimeout();
@@ -46,7 +88,16 @@ public class SingleCameraActivity extends AbstractPreviewActivity {
     showWallpaperMsg(null);
     setPreview(cameraView);
     cameraView.start(0, 100);
+  }
 
+  @Override
+  protected void onStart() {
+    super.onStart();
+
+    String cameraName = getIntent().getStringExtra("camera_name");
+    startCamera(cameraName);
+
+    Settings settings = Settings.getInstance();
     if (settings.getRtspEnabled()) {
       boolean audioEnabled = settings.getAudioEnabledByDefault();
       int initDrawableId;
