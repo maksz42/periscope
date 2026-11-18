@@ -57,6 +57,7 @@ public abstract class AbstractPreviewActivity extends Activity {
 
   private final Handler handler = new Handler(Looper.getMainLooper());
   private final Runnable hideUIAction = () -> setUIVisible(false);
+  private LinearLayout floatingBar;
   private Dialog alertDialog;
 
   final protected CameraView.OnErrorListener cameraViewErrorListener =
@@ -86,9 +87,10 @@ public abstract class AbstractPreviewActivity extends Activity {
       // On my physical devices it doesn't matter
       getWindow().addFlags(FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
     }
-    addFloatingButton(android.R.drawable.ic_menu_preferences, R.id.preferences_button, SettingsActivity.class);
 
-    findViewById(R.id.floating_bar).requestFocus();
+    floatingBar = findViewById(R.id.floating_bar);
+    addFloatingButton(android.R.drawable.ic_menu_preferences, R.id.preferences_button, SettingsActivity.class);
+    floatingBar.requestFocus();
 
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
       return;
@@ -185,7 +187,7 @@ public abstract class AbstractPreviewActivity extends Activity {
   public boolean dispatchTouchEvent(MotionEvent ev) {
     scheduleUIHide();
     // This makes motion event stream a little inconsistent. Seems to work fine though.
-    if (findViewById(R.id.floating_bar).getVisibility() == VISIBLE) {
+    if (floatingBar.getVisibility() == VISIBLE) {
       return super.dispatchTouchEvent(ev);
     }
     onTouchEvent(ev);
@@ -221,7 +223,6 @@ public abstract class AbstractPreviewActivity extends Activity {
   }
 
   private void setAppUIVisible(boolean visible) {
-    ViewGroup floatingBar = findViewById(R.id.floating_bar);
     floatingBar.setVisibility(visible ? VISIBLE : GONE);
     floatingBar.requestFocus();
     onAppUIVisibilityChange(visible);
@@ -286,7 +287,6 @@ public abstract class AbstractPreviewActivity extends Activity {
     btn.setId(id);
     btn.setNextFocusDownId(R.id.focus_camera_view);
     btn.setNextFocusRightId(R.id.focus_camera_view);
-    LinearLayout floatingBar = findViewById(R.id.floating_bar);
     int childCount = floatingBar.getChildCount();
     if (childCount > 0) {
       floatingBar.getChildAt(childCount - 1).setNextFocusRightId(NO_ID);
@@ -298,7 +298,6 @@ public abstract class AbstractPreviewActivity extends Activity {
   }
 
   protected void removeFloatingButton(ImageButton button) {
-    LinearLayout floatingBar = findViewById(R.id.floating_bar);
     floatingBar.removeView(button);
   }
 
@@ -393,7 +392,7 @@ public abstract class AbstractPreviewActivity extends Activity {
   @Override
   public boolean dispatchKeyEvent(KeyEvent event) {
     scheduleUIHide();
-    if (findViewById(R.id.floating_bar).getVisibility() != VISIBLE) {
+    if (floatingBar.getVisibility() != VISIBLE) {
       setUIVisible(true);
       if (shouldIgnoreFirstKey(event.getKeyCode())) {
         return true;
