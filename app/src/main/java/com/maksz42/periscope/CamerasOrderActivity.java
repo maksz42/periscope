@@ -23,6 +23,13 @@ import java.util.List;
 import java.util.Set;
 
 public class CamerasOrderActivity extends Activity {
+  /**
+   * Boolean extra: choose the cameras of the "Watch over TV" list instead of the grid's. It
+   * starts from what the list shows now and has no audio switches.
+   */
+  public static final String EXTRA_OVERLAY_LIST = "overlay_list";
+
+  private boolean overlayList;
   private boolean refreshing;
   private final Set<String> usedCameraNames = new HashSet<>();
   private final List<CameraItem> cameraItems = new ArrayList<>();
@@ -33,13 +40,21 @@ public class CamerasOrderActivity extends Activity {
     requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
     super.onCreate(savedInstanceState);
     Settings settings = Settings.getInstance();
-    cameraArrayAdapter = new CameraArrayAdapter(this, cameraItems, settings.getRtspEnabled());
-    List<String> loadedCameras = settings.getSelectedCameras();
+    overlayList = getIntent().getBooleanExtra(EXTRA_OVERLAY_LIST, false);
+    cameraArrayAdapter = new CameraArrayAdapter(this, cameraItems,
+        !overlayList && settings.getRtspEnabled());
+    List<String> loadedCameras = overlayList
+        ? settings.getOverlayCameras() != null ? settings.getOverlayCameras() : settings.getSelectedCameras()
+        : settings.getSelectedCameras();
+    // With no selection at all, the list offers every camera, so the picker starts with all ticked.
+    boolean newOnesTicked = overlayList && loadedCameras == null;
     if (loadedCameras != null) {
       addCameraItems(loadedCameras, true);
     }
     ListView listView = new ListView(this);
-    listView.setOnItemLongClickListener((parent, view, position, id) -> view.findViewById(R.id.btn_audio).performClick());
+    if (!overlayList) {
+      listView.setOnItemLongClickListener((parent, view, position, id) -> view.findViewById(R.id.btn_audio).performClick());
+    }
     listView.setOnItemClickListener((parent, view, position, id) -> view.findViewById(R.id.camera_enabled).performClick());
     listView.setOnKeyListener((v, keyCode, event) -> {
       if (event.getAction() != KeyEvent.ACTION_DOWN) {
@@ -65,7 +80,7 @@ public class CamerasOrderActivity extends Activity {
       while (refreshing) {
         try {
           List<String> cameraNames = config.getCameras();
-          runOnUiThread(() -> addCameraItems(cameraNames, false));
+          runOnUiThread(() -> addCameraItems(cameraNames, newOnesTicked));
           break;
         } catch (Exception e) {
           Log.e(CamerasOrderActivity.this.getClass().getName(), "Error getting cameras", e);
@@ -80,7 +95,7 @@ public class CamerasOrderActivity extends Activity {
 
     getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE, R.layout.custom_settings_title_bar);
     TextView title = findViewById(R.id.title);
-    title.setText(R.string.cameras_order_activity_label);
+    title.setText(overlayList ? R.string.overlay_cameras : R.string.cameras_order_activity_label);
     findViewById(R.id.btn_back).setOnClickListener(v -> onBackPressed());
   }
 
@@ -106,6 +121,10 @@ public class CamerasOrderActivity extends Activity {
       if (cameraItem.audioEnabled) {
         audioCameras.add(cameraItem.name);
       }
+    }
+    if (overlayList) {
+      Settings.getInstance().setOverlayCameras(selectedCameras).apply();
+      return;
     }
     Settings.getInstance()
         .setSelectedCameras(selectedCameras)

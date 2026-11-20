@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keys only: no window content and no screenshots. Events are limited to this app, and the
+     service ignores them anyway. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/overlay_service_description"
+    android:accessibilityEventTypes="typeAnnouncement"
+    android:packageNames="com.maksz42.periscope"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRequestFilterKeyEvents"
+    android:canRequestFilterKeyEvents="true"
+    android:canRetrieveWindowContent="false"
+    android:notificationTimeout="1000" />

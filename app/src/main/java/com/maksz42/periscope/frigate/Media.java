@@ -13,6 +13,14 @@ public class Media {
   public final String endpoint;
 
   public Media(String name, ImageFormat format, int quality) {
+    this(name, format, quality, -1);
+  }
+
+  /**
+   * @param height if positive, Frigate scales the picture to this height (keeping its aspect
+   *     ratio) before sending it
+   */
+  public Media(String name, ImageFormat format, int quality, int height) {
     this.name = name;
     StringBuilder sb = new StringBuilder()
         .append("api/")
@@ -20,8 +28,13 @@ public class Media {
         .append("/latest.")
         .append(format.toString().toLowerCase());
     // Frigate defaults to 70
+    char separator = '?';
     if (quality >= 0) {
-      sb.append("?quality=").append(quality);
+      sb.append(separator).append("quality=").append(quality);
+      separator = '&';
+    }
+    if (height > 0) {
+      sb.append(separator).append("height=").append(height);
     }
     this.endpoint = sb.toString();
   }

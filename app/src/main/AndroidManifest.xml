@@ -51,6 +51,20 @@
             android:theme="@style/ThickTitlebar"
             android:exported="true" />
 
+        <service
+            android:name=".overlay.OverlayKeyService"
+            android:label="@string/overlay_service_label"
+            android:enabled="@bool/overlay_supported"
+            android:exported="false"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/overlay_key_service" />
+        </service>
+
         <receiver android:name=".UpdateManager$InstallReceiver" />
         <receiver
             android:name=".BootReceiver"

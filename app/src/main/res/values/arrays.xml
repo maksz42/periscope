@@ -12,6 +12,50 @@
         <item>HTTP</item>
         <item>HTTPS</item>
     </string-array>
+    <string-array name="overlay_gesture_entries">
+        <item>@string/overlay_gesture_hold</item>
+        <item>@string/overlay_gesture_double</item>
+    </string-array>
+    <string-array name="overlay_gesture_values">
+        <item>HOLD</item>
+        <item>DOUBLE_PRESS</item>
+    </string-array>
+    <string-array name="overlay_corner_entries">
+        <item>@string/overlay_corner_top_right</item>
+        <item>@string/overlay_corner_top_left</item>
+        <item>@string/overlay_corner_bottom_right</item>
+        <item>@string/overlay_corner_bottom_left</item>
+    </string-array>
+    <string-array name="overlay_corner_values">
+        <item>TOP_RIGHT</item>
+        <item>TOP_LEFT</item>
+        <item>BOTTOM_RIGHT</item>
+        <item>BOTTOM_LEFT</item>
+    </string-array>
+    <string-array name="overlay_size_entries">
+        <item>@string/overlay_size_small</item>
+        <item>@string/overlay_size_medium</item>
+        <item>@string/overlay_size_large</item>
+        <item>@string/overlay_size_huge</item>
+    </string-array>
+    <string-array name="overlay_size_values">
+        <item>SMALL</item>
+        <item>MEDIUM</item>
+        <item>LARGE</item>
+        <item>HUGE</item>
+    </string-array>
+    <string-array name="overlay_transparency_entries">
+        <item>@string/overlay_transparency_none</item>
+        <item>@string/overlay_transparency_low</item>
+        <item>@string/overlay_transparency_medium</item>
+        <item>@string/overlay_transparency_high</item>
+    </string-array>
+    <string-array name="overlay_transparency_values">
+        <item>NONE</item>
+        <item>LOW</item>
+        <item>MEDIUM</item>
+        <item>HIGH</item>
+    </string-array>
     <string-array name="image_format_values">
         <item>JPG</item>
         <item>WEBP</item>

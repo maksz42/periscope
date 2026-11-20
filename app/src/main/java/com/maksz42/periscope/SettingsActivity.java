@@ -18,6 +18,7 @@ import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -29,6 +30,8 @@ import com.maksz42.periscope.frigate.Client;
 import com.maksz42.periscope.frigate.Config;
 import com.maksz42.periscope.frigate.InvalidResponseException;
 import com.maksz42.periscope.helper.Settings;
+import com.maksz42.periscope.overlay.KeyGate;
+import com.maksz42.periscope.overlay.OverlayKeyService;
 import com.maksz42.periscope.utils.DialogUtils;
 import com.maksz42.periscope.utils.Misc;
 import com.maksz42.periscope.utils.Net;
@@ -98,6 +101,8 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
       getPreferenceScreen().removePreference(findPreference(settings.HideNavBarKey));
     }
 
+    setUpOverlayPreferences();
+
     Preference.OnPreferenceChangeListener portListener =
         (preference, newValue) -> validatePort((String) newValue) > 0;
     findPreference(settings.PortKey).setOnPreferenceChangeListener(portListener);
@@ -156,6 +161,88 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     findViewById(R.id.btn_back).setOnClickListener(v -> onBackPressed());
   }
 
+  /** The "Watch over TV" screen: needs accessibility overlays (Android 5.1). */
+  private void setUpOverlayPreferences() {
+    Preference screen = findPreference(getString(R.string.overlay_screen_key));
+    if (Build.VERSION.SDK_INT < 22) {
+      getPreferenceScreen().removePreference(screen);
+      return;
+    }
+    findPreference(getString(R.string.overlay_status_key)).setOnPreferenceClickListener(p -> {
+      try {
+        startActivity(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
+      } catch (android.content.ActivityNotFoundException e) {
+        DialogUtils.civilShow(
+            new AlertDialog.Builder(this)
+                .setMessage(R.string.overlay_no_accessibility_settings)
+                .setPositiveButton(android.R.string.ok, null),
+            this
+        );
+      }
+      return true;
+    });
+    findPreference(getString(R.string.overlay_trigger_key_key)).setOnPreferenceClickListener(p -> {
+      chooseTriggerKey();
+      return true;
+    });
+    findPreference(getString(R.string.overlay_cameras_key)).setOnPreferenceClickListener(p -> {
+      startActivity(new Intent(this, CamerasOrderActivity.class)
+          .putExtra(CamerasOrderActivity.EXTRA_OVERLAY_LIST, true));
+      return true;
+    });
+    updateOverlaySummaries();
+  }
+
+  private void updateOverlaySummaries() {
+    if (Build.VERSION.SDK_INT < 22) return;
+    Preference status = findPreference(getString(R.string.overlay_status_key));
+    if (status == null) return;
+    status.setSummary(OverlayKeyService.isEnabled(this)
+        ? R.string.overlay_status_on
+        : R.string.overlay_status_off);
+    findPreference(getString(R.string.overlay_trigger_key_key)).setSummary(
+        getString(R.string.overlay_trigger_summary, triggerName(settings.getOverlayTriggerKey())));
+    java.util.List<String> listCameras = settings.getOverlayCameras();
+    findPreference(getString(R.string.overlay_cameras_key)).setSummary(
+        listCameras == null ? getString(R.string.overlay_cameras_same_as_grid)
+            : listCameras.isEmpty() ? getString(R.string.no_cameras_selected)
+            : android.text.TextUtils.join(", ", listCameras));
+  }
+
+  @RequiresApi(22)
+  private static String triggerName(int keyCode) {
+    return KeyGate.label(KeyEvent.keyCodeToString(keyCode));
+  }
+
+  /** Asks for a press of the button to use, and keeps it if holding it can't disturb the show. */
+  @RequiresApi(22)
+  private void chooseTriggerKey() {
+    AlertDialog dialog = new AlertDialog.Builder(this)
+        .setTitle(R.string.overlay_trigger)
+        .setMessage(R.string.overlay_trigger_press)
+        .setNegativeButton(android.R.string.cancel, null)
+        .create();
+    dialog.setOnKeyListener((d, keyCode, event) -> {
+      if (event.getAction() != KeyEvent.ACTION_DOWN || event.getRepeatCount() != 0) return false;
+      // Keys that move around the dialog and close it keep doing so.
+      if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_DPAD_CENTER
+          || keyCode == KeyEvent.KEYCODE_ENTER || keyCode == KeyEvent.KEYCODE_DPAD_UP
+          || keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_LEFT
+          || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+        return false;
+      }
+      if (!KeyGate.canTrigger(keyCode)) {
+        dialog.setMessage(getString(R.string.overlay_trigger_refused, triggerName(keyCode)));
+        return true;
+      }
+      settings.setOverlayTriggerKey(keyCode).apply();
+      updateOverlaySummaries();
+      dialog.dismiss();
+      return true;
+    });
+    DialogUtils.civilShow(dialog, this);
+  }
+
   private int parsePort(String value) {
     try {
       int port = Integer.parseInt(value);
@@ -207,6 +294,8 @@ public class SettingsActivity extends PreferenceActivity implements SharedPrefer
     getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     PreferenceScreen preferenceScreen = getPreferenceScreen();
     postProcessPreferences(preferenceScreen);
+    // Back from the system's accessibility settings: show whether the service is on now.
+    updateOverlaySummaries();
   }
 
   private void postProcessPreferences(PreferenceScreen preferenceScreen) {
